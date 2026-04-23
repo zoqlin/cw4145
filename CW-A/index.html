@@ -247,6 +247,7 @@
   >
     <a-assets timeout="20000">
       <img id="albumTargetImage" src="assets/album-cover.png" crossorigin="anonymous">
+      <img id="albumTargetImageAlt" src="assets/album-target-alt.jpg" crossorigin="anonymous">
       <img id="kunTargetImage" src="assets/photocard-kun.png" crossorigin="anonymous">
       <img id="tenTargetImage" src="assets/photocard-ten.png" crossorigin="anonymous">
       <img id="xjTargetImage" src="assets/photocard-xj.png" crossorigin="anonymous">
@@ -497,6 +498,13 @@
           widthInMeters: 0.19,
           assetId: "albumTargetImage"
         },
+        albumAlt: {
+          key: "albumAlt",
+          kind: "album",
+          label: "Album cover alt",
+          widthInMeters: 0.24,
+          assetId: "albumTargetImageAlt"
+        },
         photocards: [
           {
             key: "kun",
@@ -537,7 +545,7 @@
         ]
       };
 
-      APP_CONFIG.targets = [APP_CONFIG.album].concat(APP_CONFIG.photocards);
+      APP_CONFIG.targets = [APP_CONFIG.album, APP_CONFIG.albumAlt].concat(APP_CONFIG.photocards);
 
       AFRAME.registerSystem("trail-pool", {
         init() {
@@ -785,11 +793,11 @@
           const isLeft = this.data.hand === "left";
           this.sourceHandEl = this.data.sourceHand || this.el.parentEl;
 
-          this.el.object3D.position.set(isLeft ? -0.03 : 0.03, -0.005, 0.005);
+          this.el.object3D.position.set(isLeft ? -0.02 : 0.02, -0.135, 0.01);
           this.el.object3D.rotation.set(
-            THREE.MathUtils.degToRad(12),
+            THREE.MathUtils.degToRad(8),
             0,
-            THREE.MathUtils.degToRad(isLeft ? -8 : 8)
+            THREE.MathUtils.degToRad(isLeft ? -6 : 6)
           );
           this.el.object3D.scale.setScalar(1.04);
 
