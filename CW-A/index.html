@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Meta Quest 3 校园草地 MR 应援体验</title>
-  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
   <style>
     :root {
       --bg: rgba(8, 10, 18, 0.84);
@@ -207,6 +207,7 @@
         <div>请在 Quest 3 的 Meta Browser 中通过 <code>https://</code> 或 <code>localhost</code> 打开本页。</div>
         <div>应援棒会跟随手部追踪移动，快速挥动时会留下短暂停留在真实空间中的粒子光轨。</div>
         <div>如果当前浏览器暂不支持图片追踪，也可以先用上面的模拟按钮检查视频窗口、空间音频和闪烁逻辑。</div>
+        <div>If image tracking does not work on Quest Browser, pinch with your left hand to open the teaser window and pinch with your right hand to play a photocard voice clip.</div>
       </div>
 
       <div class="cards">
@@ -284,8 +285,9 @@
 
     <a-entity
       id="leftHand"
-      hand-tracking-controls="hand: left; modelStyle: dots; modelColor: #f2f5c0"
+      hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffffff; modelOpacity: 0.01"
       tracked-hand="hideMesh: true"
+      gesture-shortcuts="hand: left"
     >
       <a-entity class="wand" support-wand="hand: left; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #leftHand">
         <a-cylinder
@@ -317,8 +319,9 @@
 
     <a-entity
       id="rightHand"
-      hand-tracking-controls="hand: right; modelStyle: dots; modelColor: #f2f5c0"
+      hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #ffffff; modelOpacity: 0.01"
       tracked-hand="hideMesh: true"
+      gesture-shortcuts="hand: right"
     >
       <a-entity class="wand" support-wand="hand: right; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #rightHand">
         <a-cylinder
@@ -571,7 +574,7 @@
             return;
           }
 
-          mesh.scale.setScalar(0.0001);
+          mesh.visible = false;
           this.hiddenMesh = mesh;
         },
 
@@ -582,6 +585,30 @@
         remove() {
           this.el.removeEventListener("object3dset", this.hideVisuals);
           this.el.removeEventListener("model-loaded", this.hideVisuals);
+        }
+      });
+
+      AFRAME.registerComponent("gesture-shortcuts", {
+        schema: {
+          hand: { default: "left" }
+        },
+
+        init() {
+          this.onPinchStarted = this.onPinchStarted.bind(this);
+          this.el.addEventListener("pinchstarted", this.onPinchStarted);
+        },
+
+        onPinchStarted() {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (!experience || !this.el.sceneEl.is("ar-mode")) {
+            return;
+          }
+
+          experience.handleGestureShortcut(this.data.hand);
+        },
+
+        remove() {
+          this.el.removeEventListener("pinchstarted", this.onPinchStarted);
         }
       });
 
@@ -684,12 +711,13 @@
           const isLeft = this.data.hand === "left";
           this.sourceHandEl = this.data.sourceHand || this.el.parentEl;
 
-          this.el.object3D.position.set(isLeft ? -0.035 : 0.035, -0.02, -0.045);
+          this.el.object3D.position.set(isLeft ? -0.055 : 0.055, -0.045, 0.015);
           this.el.object3D.rotation.set(
-            THREE.MathUtils.degToRad(84),
+            THREE.MathUtils.degToRad(76),
             0,
-            THREE.MathUtils.degToRad(isLeft ? -20 : 20)
+            THREE.MathUtils.degToRad(isLeft ? -12 : 12)
           );
+          this.el.object3D.scale.setScalar(1.12);
 
           this.bodyEl = this.el.querySelector(".wand-body");
           this.coreEl = this.el.querySelector(".wand-core");
@@ -736,10 +764,9 @@
 
         tick(time, delta) {
           const inAR = this.el.sceneEl.is("ar-mode");
-          const handMesh = this.sourceHandEl && this.sourceHandEl.getObject3D("mesh");
-          this.el.object3D.visible = inAR && !!handMesh;
+          this.el.object3D.visible = inAR;
 
-          if (!inAR || !handMesh) {
+          if (!inAR) {
             this.ready = false;
             this.speed = 0;
             this.rhythmTarget = 0;
@@ -1149,11 +1176,13 @@
           this.photocardTargets = APP_CONFIG.photocards;
           this.trackedImages = null;
           this.imageTrackingEnabled = false;
+          this.imageTrackingFeatureAvailable = false;
           this.preparing = false;
           this.warnedMissingTracking = false;
           this.lastAlbumTrigger = 0;
           this.lastPhotocardTrigger = 0;
           this.photocardDemoIndex = 0;
+          this.lastGestureAt = 0;
 
           this.cameraPosition = new THREE.Vector3();
           this.cameraDirection = new THREE.Vector3();
@@ -1167,6 +1196,7 @@
           this.resetAnchors = this.resetAnchors.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
           this.onExitXR = this.onExitXR.bind(this);
+          this.handleGestureShortcut = this.handleGestureShortcut.bind(this);
 
           this.startButton.addEventListener("click", this.startExperience);
           this.albumDemoButton.addEventListener("click", this.simulateAlbum);
@@ -1280,14 +1310,18 @@
               this.setStatus("正在请求 Quest 3 的透视 MR 会话...");
               await this.el.enterAR();
               this.imageTrackingEnabled = true;
+              this.imageTrackingFeatureAvailable = true;
               this.setStatus("已进入 MR。扫描专辑封面播放 teaser 视频，扫描小卡播放对应成员语音。");
               return;
             } catch (primaryError) {
               console.warn("Image tracking session request failed.", primaryError);
               this.imageTrackingEnabled = false;
+              this.imageTrackingFeatureAvailable = false;
+              this.setStatus("No image-tracking results in this Quest Browser session. Use left-hand pinch for the album teaser and right-hand pinch for photocard voice playback.");
             }
 
             this.configureWebXR(false, null);
+            this.setStatus("Image tracking fallback mode: left-hand pinch opens the album teaser, right-hand pinch plays a photocard voice clip.");
 
             try {
               this.setStatus("当前环境暂不支持图片追踪，已退回无追踪 MR 预览。你仍可使用模拟按钮验证交互逻辑。");
@@ -1358,6 +1392,24 @@
           this.playPhotocardAt(this.targetPosition, target, null, null);
         },
 
+        handleGestureShortcut(hand) {
+          const now = performance.now();
+          if (now - this.lastGestureAt < 500) {
+            return;
+          }
+
+          this.lastGestureAt = now;
+
+          if (hand === "left") {
+            this.simulateAlbum();
+            this.setStatus("Left-hand pinch detected. Album teaser opened in front of you.");
+            return;
+          }
+
+          this.simulatePhotocard();
+          this.setStatus("Right-hand pinch detected. Photocard voice playback started.");
+        },
+
         resetAnchors() {
           const albumWindow = this.videoWindowEl.components["album-window"];
           const voiceAnchor = this.voiceAnchorEl.components["spatial-voice"];
@@ -1385,6 +1437,7 @@
           document.body.classList.remove("is-xr");
           this.previewEnvironmentEl.object3D.visible = true;
           this.imageTrackingEnabled = false;
+          this.imageTrackingFeatureAvailable = false;
           this.targetTrackingState = {};
         },
 
@@ -1419,6 +1472,8 @@
           if (typeof frame.getImageTrackingResults !== "function") {
             if (!this.warnedMissingTracking) {
               this.warnedMissingTracking = true;
+              this.imageTrackingEnabled = false;
+              this.imageTrackingFeatureAvailable = false;
               this.setStatus("当前 XR 会话没有返回图片追踪结果。你仍可测试手部应援棒，或先用模拟按钮演示媒体交互。");
             }
             return;
