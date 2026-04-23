@@ -250,7 +250,7 @@
       <img id="tenTargetImage" src="assets/photocard-ten.png" crossorigin="anonymous">
       <img id="xjTargetImage" src="assets/photocard-xj.png" crossorigin="anonymous">
       <img id="yangyangTargetImage" src="assets/yangyang.png" crossorigin="anonymous">
-      <img id="grassTexture" src="../AR/images/grass.jpg" crossorigin="anonymous">
+      <img id="grassTexture" src="assets/grass.jpg" crossorigin="anonymous">
       <video id="teaserVideo" src="assets/teaser-video.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline></video>
     </a-assets>
 
@@ -267,7 +267,7 @@
         rotation="-90 0 0"
         radius-inner="1"
         radius-outer="1.28"
-        material="shader: flat; color: #ff4d9d; transparent: true; opacity: 0.18"
+        material="shader: flat; color: #e1e668; transparent: true; opacity: 0.18"
       ></a-ring>
       <a-text
         value="Desktop Preview Mode\nUse the demo buttons or switch to Quest 3."
@@ -282,70 +282,78 @@
       <a-entity id="userCamera" camera="near: 0.01; far: 100" look-controls wasd-controls position="0 1.65 0"></a-entity>
     </a-entity>
 
-    <a-entity id="leftHand" hand-tracking-controls="hand: left; modelStyle: dots; modelColor: #ffd6eb">
-      <a-entity class="wand" support-wand="hand: left; cheerColor: #ff4d9d; flashColor: #ffffff">
+    <a-entity
+      id="leftHand"
+      hand-tracking-controls="hand: left; modelStyle: dots; modelColor: #f2f5c0"
+      tracked-hand="hideMesh: true"
+    >
+      <a-entity class="wand" support-wand="hand: left; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #leftHand">
         <a-cylinder
           class="wand-body"
           radius="0.014"
           height="0.26"
           position="0 0.13 0"
-          material="color: #fff7fb; roughness: 0.22; metalness: 0.45; emissive: #ff4d9d; emissiveIntensity: 1.2"
+          material="color: #fbfce9; roughness: 0.22; metalness: 0.45; emissive: #e1e668; emissiveIntensity: 1.2"
         ></a-cylinder>
         <a-sphere
           class="wand-core"
           radius="0.042"
           position="0 0.29 0"
-          material="color: #ffadd2; roughness: 0.14; metalness: 0.1; emissive: #ff4d9d; emissiveIntensity: 2.2"
+          material="color: #eef2a1; roughness: 0.14; metalness: 0.1; emissive: #e1e668; emissiveIntensity: 2.2"
         ></a-sphere>
         <a-sphere
           class="wand-halo"
           radius="0.08"
           position="0 0.29 0"
-          material="shader: flat; color: #ff4d9d; transparent: true; opacity: 0.16; side: double"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
         ></a-sphere>
         <a-entity
           class="wand-light"
           position="0 0.29 0"
-          light="type: point; color: #ff4d9d; intensity: 1.2; distance: 0.9; decay: 1.6"
+          light="type: point; color: #e1e668; intensity: 1.2; distance: 0.9; decay: 1.6"
         ></a-entity>
       </a-entity>
     </a-entity>
 
-    <a-entity id="rightHand" hand-tracking-controls="hand: right; modelStyle: dots; modelColor: #ffd6eb">
-      <a-entity class="wand" support-wand="hand: right; cheerColor: #ff4d9d; flashColor: #ffffff">
+    <a-entity
+      id="rightHand"
+      hand-tracking-controls="hand: right; modelStyle: dots; modelColor: #f2f5c0"
+      tracked-hand="hideMesh: true"
+    >
+      <a-entity class="wand" support-wand="hand: right; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #rightHand">
         <a-cylinder
           class="wand-body"
           radius="0.014"
           height="0.26"
           position="0 0.13 0"
-          material="color: #fff7fb; roughness: 0.22; metalness: 0.45; emissive: #ff4d9d; emissiveIntensity: 1.2"
+          material="color: #fbfce9; roughness: 0.22; metalness: 0.45; emissive: #e1e668; emissiveIntensity: 1.2"
         ></a-cylinder>
         <a-sphere
           class="wand-core"
           radius="0.042"
           position="0 0.29 0"
-          material="color: #ffadd2; roughness: 0.14; metalness: 0.1; emissive: #ff4d9d; emissiveIntensity: 2.2"
+          material="color: #eef2a1; roughness: 0.14; metalness: 0.1; emissive: #e1e668; emissiveIntensity: 2.2"
         ></a-sphere>
         <a-sphere
           class="wand-halo"
           radius="0.08"
           position="0 0.29 0"
-          material="shader: flat; color: #ff4d9d; transparent: true; opacity: 0.16; side: double"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
         ></a-sphere>
         <a-entity
           class="wand-light"
           position="0 0.29 0"
-          light="type: point; color: #ff4d9d; intensity: 1.2; distance: 0.9; decay: 1.6"
+          light="type: point; color: #e1e668; intensity: 1.2; distance: 0.9; decay: 1.6"
         ></a-entity>
       </a-entity>
     </a-entity>
 
-    <a-entity id="videoWindow" album-window visible="false">
+    <a-entity id="videoWindow" world-anchor album-window visible="false">
       <a-plane
         width="1.06"
         height="0.68"
         position="0 0 -0.01"
-        material="shader: flat; color: #ff4d9d; transparent: true; opacity: 0.14; side: double"
+        material="shader: flat; color: #e1e668; transparent: true; opacity: 0.14; side: double"
       ></a-plane>
       <a-plane
         width="0.98"
@@ -375,11 +383,11 @@
       ></a-text>
     </a-entity>
 
-    <a-entity id="voiceAnchor" spatial-voice="wandSelector: .wand" visible="false">
+    <a-entity id="voiceAnchor" world-anchor spatial-voice="wandSelector: .wand" visible="false">
       <a-sphere
         class="voice-core"
         radius="0.034"
-        material="shader: flat; color: #ff4d9d; transparent: true; opacity: 0.86"
+        material="shader: flat; color: #e1e668; transparent: true; opacity: 0.86"
       ></a-sphere>
       <a-sphere
         class="voice-ring"
@@ -403,7 +411,7 @@
   <script>
     (() => {
       const APP_CONFIG = {
-        cheerColor: "#ff4d9d",
+        cheerColor: "#e1e668",
         flashColor: "#ffffff",
         album: {
           key: "album",
@@ -540,21 +548,147 @@
         }
       });
 
+      AFRAME.registerComponent("tracked-hand", {
+        schema: {
+          hideMesh: { default: true }
+        },
+
+        init() {
+          this.hiddenMesh = null;
+          this.hideVisuals = this.hideVisuals.bind(this);
+
+          this.el.addEventListener("object3dset", this.hideVisuals);
+          this.el.addEventListener("model-loaded", this.hideVisuals);
+        },
+
+        hideVisuals() {
+          if (!this.data.hideMesh) {
+            return;
+          }
+
+          const mesh = this.el.getObject3D("mesh");
+          if (!mesh || mesh === this.hiddenMesh) {
+            return;
+          }
+
+          mesh.scale.setScalar(0.0001);
+          this.hiddenMesh = mesh;
+        },
+
+        tick() {
+          this.hideVisuals();
+        },
+
+        remove() {
+          this.el.removeEventListener("object3dset", this.hideVisuals);
+          this.el.removeEventListener("model-loaded", this.hideVisuals);
+        }
+      });
+
+      AFRAME.registerComponent("world-anchor", {
+        init() {
+          this.anchor = null;
+          this.pendingAnchor = null;
+          this.position = new THREE.Vector3();
+          this.quaternion = new THREE.Quaternion();
+        },
+
+        applyPlacement(position, quaternion) {
+          this.position.copy(position);
+          this.el.object3D.position.copy(position);
+
+          if (quaternion) {
+            this.quaternion.copy(quaternion);
+            this.el.object3D.quaternion.copy(quaternion);
+          }
+        },
+
+        requestAnchor(frame, referenceSpace) {
+          if (!frame || !referenceSpace || typeof frame.createAnchor !== "function" || this.pendingAnchor) {
+            return;
+          }
+
+          const transform = new XRRigidTransform(
+            {
+              x: this.position.x,
+              y: this.position.y,
+              z: this.position.z
+            },
+            {
+              x: this.quaternion.x,
+              y: this.quaternion.y,
+              z: this.quaternion.z,
+              w: this.quaternion.w
+            }
+          );
+
+          this.pendingAnchor = frame.createAnchor(transform, referenceSpace)
+            .then((anchor) => {
+              this.clearAnchor();
+              this.anchor = anchor;
+            })
+            .catch(() => {})
+            .finally(() => {
+              this.pendingAnchor = null;
+            });
+        },
+
+        updateFromFrame(frame, referenceSpace) {
+          if (!this.anchor || !frame || !referenceSpace) {
+            return;
+          }
+
+          const pose = frame.getPose(this.anchor.anchorSpace, referenceSpace);
+          if (!pose) {
+            return;
+          }
+
+          this.el.object3D.position.set(
+            pose.transform.position.x,
+            pose.transform.position.y,
+            pose.transform.position.z
+          );
+          this.el.object3D.quaternion.set(
+            pose.transform.orientation.x,
+            pose.transform.orientation.y,
+            pose.transform.orientation.z,
+            pose.transform.orientation.w
+          );
+        },
+
+        clearAnchor() {
+          if (this.anchor && this.anchor.delete) {
+            try {
+              this.anchor.delete();
+            } catch (error) {
+            }
+          }
+
+          this.anchor = null;
+        },
+
+        remove() {
+          this.clearAnchor();
+        }
+      });
+
       AFRAME.registerComponent("support-wand", {
         schema: {
           hand: { default: "right" },
+          sourceHand: { type: "selector" },
           cheerColor: { type: "color", default: APP_CONFIG.cheerColor },
           flashColor: { type: "color", default: APP_CONFIG.flashColor }
         },
 
         init() {
           const isLeft = this.data.hand === "left";
+          this.sourceHandEl = this.data.sourceHand || this.el.parentEl;
 
-          this.el.object3D.position.set(isLeft ? -0.03 : 0.03, -0.035, -0.06);
+          this.el.object3D.position.set(isLeft ? -0.035 : 0.035, -0.02, -0.045);
           this.el.object3D.rotation.set(
-            THREE.MathUtils.degToRad(74),
+            THREE.MathUtils.degToRad(84),
             0,
-            THREE.MathUtils.degToRad(isLeft ? -18 : 18)
+            THREE.MathUtils.degToRad(isLeft ? -20 : 20)
           );
 
           this.bodyEl = this.el.querySelector(".wand-body");
@@ -602,9 +736,10 @@
 
         tick(time, delta) {
           const inAR = this.el.sceneEl.is("ar-mode");
-          this.el.object3D.visible = inAR;
+          const handMesh = this.sourceHandEl && this.sourceHandEl.getObject3D("mesh");
+          this.el.object3D.visible = inAR && !!handMesh;
 
-          if (!inAR) {
+          if (!inAR || !handMesh) {
             this.ready = false;
             this.speed = 0;
             this.rhythmTarget = 0;
@@ -680,14 +815,48 @@
           this.videoEl = document.getElementById("teaserVideo");
           this.active = false;
           this.cameraPosition = new THREE.Vector3();
+          this.surfaceNormal = new THREE.Vector3(0, 0, 1);
           this.offset = new THREE.Vector3();
           this.lift = new THREE.Vector3(0, 0.14, 0);
+          this.anchorPosition = new THREE.Vector3();
+          this.anchorQuaternion = new THREE.Quaternion();
+
+          this.attachListener = this.attachListener.bind(this);
 
           this.onEnded = () => {
             this.active = false;
           };
 
+          const sceneEl = this.el.sceneEl;
+          const listener = sceneEl.audioListener || new THREE.AudioListener();
+          sceneEl.audioListener = listener;
+
+          if (sceneEl.camera && listener.parent !== sceneEl.camera) {
+            sceneEl.camera.add(listener);
+          } else {
+            sceneEl.addEventListener("camera-set-active", this.attachListener);
+          }
+
+          this.sound = new THREE.PositionalAudio(listener);
+          this.sound.setRefDistance(0.55);
+          this.sound.setRolloffFactor(1.35);
+          this.sound.setMaxDistance(5.5);
+          this.sound.setDistanceModel("exponential");
+          this.sound.setVolume(1);
+          this.sound.setMediaElementSource(this.videoEl);
+          this.el.object3D.add(this.sound);
+
           this.videoEl.addEventListener("ended", this.onEnded);
+        },
+
+        attachListener(event) {
+          const camera = event && event.detail
+            ? event.detail.cameraEl.getObject3D("camera")
+            : this.el.sceneEl.camera;
+
+          if (camera && this.el.sceneEl.audioListener.parent !== camera) {
+            camera.add(this.el.sceneEl.audioListener);
+          }
         },
 
         getCameraPosition(target) {
@@ -701,26 +870,46 @@
           return target;
         },
 
-        showAt(targetPosition) {
+        showAt(targetPosition, targetQuaternion, frame, referenceSpace) {
           this.getCameraPosition(this.cameraPosition);
 
-          this.offset.subVectors(this.cameraPosition, targetPosition);
-          this.offset.y = 0;
-          if (this.offset.lengthSq() < 0.0001) {
-            this.offset.set(0, 0, 1);
+          if (targetQuaternion) {
+            this.surfaceNormal.set(0, 0, 1).applyQuaternion(targetQuaternion);
+          } else {
+            this.surfaceNormal.subVectors(this.cameraPosition, targetPosition);
           }
 
-          this.offset.normalize().multiplyScalar(0.24);
-          this.el.object3D.position.copy(targetPosition).add(this.offset).add(this.lift);
+          if (this.surfaceNormal.lengthSq() < 0.0001) {
+            this.surfaceNormal.set(0, 0, 1);
+          }
+
+          this.offset.subVectors(this.cameraPosition, targetPosition);
+          if (this.surfaceNormal.dot(this.offset) < 0) {
+            this.surfaceNormal.multiplyScalar(-1);
+          }
+
+          this.surfaceNormal.normalize();
+          this.anchorPosition.copy(targetPosition).addScaledVector(this.surfaceNormal, 0.26).add(this.lift);
+          this.el.object3D.position.copy(this.anchorPosition);
           this.el.object3D.lookAt(
             this.cameraPosition.x,
             this.el.object3D.position.y + 0.02,
             this.cameraPosition.z
           );
+          this.anchorQuaternion.copy(this.el.object3D.quaternion);
           this.el.object3D.visible = true;
           this.active = true;
 
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.applyPlacement(this.anchorPosition, this.anchorQuaternion);
+            anchorHost.requestAnchor(frame, referenceSpace);
+          }
+
           this.videoEl.currentTime = 0;
+          if (this.sound.context && this.sound.context.resume) {
+            this.sound.context.resume().catch(() => {});
+          }
           const playPromise = this.videoEl.play();
           if (playPromise && playPromise.catch) {
             playPromise.catch(() => {});
@@ -732,9 +921,15 @@
           this.videoEl.currentTime = 0;
           this.active = false;
           this.el.object3D.visible = false;
+
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.clearAnchor();
+          }
         },
 
         remove() {
+          this.el.sceneEl.removeEventListener("camera-set-active", this.attachListener);
           this.videoEl.removeEventListener("ended", this.onEnded);
         }
       });
@@ -829,7 +1024,7 @@
           return !!(this.mediaEl && !this.mediaEl.paused && !this.mediaEl.ended);
         },
 
-        playTarget(target, position) {
+        playTarget(target, position, frame, referenceSpace) {
           if (!target) {
             return;
           }
@@ -838,6 +1033,12 @@
           this.pendingPosition.copy(position).add(new THREE.Vector3(0, 0.08, 0));
           this.el.object3D.position.copy(this.pendingPosition);
           this.el.object3D.visible = true;
+
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.applyPlacement(this.pendingPosition, this.el.object3D.quaternion);
+            anchorHost.requestAnchor(frame, referenceSpace);
+          }
 
           if (this.labelEl) {
             this.labelEl.setAttribute("value", `${target.member} voice`);
@@ -868,6 +1069,11 @@
           this.pulse = 0;
           this.updateWands(0);
           this.el.object3D.visible = false;
+
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.clearAnchor();
+          }
         },
 
         stop() {
@@ -880,6 +1086,11 @@
           this.pulse = 0;
           this.updateWands(0);
           this.el.object3D.visible = false;
+
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.clearAnchor();
+          }
         },
 
         tick(time, delta) {
@@ -947,6 +1158,8 @@
           this.cameraPosition = new THREE.Vector3();
           this.cameraDirection = new THREE.Vector3();
           this.targetPosition = new THREE.Vector3();
+          this.targetQuaternion = new THREE.Quaternion();
+          this.targetTrackingState = {};
 
           this.startExperience = this.startExperience.bind(this);
           this.simulateAlbum = this.simulateAlbum.bind(this);
@@ -1098,24 +1311,24 @@
           };
         },
 
-        showAlbumAt(position) {
+        showAlbumAt(position, quaternion, frame, referenceSpace) {
           const albumWindow = this.videoWindowEl.components["album-window"];
           if (!albumWindow) {
             return;
           }
 
-          albumWindow.showAt(position);
+          albumWindow.showAt(position, quaternion, frame, referenceSpace);
           this.lastAlbumTrigger = performance.now();
           this.setStatus("已识别专辑封面，teaser 视频窗口已固定在真实空间中，你可以绕着窗口自由移动观看。");
         },
 
-        playPhotocardAt(position, target) {
+        playPhotocardAt(position, target, frame, referenceSpace) {
           const voiceAnchor = this.voiceAnchorEl.components["spatial-voice"];
           if (!voiceAnchor || !target) {
             return;
           }
 
-          voiceAnchor.playTarget(target, position);
+          voiceAnchor.playTarget(target, position, frame, referenceSpace);
           this.lastPhotocardTrigger = performance.now();
           this.setStatus(`已识别 ${target.label}，正在从卡片位置播放 ${target.audioSrc.split("/").pop()}，并驱动应援棒随节奏闪烁。`);
         },
@@ -1126,7 +1339,7 @@
             .copy(pose.position)
             .add(pose.direction.clone().multiplyScalar(1.15))
             .add(new THREE.Vector3(0, -0.08, 0));
-          this.showAlbumAt(this.targetPosition);
+          this.showAlbumAt(this.targetPosition, null, null, null);
         },
 
         simulatePhotocard() {
@@ -1142,12 +1355,13 @@
             .copy(pose.position)
             .add(pose.direction.clone().multiplyScalar(0.95))
             .add(new THREE.Vector3(0, -0.22, 0));
-          this.playPhotocardAt(this.targetPosition, target);
+          this.playPhotocardAt(this.targetPosition, target, null, null);
         },
 
         resetAnchors() {
           const albumWindow = this.videoWindowEl.components["album-window"];
           const voiceAnchor = this.voiceAnchorEl.components["spatial-voice"];
+          this.targetTrackingState = {};
 
           if (albumWindow) {
             albumWindow.reset();
@@ -1171,6 +1385,7 @@
           document.body.classList.remove("is-xr");
           this.previewEnvironmentEl.object3D.visible = true;
           this.imageTrackingEnabled = false;
+          this.targetTrackingState = {};
         },
 
         tick() {
@@ -1188,6 +1403,17 @@
 
           if (!frame || !referenceSpace) {
             return;
+          }
+
+          const albumAnchorHost = this.videoWindowEl.components["world-anchor"];
+          const voiceAnchorHost = this.voiceAnchorEl.components["world-anchor"];
+
+          if (albumAnchorHost) {
+            albumAnchorHost.updateFromFrame(frame, referenceSpace);
+          }
+
+          if (voiceAnchorHost) {
+            voiceAnchorHost.updateFromFrame(frame, referenceSpace);
           }
 
           if (typeof frame.getImageTrackingResults !== "function") {
@@ -1223,23 +1449,45 @@
               pose.transform.position.y,
               pose.transform.position.z
             );
+            this.targetQuaternion.set(
+              pose.transform.orientation.x,
+              pose.transform.orientation.y,
+              pose.transform.orientation.z,
+              pose.transform.orientation.w
+            );
 
             const tracked = result.trackingState === "tracked" || result.trackingState === "emulated";
             if (!tracked) {
               continue;
             }
 
+            const trackingState = this.targetTrackingState[target.key] || {
+              firstSeenAt: now,
+              lastSeenAt: now
+            };
+
+            if (now - trackingState.lastSeenAt > 240) {
+              trackingState.firstSeenAt = now;
+            }
+
+            trackingState.lastSeenAt = now;
+            this.targetTrackingState[target.key] = trackingState;
+
+            if (now - trackingState.firstSeenAt < 180) {
+              continue;
+            }
+
             if (target.kind === "album") {
               const busy = albumWindow && albumWindow.active;
               if (!busy && now - this.lastAlbumTrigger > 2600) {
-                this.showAlbumAt(this.targetPosition);
+                this.showAlbumAt(this.targetPosition, this.targetQuaternion, frame, referenceSpace);
               }
             }
 
             if (target.kind === "photocard") {
               const busy = voiceAnchor && voiceAnchor.isPlaying();
               if (!busy && now - this.lastPhotocardTrigger > 1600) {
-                this.playPhotocardAt(this.targetPosition, target);
+                this.playPhotocardAt(this.targetPosition, target, frame, referenceSpace);
               }
             }
           }
