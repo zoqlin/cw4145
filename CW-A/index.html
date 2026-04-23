@@ -292,27 +292,64 @@
       <a-entity class="wand" support-wand="hand: left; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #leftHand">
         <a-cylinder
           class="wand-body"
-          radius="0.014"
-          height="0.26"
-          position="0 0.13 0"
-          material="color: #fbfce9; roughness: 0.22; metalness: 0.45; emissive: #e1e668; emissiveIntensity: 1.2"
+          radius="0.019"
+          height="0.34"
+          position="0 -0.07 0"
+          material="color: #fafbf8; roughness: 0.3; metalness: 0.18; emissive: #d6df8e; emissiveIntensity: 0.42"
         ></a-cylinder>
-        <a-sphere
+        <a-cylinder
+          radius="0.021"
+          height="0.034"
+          position="0 0.11 0"
+          material="color: #ffffff; roughness: 0.14; metalness: 0.26"
+        ></a-cylinder>
+        <a-box
           class="wand-core"
-          radius="0.042"
-          position="0 0.29 0"
-          material="color: #eef2a1; roughness: 0.14; metalness: 0.1; emissive: #e1e668; emissiveIntensity: 2.2"
-        ></a-sphere>
-        <a-sphere
+          width="0.06"
+          height="0.09"
+          depth="0.034"
+          position="0 0.165 0"
+          material="color: #d8e46f; roughness: 0.16; metalness: 0.1; emissive: #d8e46f; emissiveIntensity: 2.8"
+        ></a-box>
+        <a-box
+          class="wand-arm"
+          width="0.055"
+          height="0.18"
+          depth="0.03"
+          position="-0.05 0.25 0"
+          rotation="0 0 28"
+          material="color: #deeb76; roughness: 0.16; metalness: 0.1; emissive: #dce874; emissiveIntensity: 3.1"
+        ></a-box>
+        <a-box
+          class="wand-arm"
+          width="0.055"
+          height="0.18"
+          depth="0.03"
+          position="0.05 0.25 0"
+          rotation="0 0 -28"
+          material="color: #deeb76; roughness: 0.16; metalness: 0.1; emissive: #dce874; emissiveIntensity: 3.1"
+        ></a-box>
+        <a-plane
           class="wand-halo"
-          radius="0.08"
-          position="0 0.29 0"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
-        ></a-sphere>
+          width="0.11"
+          height="0.17"
+          position="-0.05 0.25 -0.019"
+          rotation="0 0 28"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.13; side: double"
+        ></a-plane>
+        <a-plane
+          class="wand-halo"
+          width="0.11"
+          height="0.17"
+          position="0.05 0.25 -0.019"
+          rotation="0 0 -28"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.13; side: double"
+        ></a-plane>
+        <a-entity class="wand-tip" position="0 0.33 0"></a-entity>
         <a-entity
           class="wand-light"
-          position="0 0.29 0"
-          light="type: point; color: #e1e668; intensity: 1.2; distance: 0.9; decay: 1.6"
+          position="0 0.26 0"
+          light="type: point; color: #e1e668; intensity: 1.4; distance: 1.05; decay: 1.6"
         ></a-entity>
       </a-entity>
     </a-entity>
@@ -326,27 +363,64 @@
       <a-entity class="wand" support-wand="hand: right; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #rightHand">
         <a-cylinder
           class="wand-body"
-          radius="0.014"
-          height="0.26"
-          position="0 0.13 0"
-          material="color: #fbfce9; roughness: 0.22; metalness: 0.45; emissive: #e1e668; emissiveIntensity: 1.2"
+          radius="0.019"
+          height="0.34"
+          position="0 -0.07 0"
+          material="color: #fafbf8; roughness: 0.3; metalness: 0.18; emissive: #d6df8e; emissiveIntensity: 0.42"
         ></a-cylinder>
-        <a-sphere
+        <a-cylinder
+          radius="0.021"
+          height="0.034"
+          position="0 0.11 0"
+          material="color: #ffffff; roughness: 0.14; metalness: 0.26"
+        ></a-cylinder>
+        <a-box
           class="wand-core"
-          radius="0.042"
-          position="0 0.29 0"
-          material="color: #eef2a1; roughness: 0.14; metalness: 0.1; emissive: #e1e668; emissiveIntensity: 2.2"
-        ></a-sphere>
-        <a-sphere
+          width="0.06"
+          height="0.09"
+          depth="0.034"
+          position="0 0.165 0"
+          material="color: #d8e46f; roughness: 0.16; metalness: 0.1; emissive: #d8e46f; emissiveIntensity: 2.8"
+        ></a-box>
+        <a-box
+          class="wand-arm"
+          width="0.055"
+          height="0.18"
+          depth="0.03"
+          position="-0.05 0.25 0"
+          rotation="0 0 28"
+          material="color: #deeb76; roughness: 0.16; metalness: 0.1; emissive: #dce874; emissiveIntensity: 3.1"
+        ></a-box>
+        <a-box
+          class="wand-arm"
+          width="0.055"
+          height="0.18"
+          depth="0.03"
+          position="0.05 0.25 0"
+          rotation="0 0 -28"
+          material="color: #deeb76; roughness: 0.16; metalness: 0.1; emissive: #dce874; emissiveIntensity: 3.1"
+        ></a-box>
+        <a-plane
           class="wand-halo"
-          radius="0.08"
-          position="0 0.29 0"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
-        ></a-sphere>
+          width="0.11"
+          height="0.17"
+          position="-0.05 0.25 -0.019"
+          rotation="0 0 28"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.13; side: double"
+        ></a-plane>
+        <a-plane
+          class="wand-halo"
+          width="0.11"
+          height="0.17"
+          position="0.05 0.25 -0.019"
+          rotation="0 0 -28"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.13; side: double"
+        ></a-plane>
+        <a-entity class="wand-tip" position="0 0.33 0"></a-entity>
         <a-entity
           class="wand-light"
-          position="0 0.29 0"
-          light="type: point; color: #e1e668; intensity: 1.2; distance: 0.9; decay: 1.6"
+          position="0 0.26 0"
+          light="type: point; color: #e1e668; intensity: 1.4; distance: 1.05; decay: 1.6"
         ></a-entity>
       </a-entity>
     </a-entity>
@@ -420,7 +494,7 @@
           key: "album",
           kind: "album",
           label: "专辑封面",
-          widthInMeters: 0.15,
+          widthInMeters: 0.19,
           assetId: "albumTargetImage"
         },
         photocards: [
@@ -429,7 +503,7 @@
             kind: "photocard",
             label: "KUN 小卡",
             member: "KUN",
-            widthInMeters: 0.055,
+            widthInMeters: 0.054,
             assetId: "kunTargetImage",
             audioSrc: "assets/voice-kun.mp3"
           },
@@ -438,7 +512,7 @@
             kind: "photocard",
             label: "TEN 小卡",
             member: "TEN",
-            widthInMeters: 0.055,
+            widthInMeters: 0.054,
             assetId: "tenTargetImage",
             audioSrc: "assets/voice-ten.mp3"
           },
@@ -447,7 +521,7 @@
             kind: "photocard",
             label: "XJ 小卡",
             member: "XJ",
-            widthInMeters: 0.055,
+            widthInMeters: 0.054,
             assetId: "xjTargetImage",
             audioSrc: "assets/xj.mp3"
           },
@@ -456,7 +530,7 @@
             kind: "photocard",
             label: "YANGYANG 小卡",
             member: "YANGYANG",
-            widthInMeters: 0.055,
+            widthInMeters: 0.054,
             assetId: "yangyangTargetImage",
             audioSrc: "assets/yang.mp4"
           }
@@ -711,22 +785,25 @@
           const isLeft = this.data.hand === "left";
           this.sourceHandEl = this.data.sourceHand || this.el.parentEl;
 
-          this.el.object3D.position.set(isLeft ? -0.055 : 0.055, -0.045, 0.015);
+          this.el.object3D.position.set(isLeft ? -0.03 : 0.03, -0.005, 0.005);
           this.el.object3D.rotation.set(
-            THREE.MathUtils.degToRad(76),
+            THREE.MathUtils.degToRad(12),
             0,
-            THREE.MathUtils.degToRad(isLeft ? -12 : 12)
+            THREE.MathUtils.degToRad(isLeft ? -8 : 8)
           );
-          this.el.object3D.scale.setScalar(1.12);
+          this.el.object3D.scale.setScalar(1.04);
 
           this.bodyEl = this.el.querySelector(".wand-body");
           this.coreEl = this.el.querySelector(".wand-core");
-          this.haloEl = this.el.querySelector(".wand-halo");
+          this.tipEl = this.el.querySelector(".wand-tip");
           this.lightEl = this.el.querySelector(".wand-light");
+          this.armEls = Array.from(this.el.querySelectorAll(".wand-arm"));
+          this.haloEls = Array.from(this.el.querySelectorAll(".wand-halo"));
 
           this.bodyMesh = null;
           this.coreMesh = null;
-          this.haloMesh = null;
+          this.armMeshes = [];
+          this.haloMeshes = [];
 
           this.baseColor = new THREE.Color(this.data.cheerColor);
           this.flashColor = new THREE.Color(this.data.flashColor);
@@ -757,8 +834,16 @@
             this.coreMesh = this.coreEl.getObject3D("mesh");
           }
 
-          if (!this.haloMesh && this.haloEl) {
-            this.haloMesh = this.haloEl.getObject3D("mesh");
+          if (!this.armMeshes.length && this.armEls.length) {
+            this.armMeshes = this.armEls
+              .map((el) => el.getObject3D("mesh"))
+              .filter(Boolean);
+          }
+
+          if (!this.haloMeshes.length && this.haloEls.length) {
+            this.haloMeshes = this.haloEls
+              .map((el) => el.getObject3D("mesh"))
+              .filter(Boolean);
           }
         },
 
@@ -775,11 +860,11 @@
           }
 
           this.updateMeshes();
-          if (!delta || !this.coreEl) {
+          if (!delta || !this.tipEl) {
             return;
           }
 
-          this.coreEl.object3D.getWorldPosition(this.tipWorld);
+          this.tipEl.object3D.getWorldPosition(this.tipWorld);
 
           if (!this.ready) {
             this.lastTipWorld.copy(this.tipWorld);
@@ -804,28 +889,44 @@
           this.coreTint.copy(this.mixColor).lerp(new THREE.Color("#ffffff"), 0.18);
 
           if (this.bodyMesh && this.bodyMesh.material.emissive) {
-            this.bodyMesh.material.color.set("#fff7fb");
+            this.bodyMesh.material.color.set("#fbfcfb");
             this.bodyMesh.material.emissive.copy(this.mixColor);
-            this.bodyMesh.material.emissiveIntensity = 0.9 + motion01 * 2.2 + this.rhythmValue * 2.4;
+            this.bodyMesh.material.emissiveIntensity = 0.22 + motion01 * 0.7 + this.rhythmValue * 0.9;
           }
 
           if (this.coreMesh && this.coreMesh.material.emissive) {
             this.coreMesh.material.color.copy(this.coreTint);
             this.coreMesh.material.emissive.copy(this.mixColor);
-            this.coreMesh.material.emissiveIntensity = 1.8 + motion01 * 4.6 + this.rhythmValue * 5.4;
+            this.coreMesh.material.emissiveIntensity = 2.2 + motion01 * 3.6 + this.rhythmValue * 4.8;
           }
 
-          if (this.haloMesh) {
-            this.haloMesh.material.color.copy(this.mixColor);
-            this.haloMesh.material.opacity = 0.08 + combined * 0.26;
-            this.haloEl.object3D.scale.setScalar(1 + combined * 1.4 + Math.sin(time * 0.018) * 0.08);
+          for (const armMesh of this.armMeshes) {
+            if (!armMesh.material.emissive) {
+              continue;
+            }
+
+            armMesh.material.color.copy(this.coreTint);
+            armMesh.material.emissive.copy(this.mixColor);
+            armMesh.material.emissiveIntensity = 2.6 + motion01 * 4.4 + this.rhythmValue * 5.2;
+          }
+
+          for (let i = 0; i < this.haloMeshes.length; i += 1) {
+            const haloMesh = this.haloMeshes[i];
+            const haloEl = this.haloEls[i];
+            if (!haloMesh || !haloEl) {
+              continue;
+            }
+
+            haloMesh.material.color.copy(this.mixColor);
+            haloMesh.material.opacity = 0.07 + combined * 0.24;
+            haloEl.object3D.scale.setScalar(1 + combined * 0.65 + Math.sin(time * 0.018) * 0.06);
           }
 
           const light = this.lightEl ? this.lightEl.getObject3D("light") : null;
           if (light) {
             light.color.copy(this.mixColor);
-            light.intensity = 0.6 + combined * 4.2;
-            light.distance = 0.7 + motion01 * 1.1;
+            light.intensity = 0.85 + combined * 4.5;
+            light.distance = 0.95 + motion01 * 1.2;
           }
 
           this.trailAccumulator += delta;
