@@ -207,7 +207,7 @@
         <div>请在 Quest 3 的 Meta Browser 中通过 <code>https://</code> 或 <code>localhost</code> 打开本页。</div>
         <div>应援棒会跟随手部追踪移动，快速挥动时会留下短暂停留在真实空间中的粒子光轨。</div>
         <div>如果当前浏览器暂不支持图片追踪，也可以先用上面的模拟按钮检查视频窗口、空间音频和闪烁逻辑。</div>
-        <div>If image tracking does not work on Quest Browser, pinch with your left hand to open the teaser window and pinch with your right hand to play a photocard voice clip.</div>
+        <div>Current test mode focuses on image recognition only. If recognition still fails in Quest Browser, retry the session before enabling gesture fallback again.</div>
       </div>
 
       <div class="cards">
@@ -288,7 +288,6 @@
       id="leftHand"
       hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffffff; modelOpacity: 0.01"
       tracked-hand="hideMesh: true"
-      gesture-shortcuts="hand: left"
     >
       <a-entity class="wand" support-wand="hand: left; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #leftHand">
         <a-cylinder
@@ -359,7 +358,6 @@
       id="rightHand"
       hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #ffffff; modelOpacity: 0.01"
       tracked-hand="hideMesh: true"
-      gesture-shortcuts="hand: right"
     >
       <a-entity class="wand" support-wand="hand: right; cheerColor: #e1e668; flashColor: #ffffff; sourceHand: #rightHand">
         <a-cylinder
@@ -428,36 +426,37 @@
 
     <a-entity id="videoWindow" world-anchor album-window visible="false">
       <a-plane
-        width="1.06"
-        height="0.68"
+        width="2.2"
+        height="1.38"
         position="0 0 -0.01"
         material="shader: flat; color: #e1e668; transparent: true; opacity: 0.14; side: double"
       ></a-plane>
       <a-plane
-        width="0.98"
-        height="0.6"
+        width="2.04"
+        height="1.2"
         material="shader: flat; color: #16091f; transparent: true; opacity: 0.92; side: double"
       ></a-plane>
-      <a-plane
+      <a-video
         class="video-screen"
-        width="0.9"
-        height="0.506"
-        position="0 0.02 0.01"
-        material="shader: flat; src: #teaserVideo; side: double"
-      ></a-plane>
+        width="1.92"
+        height="1.08"
+        position="0 0.08 0.02"
+        src="#teaserVideo"
+        material="shader: flat; side: double"
+      ></a-video>
       <a-text
-        value="Album teaser locked in space"
+        value="Album teaser"
         align="center"
-        width="2"
+        width="3.3"
         color="#ffd6eb"
-        position="0 -0.33 0.02"
+        position="0 -0.54 0.02"
       ></a-text>
       <a-text
-        value="Walk around to watch the floating MV window."
+        value="Watch the video in front of you while waving the light stick."
         align="center"
-        width="1.9"
+        width="3.1"
         color="#ffffff"
-        position="0 -0.4 0.02"
+        position="0 -0.65 0.02"
       ></a-text>
     </a-entity>
 
@@ -479,6 +478,44 @@
         width="1.3"
         color="#ffd6eb"
         position="0 0.12 0"
+      ></a-text>
+    </a-entity>
+
+    <a-entity id="photocardWindow" world-anchor photocard-window visible="false">
+      <a-plane
+        width="0.68"
+        height="1.02"
+        position="0 0 -0.01"
+        material="shader: flat; color: #e1e668; transparent: true; opacity: 0.12; side: double"
+      ></a-plane>
+      <a-plane
+        width="0.6"
+        height="0.92"
+        material="shader: flat; color: #16091f; transparent: true; opacity: 0.9; side: double"
+      ></a-plane>
+      <a-image
+        class="photo-art"
+        width="0.5"
+        height="0.8"
+        position="0 0.05 0.02"
+        src="#kunTargetImage"
+        material="side: double"
+      ></a-image>
+      <a-text
+        class="photo-title"
+        value="Photocard voice"
+        align="center"
+        width="1.5"
+        color="#ffd6eb"
+        position="0 -0.42 0.02"
+      ></a-text>
+      <a-text
+        class="photo-subtitle"
+        value="Voice matched to the current photocard"
+        align="center"
+        width="1.42"
+        color="#ffffff"
+        position="0 -0.5 0.02"
       ></a-text>
     </a-entity>
 
@@ -949,11 +986,11 @@
       AFRAME.registerComponent("album-window", {
         init() {
           this.videoEl = document.getElementById("teaserVideo");
+          this.videoScreenEl = this.el.querySelector(".video-screen");
           this.active = false;
           this.cameraPosition = new THREE.Vector3();
-          this.surfaceNormal = new THREE.Vector3(0, 0, 1);
-          this.offset = new THREE.Vector3();
-          this.lift = new THREE.Vector3(0, 0.14, 0);
+          this.cameraDirection = new THREE.Vector3();
+          this.anchorOffset = new THREE.Vector3(0, 0.08, 0);
           this.anchorPosition = new THREE.Vector3();
           this.anchorQuaternion = new THREE.Quaternion();
 
@@ -1006,35 +1043,38 @@
           return target;
         },
 
+        getCameraDirection(target) {
+          const cameraEl = document.getElementById("userCamera");
+          if (cameraEl) {
+            cameraEl.object3D.getWorldDirection(target);
+            return target;
+          }
+
+          target.set(0, 0, -1);
+          return target;
+        },
+
         showAt(targetPosition, targetQuaternion, frame, referenceSpace) {
           this.getCameraPosition(this.cameraPosition);
-
-          if (targetQuaternion) {
-            this.surfaceNormal.set(0, 0, 1).applyQuaternion(targetQuaternion);
-          } else {
-            this.surfaceNormal.subVectors(this.cameraPosition, targetPosition);
-          }
-
-          if (this.surfaceNormal.lengthSq() < 0.0001) {
-            this.surfaceNormal.set(0, 0, 1);
-          }
-
-          this.offset.subVectors(this.cameraPosition, targetPosition);
-          if (this.surfaceNormal.dot(this.offset) < 0) {
-            this.surfaceNormal.multiplyScalar(-1);
-          }
-
-          this.surfaceNormal.normalize();
-          this.anchorPosition.copy(targetPosition).addScaledVector(this.surfaceNormal, 0.26).add(this.lift);
+          this.getCameraDirection(this.cameraDirection);
+          this.anchorPosition
+            .copy(this.cameraPosition)
+            .add(this.cameraDirection.multiplyScalar(1.95))
+            .add(this.anchorOffset);
           this.el.object3D.position.copy(this.anchorPosition);
           this.el.object3D.lookAt(
             this.cameraPosition.x,
-            this.el.object3D.position.y + 0.02,
+            this.cameraPosition.y,
             this.cameraPosition.z
           );
+          this.el.object3D.rotateY(Math.PI);
           this.anchorQuaternion.copy(this.el.object3D.quaternion);
           this.el.object3D.visible = true;
           this.active = true;
+
+          if (this.videoScreenEl) {
+            this.videoScreenEl.setAttribute("src", "#teaserVideo");
+          }
 
           const anchorHost = this.el.components["world-anchor"];
           if (anchorHost) {
@@ -1043,6 +1083,12 @@
           }
 
           this.videoEl.currentTime = 0;
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience && experience.activePhotocardKey) {
+            experience.duckVideoAudio();
+          } else {
+            this.videoEl.volume = 1;
+          }
           if (this.sound.context && this.sound.context.resume) {
             this.sound.context.resume().catch(() => {});
           }
@@ -1055,6 +1101,7 @@
         reset() {
           this.videoEl.pause();
           this.videoEl.currentTime = 0;
+          this.videoEl.volume = 1;
           this.active = false;
           this.el.object3D.visible = false;
 
@@ -1165,6 +1212,8 @@
             return;
           }
 
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+
           this.currentTarget = target;
           this.pendingPosition.copy(position).add(new THREE.Vector3(0, 0.08, 0));
           this.el.object3D.position.copy(this.pendingPosition);
@@ -1188,6 +1237,11 @@
             this.mediaEl.load();
           }
 
+          if (experience) {
+            experience.activePhotocardKey = target.key;
+            experience.duckVideoAudio();
+          }
+
           if (this.sound.context && this.sound.context.resume) {
             this.sound.context.resume().catch(() => {});
           }
@@ -1201,10 +1255,16 @@
         },
 
         onEnded() {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
           this.currentTarget = null;
           this.pulse = 0;
           this.updateWands(0);
           this.el.object3D.visible = false;
+
+          if (experience) {
+            experience.activePhotocardKey = null;
+            experience.restoreVideoAudio();
+          }
 
           const anchorHost = this.el.components["world-anchor"];
           if (anchorHost) {
@@ -1213,6 +1273,7 @@
         },
 
         stop() {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
           if (this.mediaEl) {
             this.mediaEl.pause();
             this.mediaEl.currentTime = 0;
@@ -1222,6 +1283,11 @@
           this.pulse = 0;
           this.updateWands(0);
           this.el.object3D.visible = false;
+
+          if (experience) {
+            experience.activePhotocardKey = null;
+            experience.restoreVideoAudio();
+          }
 
           const anchorHost = this.el.components["world-anchor"];
           if (anchorHost) {
@@ -1269,6 +1335,78 @@
         }
       });
 
+      AFRAME.registerComponent("photocard-window", {
+        init() {
+          this.cameraPosition = new THREE.Vector3();
+          this.cameraDirection = new THREE.Vector3();
+          this.anchorPosition = new THREE.Vector3();
+          this.anchorQuaternion = new THREE.Quaternion();
+          this.imageEl = this.el.querySelector(".photo-art");
+          this.titleEl = this.el.querySelector(".photo-title");
+          this.subtitleEl = this.el.querySelector(".photo-subtitle");
+        },
+
+        getCameraTransform(positionTarget, directionTarget) {
+          const cameraEl = document.getElementById("userCamera");
+          if (cameraEl) {
+            cameraEl.object3D.getWorldPosition(positionTarget);
+            cameraEl.object3D.getWorldDirection(directionTarget);
+            return;
+          }
+
+          positionTarget.set(0, 1.6, 0);
+          directionTarget.set(0, 0, -1);
+        },
+
+        showTarget(target, frame, referenceSpace) {
+          if (!target) {
+            return;
+          }
+
+          this.getCameraTransform(this.cameraPosition, this.cameraDirection);
+          this.anchorPosition
+            .copy(this.cameraPosition)
+            .add(this.cameraDirection.multiplyScalar(1.18))
+            .add(new THREE.Vector3(0.42, -0.08, 0));
+
+          this.el.object3D.position.copy(this.anchorPosition);
+          this.el.object3D.lookAt(
+            this.cameraPosition.x,
+            this.cameraPosition.y - 0.02,
+            this.cameraPosition.z
+          );
+          this.el.object3D.rotateY(Math.PI);
+          this.anchorQuaternion.copy(this.el.object3D.quaternion);
+          this.el.object3D.visible = true;
+
+          if (this.imageEl) {
+            this.imageEl.setAttribute("src", `#${target.assetId}`);
+          }
+
+          if (this.titleEl) {
+            this.titleEl.setAttribute("value", `${target.member} photocard`);
+          }
+
+          if (this.subtitleEl) {
+            this.subtitleEl.setAttribute("value", `${target.audioSrc.split("/").pop()} is now playing`);
+          }
+
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.applyPlacement(this.anchorPosition, this.anchorQuaternion);
+            anchorHost.requestAnchor(frame, referenceSpace);
+          }
+        },
+
+        reset() {
+          this.el.object3D.visible = false;
+          const anchorHost = this.el.components["world-anchor"];
+          if (anchorHost) {
+            anchorHost.clearAnchor();
+          }
+        }
+      });
+
       AFRAME.registerComponent("mr-idol-experience", {
         init() {
           this.statusEl = document.getElementById("status");
@@ -1279,6 +1417,7 @@
           this.resetButton = document.getElementById("resetButton");
           this.videoWindowEl = document.getElementById("videoWindow");
           this.voiceAnchorEl = document.getElementById("voiceAnchor");
+          this.photocardWindowEl = document.getElementById("photocardWindow");
           this.videoEl = document.getElementById("teaserVideo");
 
           this.targets = APP_CONFIG.targets;
@@ -1298,6 +1437,9 @@
           this.targetPosition = new THREE.Vector3();
           this.targetQuaternion = new THREE.Quaternion();
           this.targetTrackingState = {};
+          this.videoBaseVolume = 1;
+          this.videoDuckedVolume = 0.2;
+          this.activePhotocardKey = null;
 
           this.startExperience = this.startExperience.bind(this);
           this.simulateAlbum = this.simulateAlbum.bind(this);
@@ -1305,7 +1447,6 @@
           this.resetAnchors = this.resetAnchors.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
           this.onExitXR = this.onExitXR.bind(this);
-          this.handleGestureShortcut = this.handleGestureShortcut.bind(this);
 
           this.startButton.addEventListener("click", this.startExperience);
           this.albumDemoButton.addEventListener("click", this.simulateAlbum);
@@ -1317,6 +1458,18 @@
 
         setStatus(text) {
           this.statusEl.textContent = text;
+        },
+
+        setVideoVolume(volume) {
+          this.videoEl.volume = THREE.MathUtils.clamp(volume, 0, 1);
+        },
+
+        duckVideoAudio() {
+          this.setVideoVolume(this.videoDuckedVolume);
+        },
+
+        restoreVideoAudio() {
+          this.setVideoVolume(this.videoBaseVolume);
         },
 
         async primeVideo() {
@@ -1426,11 +1579,11 @@
               console.warn("Image tracking session request failed.", primaryError);
               this.imageTrackingEnabled = false;
               this.imageTrackingFeatureAvailable = false;
-              this.setStatus("No image-tracking results in this Quest Browser session. Use left-hand pinch for the album teaser and right-hand pinch for photocard voice playback.");
+              this.setStatus("No image-tracking results were returned in this Quest Browser session. Image recognition is currently unavailable.");
             }
 
             this.configureWebXR(false, null);
-            this.setStatus("Image tracking fallback mode: left-hand pinch opens the album teaser, right-hand pinch plays a photocard voice clip.");
+            this.setStatus("Image tracking could not be enabled in this session. Please retry in Quest Browser and test image recognition again.");
 
             try {
               this.setStatus("当前环境暂不支持图片追踪，已退回无追踪 MR 预览。你仍可使用模拟按钮验证交互逻辑。");
@@ -1467,11 +1620,15 @@
 
         playPhotocardAt(position, target, frame, referenceSpace) {
           const voiceAnchor = this.voiceAnchorEl.components["spatial-voice"];
+          const photocardWindow = this.photocardWindowEl.components["photocard-window"];
           if (!voiceAnchor || !target) {
             return;
           }
 
           voiceAnchor.playTarget(target, position, frame, referenceSpace);
+          if (photocardWindow) {
+            photocardWindow.showTarget(target, frame, referenceSpace);
+          }
           this.lastPhotocardTrigger = performance.now();
           this.setStatus(`已识别 ${target.label}，正在从卡片位置播放 ${target.audioSrc.split("/").pop()}，并驱动应援棒随节奏闪烁。`);
         },
@@ -1480,8 +1637,8 @@
           const pose = this.getCameraPose();
           this.targetPosition
             .copy(pose.position)
-            .add(pose.direction.clone().multiplyScalar(1.15))
-            .add(new THREE.Vector3(0, -0.08, 0));
+            .add(pose.direction.clone().multiplyScalar(1.95))
+            .add(new THREE.Vector3(0, 0.08, 0));
           this.showAlbumAt(this.targetPosition, null, null, null);
         },
 
@@ -1501,27 +1658,10 @@
           this.playPhotocardAt(this.targetPosition, target, null, null);
         },
 
-        handleGestureShortcut(hand) {
-          const now = performance.now();
-          if (now - this.lastGestureAt < 500) {
-            return;
-          }
-
-          this.lastGestureAt = now;
-
-          if (hand === "left") {
-            this.simulateAlbum();
-            this.setStatus("Left-hand pinch detected. Album teaser opened in front of you.");
-            return;
-          }
-
-          this.simulatePhotocard();
-          this.setStatus("Right-hand pinch detected. Photocard voice playback started.");
-        },
-
         resetAnchors() {
           const albumWindow = this.videoWindowEl.components["album-window"];
           const voiceAnchor = this.voiceAnchorEl.components["spatial-voice"];
+          const photocardWindow = this.photocardWindowEl.components["photocard-window"];
           this.targetTrackingState = {};
 
           if (albumWindow) {
@@ -1530,6 +1670,10 @@
 
           if (voiceAnchor) {
             voiceAnchor.stop();
+          }
+
+          if (photocardWindow) {
+            photocardWindow.reset();
           }
 
           this.setStatus("媒体锚点已重置。重新扫描专辑封面或小卡即可再次触发。");
@@ -1569,6 +1713,7 @@
 
           const albumAnchorHost = this.videoWindowEl.components["world-anchor"];
           const voiceAnchorHost = this.voiceAnchorEl.components["world-anchor"];
+          const photocardAnchorHost = this.photocardWindowEl.components["world-anchor"];
 
           if (albumAnchorHost) {
             albumAnchorHost.updateFromFrame(frame, referenceSpace);
@@ -1576,6 +1721,10 @@
 
           if (voiceAnchorHost) {
             voiceAnchorHost.updateFromFrame(frame, referenceSpace);
+          }
+
+          if (photocardAnchorHost) {
+            photocardAnchorHost.updateFromFrame(frame, referenceSpace);
           }
 
           if (typeof frame.getImageTrackingResults !== "function") {
