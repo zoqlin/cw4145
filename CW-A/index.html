@@ -529,8 +529,6 @@
       });
 
       AFRAME.registerComponent("support-wand", {
-        dependencies: ["hand-tracking-controls"],
-
         schema: {
           hand: { default: "right" },
           sourceHand: { type: "selector" }
@@ -1057,7 +1055,6 @@
           this.tempWorldB.copy(this.cameraPosition);
           this.tempWorldB.y = 0;
           this.stageRootEl.object3D.lookAt(this.tempWorldB);
-          this.stageRootEl.object3D.rotateY(Math.PI);
           this.stageRootEl.object3D.rotation.x = 0;
           this.stageRootEl.object3D.rotation.z = 0;
         },
