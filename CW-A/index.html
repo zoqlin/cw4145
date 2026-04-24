@@ -195,7 +195,7 @@
       <p class="eyebrow">A-Frame / WebXR / Quest 3</p>
       <h1>香槟绿 MR 应援舞台</h1>
       <p id="status">
-        点击“开始体验”后，会在你前方生成中央大屏与成员弧形阵列。靠近成员面板会触发高亮与空间音频预览，捏合可锁定该成员并让应援棒同步发光。
+        点击“开始体验”后，会在你前方生成中央大屏与成员弧形阵列。距离成员面板约 1.8 米内会自动播放空间音频预览，手靠近到约 45 厘米内再捏合即可锁定该成员。
       </p>
 
       <div class="controls">
@@ -207,7 +207,7 @@
       <div class="tips">
         <div>推荐使用 Quest 3 的 Meta Browser，通过 <code>https://</code> 或 <code>localhost</code> 打开。</div>
         <div>当前版本不再依赖图片识别，先优先保证“中央大屏 + 空间音频 + 捏合锁定”稳定可用。</div>
-        <div>靠近面板会出现前馈高亮；捏合后只会播放一个成员音频，中央视频音量会自动降低。</div>
+        <div>靠近面板会出现前馈高亮并自动预览音频；捏合后只会播放一个成员音频，中央视频音量会自动降低。</div>
       </div>
 
       <div class="cards">
@@ -485,21 +485,32 @@
       });
 
       AFRAME.registerComponent("pinch-input", {
+        dependencies: ["hand-tracking-controls"],
+
         schema: {
           hand: { default: "left" }
         },
 
         init() {
           this.onPinchStarted = this.onPinchStarted.bind(this);
+          this.onPinchMoved = this.onPinchMoved.bind(this);
           this.onPinchEnded = this.onPinchEnded.bind(this);
           this.el.addEventListener("pinchstarted", this.onPinchStarted);
+          this.el.addEventListener("pinchmoved", this.onPinchMoved);
           this.el.addEventListener("pinchended", this.onPinchEnded);
         },
 
-        onPinchStarted() {
+        onPinchStarted(event) {
           const experience = this.el.sceneEl.components["mr-idol-experience"];
           if (experience) {
-            experience.handlePinchStart(this.data.hand, this.el);
+            experience.handlePinchStart(this.data.hand, this.el, event && event.detail && event.detail.position);
+          }
+        },
+
+        onPinchMoved(event) {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience) {
+            experience.handlePinchMove(this.data.hand, event && event.detail && event.detail.position);
           }
         },
 
@@ -512,11 +523,14 @@
 
         remove() {
           this.el.removeEventListener("pinchstarted", this.onPinchStarted);
+          this.el.removeEventListener("pinchmoved", this.onPinchMoved);
           this.el.removeEventListener("pinchended", this.onPinchEnded);
         }
       });
 
       AFRAME.registerComponent("support-wand", {
+        dependencies: ["hand-tracking-controls"],
+
         schema: {
           hand: { default: "right" },
           sourceHand: { type: "selector" }
@@ -932,15 +946,23 @@
         },
 
         getCameraPose() {
+          const xrCamera = this.el.camera;
+          if (xrCamera && (this.el.is("ar-mode") || this.el.is("vr-mode"))) {
+            xrCamera.getWorldPosition(this.cameraPosition);
+            xrCamera.getWorldDirection(this.cameraDirection);
+            return;
+          }
+
           const cameraEl = document.getElementById("userCamera");
-          if (!cameraEl) {
+          const cameraObject = cameraEl && (cameraEl.getObject3D("camera") || cameraEl.object3D);
+          if (!cameraObject) {
             this.cameraPosition.set(0, 1.65, 0);
             this.cameraDirection.set(0, 0, -1);
             return;
           }
 
-          cameraEl.object3D.getWorldPosition(this.cameraPosition);
-          cameraEl.object3D.getWorldDirection(this.cameraDirection);
+          cameraObject.getWorldPosition(this.cameraPosition);
+          cameraObject.getWorldDirection(this.cameraDirection);
         },
 
         getHandWorldPosition(hand, target) {
@@ -1032,8 +1054,12 @@
           this.tempWorld.y = 0;
           this.stageRootEl.object3D.position.copy(this.tempWorld);
 
-          this.stageYaw = Math.atan2(-this.cameraForwardFlat.x, -this.cameraForwardFlat.z);
-          this.stageRootEl.object3D.rotation.set(0, this.stageYaw, 0);
+          this.tempWorldB.copy(this.cameraPosition);
+          this.tempWorldB.y = 0;
+          this.stageRootEl.object3D.lookAt(this.tempWorldB);
+          this.stageRootEl.object3D.rotateY(Math.PI);
+          this.stageRootEl.object3D.rotation.x = 0;
+          this.stageRootEl.object3D.rotation.z = 0;
         },
 
         async startVideoLoop() {
@@ -1174,7 +1200,7 @@
           for (const member of this.members) {
             member.el.object3D.getWorldPosition(this.tempWorld);
             const distance = handPos.distanceTo(this.tempWorld);
-            if (distance < 0.34 && distance < bestDistance) {
+            if (distance < 0.45 && distance < bestDistance) {
               best = member;
               bestDistance = distance;
             }
@@ -1183,15 +1209,19 @@
           return best;
         },
 
-        handlePinchStart(hand, handEl) {
+        handlePinchStart(hand, handEl, pinchPosition) {
           if (!this.started) {
             return;
           }
 
           this.pinchingHands[hand] = true;
-          this.getHandWorldPosition(hand, this.handWorld[hand]);
+          if (pinchPosition) {
+            this.handWorld[hand].copy(pinchPosition);
+          } else {
+            this.getHandWorldPosition(hand, this.handWorld[hand]);
+          }
 
-          const target = this.findBestTargetForHand(hand);
+          const target = this.findBestTargetForHand(hand) || this.previewTarget;
           if (!target) {
             this.setStatus("这次捏合没有命中成员面板。请把手靠近某张照片后再捏合。");
             return;
@@ -1202,6 +1232,18 @@
           this.activeHand = hand;
           this.activeHandEl = handEl;
           this.playMemberAudio(target, "selected");
+        },
+
+        handlePinchMove(hand, pinchPosition) {
+          if (!pinchPosition) {
+            return;
+          }
+
+          this.handWorld[hand].copy(pinchPosition);
+
+          if (this.activeSelection && this.activeHand === hand) {
+            this.updateLaserFollow();
+          }
         },
 
         handlePinchEnd(hand) {
@@ -1238,12 +1280,19 @@
         },
 
         updateLaserFollow() {
-          if (!this.activeSelection || !this.activeHandEl || !this.laserEl.object3D.visible) {
+          if (!this.activeSelection || !this.laserEl.object3D.visible) {
             return;
           }
 
-          this.activeHandEl.object3D.getWorldPosition(this.tempWorld);
-          this.tempWorld.y += 0.015;
+          if (this.activeHand && this.handWorld[this.activeHand]) {
+            this.tempWorld.copy(this.handWorld[this.activeHand]);
+          } else if (this.activeHandEl) {
+            this.activeHandEl.object3D.getWorldPosition(this.tempWorld);
+            this.tempWorld.y += 0.015;
+          } else {
+            return;
+          }
+
           this.activeSelection.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
 
@@ -1332,8 +1381,8 @@
             }
 
             const cameraDistance = this.cameraPosition.distanceTo(this.tempWorld);
-            const hoverTarget = handDistance < 0.28 ? 1 - handDistance / 0.28 : 0;
-            const nearTarget = cameraDistance < 1.28 ? 1 - cameraDistance / 1.28 : 0;
+            const hoverTarget = handDistance < 0.42 ? 1 - handDistance / 0.42 : 0;
+            const nearTarget = cameraDistance < 1.85 ? 1 - cameraDistance / 1.85 : 0;
             const selectedTarget = this.activeSelection && this.activeSelection.key === member.key ? 1 : 0;
 
             member.hoverAmount = THREE.MathUtils.lerp(member.hoverAmount, Math.max(hoverTarget, nearTarget * 0.56), 0.18);
@@ -1377,7 +1426,7 @@
 
             member.nameEl.setAttribute("color", member.selectedAmount > 0.1 ? member.color : APP_CONFIG.colors.accentSoft);
 
-            if (!this.activeSelection && cameraDistance < 1.1 && cameraDistance < closestPreviewDistance) {
+            if (!this.activeSelection && cameraDistance < 1.85 && cameraDistance < closestPreviewDistance) {
               closestPreview = member;
               closestPreviewDistance = cameraDistance;
             }
@@ -1389,7 +1438,7 @@
               this.previewCooldownUntil = now + 900;
             }
 
-            if (this.previewTarget && closestPreview !== this.previewTarget && (!closestPreview || closestPreviewDistance > 1.2)) {
+            if (this.previewTarget && closestPreview !== this.previewTarget && (!closestPreview || closestPreviewDistance > 2.05)) {
               this.stopMemberAudio(true);
               this.restoreVideo();
             }
