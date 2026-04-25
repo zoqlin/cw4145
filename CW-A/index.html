@@ -224,8 +224,12 @@
           <figcaption>XIAOJUN 面板与语音</figcaption>
         </figure>
         <figure>
-          <img src="assets/yangyang.png" alt="YANGYANG">
+          <img src="assets/photocard-yangyang.png" alt="YANGYANG">
           <figcaption>YANGYANG 面板与语音</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/photocard-hgh.png" alt="HENDERY">
+          <figcaption>HENDERY 面板与语音</figcaption>
         </figure>
       </div>
     </div>
@@ -246,8 +250,15 @@
       <img id="kunArt" src="assets/photocard-kun.png" crossorigin="anonymous">
       <img id="tenArt" src="assets/photocard-ten.png" crossorigin="anonymous">
       <img id="xjArt" src="assets/photocard-xj.png" crossorigin="anonymous">
-      <img id="yangArt" src="assets/yangyang.png" crossorigin="anonymous">
+      <img id="yangArt" src="assets/photocard-yangyang.png" crossorigin="anonymous">
+      <img id="hghArt" src="assets/photocard-hgh.png" crossorigin="anonymous">
+      <img id="kunDetailArt" src="assets/kun.png" crossorigin="anonymous">
+      <img id="tenDetailArt" src="assets/ten.png" crossorigin="anonymous">
+      <img id="xjDetailArt" src="assets/xj.png" crossorigin="anonymous">
+      <img id="yangDetailArt" src="assets/yangyang.png" crossorigin="anonymous">
+      <img id="hghDetailArt" src="assets/hgh.png" crossorigin="anonymous">
       <video id="teaserVideo" src="assets/teaser-video.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline loop></video>
+      <audio id="bgmTrack" src="assets/bgm.mp4" preload="auto" crossorigin="anonymous"></audio>
     </a-assets>
 
     <a-entity id="previewEnvironment">
@@ -266,7 +277,7 @@
         material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16"
       ></a-ring>
       <a-text
-        value="Desktop Preview\nClick Start Experience"
+        value="桌面预览模式\n点击开始体验"
         align="center"
         width="4.6"
         color="#ffe9f5"
@@ -338,17 +349,9 @@
           color="#ffe9f5"
           position="0 -0.86 0.03"
         ></a-text>
-        <a-image
-          id="focusArt"
-          visible="false"
-          width="0.36"
-          height="0.52"
-          position="1 -0.08 0.03"
-          material="shader: flat; side: double; transparent: true"
-        ></a-image>
         <a-text
           id="focusLabel"
-          value="Walk closer to a member panel"
+          value="靠近任意成员面板开始体验"
           visible="true"
           align="center"
           width="2.5"
@@ -358,6 +361,53 @@
       </a-entity>
 
       <a-entity id="memberArc"></a-entity>
+      <a-entity id="selectionBillboard" visible="false">
+        <a-plane
+          id="selectionPhotoGlow"
+          width="0.62"
+          height="0.82"
+          position="0 0 -0.02"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.14; side: double"
+        ></a-plane>
+        <a-plane
+          width="0.56"
+          height="0.76"
+          material="shader: flat; color: #071211; transparent: true; opacity: 0.92; side: double"
+        ></a-plane>
+        <a-image
+          id="selectionPhoto"
+          width="0.48"
+          height="0.64"
+          position="0 0.02 0.02"
+          material="shader: flat; side: double; transparent: true"
+        ></a-image>
+        <a-text
+          id="selectionCaption"
+          value=""
+          align="center"
+          width="1.6"
+          color="#ffe9f5"
+          position="0 -0.46 0.02"
+        ></a-text>
+      </a-entity>
+      <a-entity id="selectionGroundCue" visible="false">
+        <a-ring
+          id="selectionGroundRing"
+          rotation="-90 0 0"
+          radius-inner="0.16"
+          radius-outer="0.22"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.4; side: double"
+        ></a-ring>
+      </a-entity>
+      <a-entity id="selectionBeam" visible="false">
+        <a-cone
+          id="selectionBeamCone"
+          radius-bottom="0.28"
+          radius-top="0.02"
+          height="2.2"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.1; side: double"
+        ></a-cone>
+      </a-entity>
     </a-entity>
 
     <a-entity id="laserLine" visible="false"></a-entity>
@@ -378,8 +428,17 @@
           inactive: "#f7fbf2"
         },
         video: {
-          baseVolume: 0.52,
-          duckedVolume: 0.14
+          baseVolume: 0,
+          duckedVolume: 0,
+          muted: true
+        },
+        bgm: {
+          baseVolume: 0.22,
+          duckedVolume: 0.06
+        },
+        voices: {
+          previewVolume: 0.7,
+          selectedVolume: 1
         },
         stage: {
           distance: 2.05,
@@ -391,6 +450,7 @@
             name: "KUN",
             color: "#f2f59f",
             imageId: "kunArt",
+            detailImageId: "kunDetailArt",
             audioSrc: "assets/voice-kun.mp3"
           },
           {
@@ -398,21 +458,32 @@
             name: "TEN",
             color: "#ffd2ef",
             imageId: "tenArt",
-            audioSrc: "assets/voice-ten.mp3"
+            detailImageId: "tenDetailArt",
+            audioSrc: "assets/voice-ten.mp4"
           },
           {
             key: "xj",
             name: "XIAOJUN",
             color: "#c6f0a5",
             imageId: "xjArt",
-            audioSrc: "assets/xj.mp3"
+            detailImageId: "xjDetailArt",
+            audioSrc: "assets/voice-xj.mp3"
           },
           {
             key: "yangyang",
             name: "YANGYANG",
             color: "#b8efff",
             imageId: "yangArt",
+            detailImageId: "yangDetailArt",
             audioSrc: "assets/yang.mp4"
+          },
+          {
+            key: "hgh",
+            name: "HENDERY",
+            color: "#ffd8a8",
+            imageId: "hghArt",
+            detailImageId: "hghDetailArt",
+            audioSrc: "assets/voice-hgh.mp4"
           }
         ]
       };
@@ -566,6 +637,7 @@
           this.energyTarget = 0;
           this.energyValue = 0;
           this.trailAccumulator = 0;
+          this.overlayPrepared = false;
 
           const isLeft = this.data.hand === "left";
           this.el.object3D.position.set(isLeft ? -0.05 : 0.05, -0.03, -0.02);
@@ -692,6 +764,27 @@
           if (!this.haloMeshes.length) {
             this.haloMeshes = this.haloEls.map((el) => el.getObject3D("mesh")).filter(Boolean);
           }
+
+          if (!this.overlayPrepared) {
+            const overlayMeshes = [
+              this.bodyMesh,
+              this.gripMesh,
+              ...this.armMeshes,
+              ...this.haloMeshes
+            ].filter(Boolean);
+
+            overlayMeshes.forEach((mesh, index) => {
+              mesh.renderOrder = 200 + index;
+              if (mesh.material) {
+                mesh.material.transparent = true;
+                mesh.material.depthTest = false;
+                mesh.material.depthWrite = false;
+                mesh.material.needsUpdate = true;
+              }
+            });
+
+            this.overlayPrepared = overlayMeshes.length > 0;
+          }
         },
 
         tick(time, delta) {
@@ -784,10 +877,18 @@
           this.stageRootEl = document.getElementById("experienceRoot");
           this.memberArcEl = document.getElementById("memberArc");
           this.screenGlowEl = document.getElementById("screenGlow");
-          this.focusArtEl = document.getElementById("focusArt");
           this.focusLabelEl = document.getElementById("focusLabel");
+          this.selectionBillboardEl = document.getElementById("selectionBillboard");
+          this.selectionPhotoEl = document.getElementById("selectionPhoto");
+          this.selectionPhotoGlowEl = document.getElementById("selectionPhotoGlow");
+          this.selectionCaptionEl = document.getElementById("selectionCaption");
+          this.selectionGroundCueEl = document.getElementById("selectionGroundCue");
+          this.selectionGroundRingEl = document.getElementById("selectionGroundRing");
+          this.selectionBeamEl = document.getElementById("selectionBeam");
+          this.selectionBeamConeEl = document.getElementById("selectionBeamCone");
           this.laserEl = document.getElementById("laserLine");
           this.videoEl = document.getElementById("teaserVideo");
+          this.bgmEl = document.getElementById("bgmTrack");
 
           this.audioEl = document.createElement("audio");
           this.audioEl.preload = "auto";
@@ -819,14 +920,23 @@
           this.tempWorldB = new THREE.Vector3();
           this.tempLocal = new THREE.Vector3();
           this.tempQuaternion = new THREE.Quaternion();
+          this.lastHandWorld = {
+            left: new THREE.Vector3(),
+            right: new THREE.Vector3()
+          };
           this.handWorld = {
             left: new THREE.Vector3(),
             right: new THREE.Vector3()
+          };
+          this.handSpeed = {
+            left: 0,
+            right: 0
           };
           this.handHasPose = {
             left: false,
             right: false
           };
+          this.lastWaveBurstAt = 0;
 
           this.onAudioEnded = this.onAudioEnded.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
@@ -844,7 +954,7 @@
 
           this.initAudio();
           this.buildMemberPanels();
-          this.setStatus("点击“开始体验”后会在你前方召唤中央大屏与成员弧形阵列。");
+            this.setStatus("点击“开始体验”后，会在前方生成固定在草地空间中的中央大屏与成员弧形阵列。");
         },
 
         initAudio() {
@@ -984,25 +1094,30 @@
         },
 
         updateFocusHud(member, mode) {
-          if (!this.focusArtEl || !this.focusLabelEl) {
+          if (!this.focusLabelEl || !this.selectionBillboardEl || !this.selectionPhotoEl || !this.selectionCaptionEl) {
             return;
           }
 
           if (!member) {
-            this.focusArtEl.setAttribute("visible", "false");
-            this.focusLabelEl.setAttribute("value", "Walk closer to a member panel");
+            this.selectionBillboardEl.object3D.visible = false;
+            this.focusLabelEl.setAttribute("value", "靠近任意成员面板开始体验");
             this.focusLabelEl.setAttribute("color", APP_CONFIG.colors.accentSoft);
             this.focusLabelEl.setAttribute("visible", "true");
             return;
           }
 
-          this.focusArtEl.setAttribute("src", `#${member.imageId}`);
-          this.focusArtEl.setAttribute("visible", "true");
+          this.selectionBillboardEl.object3D.visible = true;
+          this.selectionPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
+          if (this.selectionPhotoGlowEl) {
+            this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.16; side: double`);
+          }
+              this.selectionCaptionEl.setAttribute("value", mode === "selected" ? `${member.name} HIGHLIGHT` : `${member.name} TARGET`);
+          this.selectionCaptionEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
           this.focusLabelEl.setAttribute(
             "value",
             mode === "selected"
-              ? `${member.name} NOW PLAYING`
-              : `${member.name} LOCK TARGET`
+              ? `${member.name} 正在播放`
+              : `${member.name} 已锁定目标`
           );
           this.focusLabelEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
           this.focusLabelEl.setAttribute("visible", "true");
@@ -1052,19 +1167,75 @@
           this.updateVideoVolume(APP_CONFIG.video.baseVolume);
         },
 
+        setBgmVolume(volume) {
+          if (!this.bgmEl) {
+            return;
+          }
+
+          this.bgmEl.volume = THREE.MathUtils.clamp(volume, 0, 1);
+        },
+
+        duckBgm() {
+          this.setBgmVolume(APP_CONFIG.bgm.duckedVolume);
+        },
+
+        restoreBgm() {
+          this.setBgmVolume(APP_CONFIG.bgm.baseVolume);
+        },
+
+        fadeMediaVolume(mediaEl, from, to, duration = 260, done) {
+          if (!mediaEl) {
+            if (done) {
+              done();
+            }
+            return;
+          }
+
+          mediaEl.volume = from;
+          const startedAt = performance.now();
+          const step = () => {
+            const t = THREE.MathUtils.clamp((performance.now() - startedAt) / duration, 0, 1);
+            mediaEl.volume = THREE.MathUtils.lerp(from, to, t);
+            if (t < 1) {
+              requestAnimationFrame(step);
+              return;
+            }
+
+            mediaEl.volume = to;
+            if (done) {
+              done();
+            }
+          };
+
+          requestAnimationFrame(step);
+        },
+
         async primeMedia() {
           if (this.spatialSound && this.spatialSound.context && this.spatialSound.context.resume) {
             await this.spatialSound.context.resume().catch(() => {});
           }
 
+          if (this.bgmEl) {
+            this.bgmEl.muted = true;
+            try {
+              await this.bgmEl.play();
+            } catch (error) {
+            }
+            this.bgmEl.pause();
+            this.bgmEl.currentTime = 0;
+            this.bgmEl.muted = false;
+          }
+
           this.videoEl.muted = true;
+          this.videoEl.volume = 0;
           try {
             await this.videoEl.play();
           } catch (error) {
           }
           this.videoEl.pause();
           this.videoEl.currentTime = 0;
-          this.videoEl.muted = false;
+          this.videoEl.muted = APP_CONFIG.video.muted;
+          this.videoEl.volume = APP_CONFIG.video.baseVolume;
 
           this.audioEl.muted = true;
           this.audioEl.src = APP_CONFIG.members[0].audioSrc;
@@ -1099,6 +1270,7 @@
 
             this.positionStageInFront();
             await this.startVideoLoop();
+            await this.startBgmLoop();
             this.started = true;
             this.stageStartedAt = performance.now();
             this.stageRootEl.object3D.visible = true;
@@ -1131,11 +1303,27 @@
         async startVideoLoop() {
           this.videoEl.loop = true;
           this.videoEl.currentTime = 0;
+          this.videoEl.muted = APP_CONFIG.video.muted;
           this.restoreVideo();
           const promise = this.videoEl.play();
           if (promise && promise.catch) {
             promise.catch(() => {});
           }
+        },
+
+        async startBgmLoop() {
+          if (!this.bgmEl) {
+            return;
+          }
+
+          this.bgmEl.loop = true;
+          this.bgmEl.currentTime = 0;
+          this.bgmEl.volume = 0;
+          const promise = this.bgmEl.play();
+          if (promise && promise.catch) {
+            promise.catch(() => {});
+          }
+          this.fadeMediaVolume(this.bgmEl, 0, APP_CONFIG.bgm.baseVolume, 500);
         },
 
         attachAudioToMember(member) {
@@ -1169,9 +1357,14 @@
           this.candidateTarget = member;
           this.candidateSince = performance.now();
           this.audioEl.loop = false;
-          this.audioEl.volume = 1;
+          this.audioEl.volume = 0;
           this.audioEl.currentTime = 0;
           this.duckVideo();
+          if (mode === "selected") {
+            this.duckBgm();
+          } else {
+            this.setBgmVolume(0.12);
+          }
           this.updateFocusHud(member, mode);
 
           if (this.spatialSound && this.spatialSound.context && this.spatialSound.context.resume) {
@@ -1184,6 +1377,12 @@
               this.setStatus(`${member.name} 已被选中，但浏览器暂时拦截了音频。请再次点击“开始体验”后重试。`);
             });
           }
+          this.fadeMediaVolume(
+            this.audioEl,
+            0,
+            mode === "selected" ? APP_CONFIG.voices.selectedVolume : APP_CONFIG.voices.previewVolume,
+            320
+          );
 
           this.updateWandsForState();
 
@@ -1208,6 +1407,7 @@
 
           if (!this.activeSelection) {
             this.restoreVideo();
+            this.restoreBgm();
           }
 
           this.updateFocusHud(this.activeSelection || this.candidateTarget, this.activeSelection ? "selected" : "preview");
@@ -1236,6 +1436,7 @@
             this.audioEl.volume = 1;
             this.stopMemberAudio(true);
             this.hideLaser();
+            this.restoreBgm();
             this.setStatus("连线已解除，应援棒回到呼吸灯状态。");
           };
 
@@ -1418,6 +1619,7 @@
             this.activeHandEl = null;
             this.hideLaser();
             this.restoreVideo();
+            this.restoreBgm();
             this.updateFocusHud(null, null);
             this.updateWandsForState();
             this.setStatus("当前成员音频已播放完毕。你可以靠近其他面板继续探索，或再次捏合重新锁定。");
@@ -1427,6 +1629,7 @@
           if (this.previewTarget) {
             this.previewTarget = null;
             this.restoreVideo();
+            this.restoreBgm();
             this.updateFocusHud(this.candidateTarget, "preview");
             this.updateWandsForState();
           }
@@ -1435,10 +1638,19 @@
         updateMemberVisuals(time, delta) {
           const now = performance.now();
           const stageElapsed = (now - this.stageStartedAt) / 1000;
+          const dt = Math.max((delta || 16) / 1000, 0.0001);
 
           this.getCameraPose();
           this.handHasPose.left = this.getHandWorldPosition("left", this.handWorld.left);
           this.handHasPose.right = this.getHandWorldPosition("right", this.handWorld.right);
+          for (const hand of ["left", "right"]) {
+            if (this.handHasPose[hand]) {
+              this.handSpeed[hand] = this.handWorld[hand].distanceTo(this.lastHandWorld[hand]) / dt;
+              this.lastHandWorld[hand].copy(this.handWorld[hand]);
+            } else {
+              this.handSpeed[hand] = THREE.MathUtils.lerp(this.handSpeed[hand], 0, 0.25);
+            }
+          }
           this.hoveredByHand.left = null;
           this.hoveredByHand.right = null;
 
@@ -1520,7 +1732,7 @@
               member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
               member.badgeMesh.material.opacity = badgeOpacity * appear;
             }
-            member.badgeTextEl.setAttribute("value", isSelected ? "NOW PLAYING" : isCandidate ? "LOCK TARGET" : "");
+            member.badgeTextEl.setAttribute("value", isSelected ? "正在播放" : isCandidate ? "锁定目标" : "");
             member.badgeTextEl.setAttribute("visible", badgeOpacity > 0.01);
 
             if (!this.activeSelection && cameraDistance < 1.85 && cameraDistance < closestPreviewDistance) {
@@ -1551,6 +1763,100 @@
               this.restoreVideo();
             }
           }
+        },
+
+        updateSelectionPresentation() {
+          const target = this.activeSelection || this.candidateTarget;
+
+          if (!target) {
+            if (this.selectionBillboardEl) {
+              this.selectionBillboardEl.object3D.visible = false;
+            }
+            if (this.selectionGroundCueEl) {
+              this.selectionGroundCueEl.object3D.visible = false;
+            }
+            if (this.selectionBeamEl) {
+              this.selectionBeamEl.object3D.visible = false;
+            }
+            return;
+          }
+
+          const x = target.baseX;
+          const z = target.baseZ + target.forwardOffset;
+          const isSelected = this.activeSelection && this.activeSelection.key === target.key;
+
+          if (this.selectionBillboardEl) {
+            this.selectionBillboardEl.object3D.visible = true;
+            this.selectionBillboardEl.object3D.position.set(x, 1.62 + (isSelected ? 0.08 : 0), z + 0.22);
+            this.selectionBillboardEl.object3D.rotation.set(0, 0, 0);
+            this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 1.02 : 0.94);
+          }
+
+          if (this.selectionGroundCueEl) {
+            this.selectionGroundCueEl.object3D.visible = true;
+            this.selectionGroundCueEl.object3D.position.set(x, 0.03, z);
+            this.selectionGroundCueEl.object3D.scale.setScalar(isSelected ? 1.18 : 1);
+          }
+
+          if (this.selectionGroundRingEl) {
+            this.selectionGroundRingEl.setAttribute(
+              "material",
+              `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.5 : 0.28}; side: double`
+            );
+          }
+
+          if (this.selectionBeamEl) {
+            this.selectionBeamEl.object3D.visible = true;
+            this.selectionBeamEl.object3D.position.set(x, 1.15, z);
+            this.selectionBeamEl.object3D.scale.setScalar(isSelected ? 1.12 : 0.9);
+          }
+
+          if (this.selectionBeamConeEl) {
+            this.selectionBeamConeEl.setAttribute(
+              "material",
+              `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.15 : 0.08}; side: double`
+            );
+          }
+        },
+
+        updatePerformanceParticles(now) {
+          if (!this.activeSelection) {
+            return;
+          }
+
+          const systems = this.el.systems["trail-pool"];
+          if (!systems) {
+            return;
+          }
+
+          let triggerHand = null;
+          for (const hand of ["left", "right"]) {
+            if (!this.handHasPose[hand] || this.handSpeed[hand] < 0.75) {
+              continue;
+            }
+
+            this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
+            if (this.handWorld[hand].distanceTo(this.tempWorld) < 0.75) {
+              triggerHand = hand;
+              break;
+            }
+          }
+
+          if (!triggerHand || now - this.lastWaveBurstAt < 90) {
+            return;
+          }
+
+          this.lastWaveBurstAt = now;
+          this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
+          this.tempWorld.y += 0.18 + Math.random() * 0.22;
+          this.tempWorld.x += (Math.random() - 0.5) * 0.18;
+          this.tempWorld.z += (Math.random() - 0.5) * 0.18;
+          this.tempWorldB.set(
+            (Math.random() - 0.5) * 0.08,
+            0.08 + Math.random() * 0.12,
+            (Math.random() - 0.5) * 0.08
+          );
+          systems.spawn(this.tempWorld, this.tempWorldB, 0.95, new THREE.Color(this.activeSelection.color));
         },
 
         updateScreenVisuals(delta) {
@@ -1586,9 +1892,14 @@
         resetExperience() {
           this.audioEl.pause();
           this.audioEl.currentTime = 0;
+          if (this.bgmEl) {
+            this.bgmEl.pause();
+            this.bgmEl.currentTime = 0;
+          }
           this.videoEl.pause();
           this.videoEl.currentTime = 0;
           this.restoreVideo();
+          this.restoreBgm();
           this.activeSelection = null;
           this.previewTarget = null;
           this.candidateTarget = null;
@@ -1604,6 +1915,7 @@
 
           if (this.started) {
             this.startVideoLoop();
+            this.startBgmLoop();
           }
 
           this.setStatus("场景已重置。你可以重新靠近成员面板测试空间音频，或再次捏合锁定。");
@@ -1629,9 +1941,11 @@
           }
 
           this.updateMemberVisuals(time, delta);
+          this.updateSelectionPresentation();
           this.updateScreenVisuals(delta);
           this.updateLaserFollow();
           this.updateAudioReactiveState();
+          this.updatePerformanceParticles(performance.now());
 
           if (this.activeSelection) {
             this.duckVideo();
@@ -1643,6 +1957,9 @@
         remove() {
           this.audioEl.removeEventListener("ended", this.onAudioEnded);
           this.audioEl.remove();
+          if (this.bgmEl) {
+            this.bgmEl.pause();
+          }
           this.startButton.removeEventListener("click", this.startExperience);
           this.demoNextButton.removeEventListener("click", this.demoNextMember);
           this.resetButton.removeEventListener("click", this.resetExperience);
