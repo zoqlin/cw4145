@@ -195,8 +195,7 @@
       <p class="eyebrow">A-Frame / WebXR / Quest 3</p>
       <h1>香槟绿 MR 应援舞台</h1>
       <p id="status">
-        点击“开始体验”后，会在你前方生成中央大屏与成员弧形阵列。靠近成员面板后会先出现“已瞄准”反馈，再自动锁定并播放该成员音频；如果手势可用，也可以直接捏合锁定。
-      </p>
+        点击“开始体验”后，你前方会生成中央大屏与成员弧形阵列。靠近成员卡片会先出现锁定反馈，再自动播放对应音频；如果手势可用，也可以用右手直接捏合锁定。      </p>
 
       <div class="controls">
         <button id="startButton">开始体验</button>
@@ -206,30 +205,30 @@
 
       <div class="tips">
         <div>推荐使用 Quest 3 的 Meta Browser，通过 <code>https://</code> 或 <code>localhost</code> 打开。</div>
-        <div>当前版本不再依赖图片识别，先优先保证“中央大屏 + 空间音频 + 捏合锁定”稳定可用。</div>
-        <div>靠近面板会先高亮并显示已瞄准，继续靠近会自动开始音频；同一时间只会播放一个成员音频，中央视频音量会自动降低。</div>
+        <div>当前版本先优先保证“中央大屏 + 空间音频 + 右手捏合锁定”稳定可用，再逐步叠加复杂识别。</div>
+        <div>靠近成员卡片会先高亮并显示已瞄准，继续靠近会自动开始音频；同一时间只会播放一个成员音频，背景视频与 BGM 会自动降音量。</div>
       </div>
 
       <div class="cards">
         <figure>
           <img src="assets/photocard-kun.png" alt="KUN">
-          <figcaption>KUN 面板与语音</figcaption>
+          <figcaption>KUN 卡片与语音</figcaption>
         </figure>
         <figure>
           <img src="assets/photocard-ten.png" alt="TEN">
-          <figcaption>TEN 面板与语音</figcaption>
+          <figcaption>TEN 卡片与语音</figcaption>
         </figure>
         <figure>
           <img src="assets/photocard-xj.png" alt="XIAOJUN">
-          <figcaption>XIAOJUN 面板与语音</figcaption>
+          <figcaption>XIAOJUN 卡片与语音</figcaption>
         </figure>
         <figure>
           <img src="assets/photocard-yangyang.png" alt="YANGYANG">
-          <figcaption>YANGYANG 面板与语音</figcaption>
+          <figcaption>YANGYANG 卡片与语音</figcaption>
         </figure>
         <figure>
           <img src="assets/photocard-hgh.png" alt="HENDERY">
-          <figcaption>HENDERY 面板与语音</figcaption>
+          <figcaption>HENDERY 卡片与语音</figcaption>
         </figure>
       </div>
     </div>
@@ -294,7 +293,6 @@
       hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffc4db; modelOpacity: 0.6"
       pinch-input="hand: left"
     >
-      <a-entity class="wand" support-wand="hand: left; sourceHand: #leftHand"></a-entity>
     </a-entity>
 
     <a-entity
@@ -351,7 +349,7 @@
         ></a-text>
         <a-text
           id="focusLabel"
-          value="靠近任意成员面板开始体验"
+          value="靠近任意成员卡片开始体验"
           visible="true"
           align="center"
           width="2.5"
@@ -370,10 +368,25 @@
           material="shader: flat; color: #e1e668; transparent: true; opacity: 0.14; side: double"
         ></a-plane>
         <a-plane
+          id="selectionPhotoBacking"
           width="0.56"
           height="0.76"
           material="shader: flat; color: #071211; transparent: true; opacity: 0.92; side: double"
         ></a-plane>
+        <a-ring
+          id="selectionPhotoRing"
+          radius-inner="0.28"
+          radius-outer="0.315"
+          position="0 0.03 -0.004"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.28; side: double"
+        ></a-ring>
+        <a-ring
+          id="selectionPhotoRingOuter"
+          radius-inner="0.35"
+          radius-outer="0.366"
+          position="0 0.03 -0.01"
+          material="shader: flat; color: #ffe9f5; transparent: true; opacity: 0.12; side: double"
+        ></a-ring>
         <a-image
           id="selectionPhoto"
           width="0.48"
@@ -439,6 +452,24 @@
         voices: {
           previewVolume: 0.7,
           selectedVolume: 1
+        },
+        interaction: {
+          handHoverDistance: 0.48,
+          focusDistance: 2.15,
+          autoSelectDistance: 1.72,
+          autoSelectHoldMs: 220,
+          releaseDistance: 2.32,
+          replayCooldownMs: 1100
+        },
+        layout: {
+          memberArcDegrees: 68,
+          memberArcRadiusX: 1.5,
+          memberArcDepth: 0.6,
+          memberBaseY: 0.72,
+          cardImageHeight: 0.54,
+          cardPaddingX: 0.08,
+          cardPaddingY: 0.09,
+          topPhotoHeight: 0.7
         },
         stage: {
           distance: 2.05,
@@ -788,11 +819,12 @@
         },
 
         tick(time, delta) {
-          const inXR = this.el.sceneEl.is("ar-mode") || this.el.sceneEl.is("vr-mode");
-          this.el.object3D.visible = !!(inXR || (this.sourceHandEl && this.sourceHandEl.object3D.visible !== false));
+          const sourceVisible = !!(this.sourceHandEl && this.sourceHandEl.object3D.visible !== false);
+          this.el.object3D.visible = sourceVisible;
 
           this.updateMeshes();
-          if (!delta || !this.tipEl) {
+          if (!delta || !this.tipEl || !sourceVisible) {
+            this.ready = false;
             return;
           }
 
@@ -881,6 +913,9 @@
           this.selectionBillboardEl = document.getElementById("selectionBillboard");
           this.selectionPhotoEl = document.getElementById("selectionPhoto");
           this.selectionPhotoGlowEl = document.getElementById("selectionPhotoGlow");
+          this.selectionPhotoBackingEl = document.getElementById("selectionPhotoBacking");
+          this.selectionPhotoRingEl = document.getElementById("selectionPhotoRing");
+          this.selectionPhotoRingOuterEl = document.getElementById("selectionPhotoRingOuter");
           this.selectionCaptionEl = document.getElementById("selectionCaption");
           this.selectionGroundCueEl = document.getElementById("selectionGroundCue");
           this.selectionGroundRingEl = document.getElementById("selectionGroundRing");
@@ -954,7 +989,7 @@
 
           this.initAudio();
           this.buildMemberPanels();
-            this.setStatus("点击“开始体验”后，会在前方生成固定在草地空间中的中央大屏与成员弧形阵列。");
+          this.setStatus("点击“开始体验”后，系统会在你前方生成固定在草地空间中的中央大屏和成员弧形阵列。");
         },
 
         initAudio() {
@@ -990,46 +1025,54 @@
           this.memberMap.clear();
 
           const count = APP_CONFIG.members.length;
-          const maxAngle = 52;
-          const baseY = 0.72;
-          const radiusX = 1.02;
-          const depth = 0.46;
+          const maxAngle = APP_CONFIG.layout.memberArcDegrees;
+          const baseY = APP_CONFIG.layout.memberBaseY;
+          const radiusX = APP_CONFIG.layout.memberArcRadiusX;
+          const depth = APP_CONFIG.layout.memberArcDepth;
 
           APP_CONFIG.members.forEach((member, index) => {
             const ratio = count === 1 ? 0.5 : index / (count - 1);
             const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-maxAngle, maxAngle, ratio));
             const x = Math.sin(angle) * radiusX;
             const z = depth - Math.cos(angle) * 0.22;
+            const imageAspect = this.getAssetAspect(member.imageId, 0.72);
+            const detailAspect = this.getAssetAspect(member.detailImageId || member.imageId, imageAspect);
+            const artHeight = APP_CONFIG.layout.cardImageHeight;
+            const artWidth = THREE.MathUtils.clamp(artHeight * imageAspect, 0.26, 0.48);
+            const panelWidth = artWidth + APP_CONFIG.layout.cardPaddingX * 2;
+            const panelHeight = artHeight + APP_CONFIG.layout.cardPaddingY * 2 + 0.1;
+            const glowWidth = panelWidth + 0.08;
+            const glowHeight = panelHeight + 0.08;
             const cardEl = document.createElement("a-entity");
             cardEl.setAttribute("position", `${x.toFixed(4)} ${baseY.toFixed(4)} ${z.toFixed(4)}`);
             cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle) * 0.38).toFixed(2)} 0`);
             cardEl.object3D.visible = true;
 
             const glow = document.createElement("a-plane");
-            glow.setAttribute("width", "0.54");
-            glow.setAttribute("height", "0.76");
+            glow.setAttribute("width", glowWidth.toFixed(3));
+            glow.setAttribute("height", glowHeight.toFixed(3));
             glow.setAttribute("position", "0 0 -0.018");
             glow.setAttribute("material", `shader: flat; color: ${APP_CONFIG.colors.accent}; transparent: true; opacity: 0.12; side: double`);
             cardEl.appendChild(glow);
 
             const panel = document.createElement("a-plane");
-            panel.setAttribute("width", "0.48");
-            panel.setAttribute("height", "0.68");
+            panel.setAttribute("width", panelWidth.toFixed(3));
+            panel.setAttribute("height", panelHeight.toFixed(3));
             panel.setAttribute("material", "shader: flat; color: #081312; transparent: true; opacity: 0.84; side: double");
             cardEl.appendChild(panel);
 
             const border = document.createElement("a-ring");
             border.setAttribute("rotation", "0 0 0");
             border.setAttribute("radius-inner", "0.3");
-            border.setAttribute("radius-outer", "0.312");
+            border.setAttribute("radius-outer", "0.314");
             border.setAttribute("material", `shader: flat; color: ${APP_CONFIG.colors.accent}; transparent: true; opacity: 0.14; side: double`);
-            border.object3D.scale.set(0.82, 1.16, 1);
+            border.object3D.scale.set(panelWidth / 0.62, panelHeight / 0.62, 1);
             cardEl.appendChild(border);
 
             const art = document.createElement("a-image");
             art.setAttribute("src", `#${member.imageId}`);
-            art.setAttribute("width", "0.38");
-            art.setAttribute("height", "0.56");
+            art.setAttribute("width", artWidth.toFixed(3));
+            art.setAttribute("height", artHeight.toFixed(3));
             art.setAttribute("position", "0 0.04 0.01");
             art.setAttribute("material", "shader: flat; side: double; transparent: true");
             cardEl.appendChild(art);
@@ -1076,6 +1119,12 @@
               borderMesh: null,
               badgeMesh: null,
               appearDelay: index * 0.12,
+              imageAspect,
+              detailAspect,
+              artWidth,
+              artHeight,
+              panelWidth,
+              panelHeight,
               hoverAmount: 0,
               selectedAmount: 0,
               visibleAmount: 0,
@@ -1100,7 +1149,7 @@
 
           if (!member) {
             this.selectionBillboardEl.object3D.visible = false;
-            this.focusLabelEl.setAttribute("value", "靠近任意成员面板开始体验");
+            this.focusLabelEl.setAttribute("value", "靠近任意成员卡片开始体验");
             this.focusLabelEl.setAttribute("color", APP_CONFIG.colors.accentSoft);
             this.focusLabelEl.setAttribute("visible", "true");
             return;
@@ -1108,15 +1157,32 @@
 
           this.selectionBillboardEl.object3D.visible = true;
           this.selectionPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
+          const topPhotoHeight = APP_CONFIG.layout.topPhotoHeight;
+          const topPhotoWidth = THREE.MathUtils.clamp(topPhotoHeight * (member.detailAspect || 0.72), 0.42, 0.88);
+          this.selectionPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
+          this.selectionPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
           if (this.selectionPhotoGlowEl) {
+            this.selectionPhotoGlowEl.setAttribute("width", (topPhotoWidth + 0.14).toFixed(3));
+            this.selectionPhotoGlowEl.setAttribute("height", (topPhotoHeight + 0.18).toFixed(3));
             this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.16; side: double`);
           }
-              this.selectionCaptionEl.setAttribute("value", mode === "selected" ? `${member.name} HIGHLIGHT` : `${member.name} TARGET`);
+          if (this.selectionPhotoBackingEl) {
+            this.selectionPhotoBackingEl.setAttribute("width", (topPhotoWidth + 0.08).toFixed(3));
+            this.selectionPhotoBackingEl.setAttribute("height", (topPhotoHeight + 0.1).toFixed(3));
+          }
+          if (this.selectionPhotoRingEl) {
+            this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${mode === "selected" ? 0.34 : 0.22}; side: double`);
+            this.selectionPhotoRingEl.object3D.scale.set(topPhotoWidth / 0.56, topPhotoHeight / 0.56, 1);
+          }
+          if (this.selectionPhotoRingOuterEl) {
+            this.selectionPhotoRingOuterEl.object3D.scale.set((topPhotoWidth + 0.12) / 0.72, (topPhotoHeight + 0.12) / 0.72, 1);
+          }
+          this.selectionCaptionEl.setAttribute("value", mode === "selected" ? `${member.name} HIGHLIGHT` : `${member.name} TARGET`);
           this.selectionCaptionEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
           this.focusLabelEl.setAttribute(
             "value",
             mode === "selected"
-              ? `${member.name} 正在播放`
+              ? `${member.name} 正在播放音频`
               : `${member.name} 已锁定目标`
           );
           this.focusLabelEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
@@ -1145,14 +1211,26 @@
 
         getHandWorldPosition(hand, target) {
           const handEl = document.getElementById(hand === "left" ? "leftHand" : "rightHand");
-          if (!handEl) {
+          if (!handEl || handEl.object3D.visible === false) {
             return false;
           }
 
           handEl.object3D.getWorldPosition(target);
+          if (!Number.isFinite(target.x) || !Number.isFinite(target.y) || !Number.isFinite(target.z)) {
+            return false;
+          }
           target.y += 0.015;
           target.z -= 0.01;
           return true;
+        },
+
+        getAssetAspect(assetId, fallback = 0.72) {
+          const assetEl = document.getElementById(assetId);
+          if (!assetEl || !assetEl.naturalWidth || !assetEl.naturalHeight) {
+            return fallback;
+          }
+
+          return assetEl.naturalWidth / assetEl.naturalHeight;
         },
 
         updateVideoVolume(volume) {
@@ -1261,7 +1339,7 @@
               try {
                 const supported = await navigator.xr.isSessionSupported("immersive-ar");
                 if (supported && !this.el.is("ar-mode")) {
-                  this.setStatus("正在请求 Quest 3 透视 MR 会话...");
+                  this.setStatus("姝ｅ湪璇锋眰 Quest 3 閫忚 MR 浼氳瘽...");
                   await this.el.enterAR();
                 }
               } catch (error) {
@@ -1275,7 +1353,7 @@
             this.stageStartedAt = performance.now();
             this.stageRootEl.object3D.visible = true;
             this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
-            this.setStatus("舞台已生成。靠近成员面板触发空间音频预览，捏合可锁定该成员。");
+            this.setStatus("舞台已生成。靠近成员卡片即可自动选中并播放音频，也可以捏合右手进行锁定。");
           } finally {
             this.preparing = false;
           }
@@ -1389,7 +1467,7 @@
           if (mode === "preview") {
             this.setStatus(`${member.name} 已瞄准。继续靠近或直接捏合，即可开始播放该成员音频。`);
           } else {
-            this.setStatus(`${member.name} 已锁定。当前只播放这一位成员的音频，中央视频音量已自动降低。`);
+            this.setStatus(`${member.name} 已锁定。当前只播放这一位成员的音频，中央视频与 BGM 音量已自动降低。`);
           }
         },
 
@@ -1437,7 +1515,7 @@
             this.stopMemberAudio(true);
             this.hideLaser();
             this.restoreBgm();
-            this.setStatus("连线已解除，应援棒回到呼吸灯状态。");
+            this.setStatus("连线已解除，应援棒回到呼吸灯待机状态。");
           };
 
           requestAnimationFrame(step);
@@ -1506,7 +1584,7 @@
 
           const target = this.findBestTargetForHand(hand) || this.previewTarget;
           if (!target) {
-            this.setStatus("这次捏合没有命中成员面板。请把手靠近某张照片后再捏合。");
+            this.setStatus("这次捏合没有命中成员卡片。请先把右手靠近某张图片，再进行捏合。");
             return;
           }
 
@@ -1622,7 +1700,7 @@
             this.restoreBgm();
             this.updateFocusHud(null, null);
             this.updateWandsForState();
-            this.setStatus("当前成员音频已播放完毕。你可以靠近其他面板继续探索，或再次捏合重新锁定。");
+            this.setStatus("当前成员音频已播放完毕。你可以继续靠近其他卡片，或再次捏合重新锁定。");
             return;
           }
 
@@ -1680,8 +1758,12 @@
             }
 
             const cameraDistance = this.cameraPosition.distanceTo(this.tempWorld);
-            const hoverTarget = handDistance < 0.42 ? 1 - handDistance / 0.42 : 0;
-            const nearTarget = cameraDistance < 1.85 ? 1 - cameraDistance / 1.85 : 0;
+            const hoverTarget = handDistance < APP_CONFIG.interaction.handHoverDistance
+              ? 1 - handDistance / APP_CONFIG.interaction.handHoverDistance
+              : 0;
+            const nearTarget = cameraDistance < APP_CONFIG.interaction.focusDistance
+              ? 1 - cameraDistance / APP_CONFIG.interaction.focusDistance
+              : 0;
             const selectedTarget = this.activeSelection && this.activeSelection.key === member.key ? 1 : 0;
 
             member.hoverAmount = THREE.MathUtils.lerp(member.hoverAmount, Math.max(hoverTarget, nearTarget * 0.56), 0.18);
@@ -1694,7 +1776,7 @@
             const appear = THREE.MathUtils.clamp((stageElapsed - member.appearDelay) / 0.7, 0, 1);
             member.visibleAmount = appear;
 
-            const forward = member.hoverAmount * 0.05 + member.selectedAmount * 0.08;
+            const forward = member.hoverAmount * 0.06 + member.selectedAmount * 0.1;
             member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.18);
             member.el.object3D.scale.setScalar(0.76 + appear * 0.24 + member.selectedAmount * 0.06);
             member.el.object3D.position.x = member.baseX;
@@ -1717,8 +1799,8 @@
               member.borderMesh.material.color.copy(glowColor);
               member.borderMesh.material.opacity = (0.12 + member.hoverAmount * 0.26 + member.selectedAmount * 0.26) * appear;
               member.borderEl.object3D.scale.set(
-                0.82 + member.hoverAmount * 0.05 + member.selectedAmount * 0.05,
-                1.16 + member.hoverAmount * 0.08 + member.selectedAmount * 0.08,
+                member.panelWidth / 0.62 + member.hoverAmount * 0.06 + member.selectedAmount * 0.08,
+                member.panelHeight / 0.62 + member.hoverAmount * 0.08 + member.selectedAmount * 0.1,
                 1
               );
             }
@@ -1735,7 +1817,7 @@
             member.badgeTextEl.setAttribute("value", isSelected ? "正在播放" : isCandidate ? "锁定目标" : "");
             member.badgeTextEl.setAttribute("visible", badgeOpacity > 0.01);
 
-            if (!this.activeSelection && cameraDistance < 1.85 && cameraDistance < closestPreviewDistance) {
+            if (!this.activeSelection && cameraDistance < APP_CONFIG.interaction.focusDistance && cameraDistance < closestPreviewDistance) {
               closestPreview = member;
               closestPreviewDistance = cameraDistance;
             }
@@ -1747,10 +1829,15 @@
                 this.candidateTarget = closestPreview;
                 this.candidateSince = now;
                 this.updateFocusHud(closestPreview, "preview");
-                this.setStatus(`${closestPreview.name} 已瞄准。再靠近一点即可自动播放，或者直接捏合锁定。`);
-              } else if (closestPreviewDistance < 1.25 && now - this.candidateSince > 320 && (!this.activeSelection || this.activeSelection.key !== closestPreview.key)) {
+                this.setStatus(`${closestPreview.name} 已瞄准。再靠近一点即可自动播放，或者直接用右手捏合锁定。`);
+              } else if (
+                now > this.previewCooldownUntil &&
+                closestPreviewDistance < APP_CONFIG.interaction.autoSelectDistance &&
+                now - this.candidateSince > APP_CONFIG.interaction.autoSelectHoldMs &&
+                (!this.activeSelection || this.activeSelection.key !== closestPreview.key)
+              ) {
                 this.playMemberAudio(closestPreview, "selected");
-                this.previewCooldownUntil = now + 900;
+                this.previewCooldownUntil = now + APP_CONFIG.interaction.replayCooldownMs;
               }
             } else {
               this.candidateTarget = null;
@@ -1758,7 +1845,11 @@
               this.updateFocusHud(null, null);
             }
 
-            if (this.previewTarget && closestPreview !== this.previewTarget && (!closestPreview || closestPreviewDistance > 2.05)) {
+            if (
+              this.previewTarget &&
+              closestPreview !== this.previewTarget &&
+              (!closestPreview || closestPreviewDistance > APP_CONFIG.interaction.releaseDistance)
+            ) {
               this.stopMemberAudio(true);
               this.restoreVideo();
             }
@@ -1886,7 +1977,7 @@
           this.demoIndex += 1;
           this.playMemberAudio(member, "selected");
           this.hideLaser();
-          this.setStatus(`桌面模式已切换到 ${member.name}。如果你在 Quest 3 中，请直接靠近面板并捏合测试。`);
+          this.setStatus(`桌面模式已切换到 ${member.name}。如果你在 Quest 3 中，请直接靠近卡片并用右手捏合测试。`);
         },
 
         resetExperience() {
@@ -1918,7 +2009,7 @@
             this.startBgmLoop();
           }
 
-          this.setStatus("场景已重置。你可以重新靠近成员面板测试空间音频，或再次捏合锁定。");
+          this.setStatus("场景已重置。你可以重新靠近成员卡片测试空间音频，或再次用右手捏合锁定。");
         },
 
         onEnterXR() {

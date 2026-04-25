@@ -17,22 +17,25 @@ const H = 720;
 const DECK_ID = "cw4145-final";
 const OUT_DIR = "E:\\unnc\\4145\\CW-A\\deliverables\\ppt_out";
 const REF_DIR = "E:\\unnc\\4145\\CW-A\\deliverables\\ppt_refs";
+const ASSET_DIR = "E:\\unnc\\4145\\CW-A\\assets";
 const SCRATCH_DIR = path.resolve(process.env.PPTX_SCRATCH_DIR || path.join("tmp", "slides", DECK_ID));
 const PREVIEW_DIR = path.join(SCRATCH_DIR, "preview");
 const VERIFICATION_DIR = path.join(SCRATCH_DIR, "verification");
 const INSPECT_PATH = path.join(SCRATCH_DIR, "inspect.ndjson");
 const MAX_RENDER_VERIFY_LOOPS = 3;
 
-const INK = "#101214";
-const GRAPHITE = "#30363A";
-const MUTED = "#687076";
-const PAPER = "#F7F4ED";
-const PAPER_96 = "#F7F4EDF5";
+const INK = "#F4FFF8";
+const GRAPHITE = "#C0D2C8";
+const MUTED = "#88A095";
+const PAPER = "#061110";
+const PAPER_96 = "#11201CF0";
 const WHITE = "#FFFFFF";
-const ACCENT = "#27C47D";
-const ACCENT_DARK = "#116B49";
-const GOLD = "#D7A83D";
-const CORAL = "#E86F5B";
+const ACCENT = "#D6E96B";
+const ACCENT_DARK = "#112014";
+const GOLD = "#FFD9A1";
+const CORAL = "#FFC4D9";
+const STROKE = "#7FA794";
+const PANEL_ALT = "#152523F2";
 const TRANSPARENT = "#00000000";
 
 const TITLE_FACE = "Caladea";
@@ -41,6 +44,12 @@ const MONO_FACE = "Aptos Mono";
 
 const FALLBACK_PLATE_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
+
+const HERO_IMAGES = [
+  path.join(ASSET_DIR, "photocard-kun.png"),
+  path.join(ASSET_DIR, "photocard-ten.png"),
+  path.join(ASSET_DIR, "yangyang.png"),
+];
 
 const SOURCES = {
   site: "Replace with your own lawn photos, field notes, and annotated campus map.",
@@ -530,15 +539,19 @@ async function addPlate(slide, slideNo, opacityPanel = false) {
       "fallback-data-url",
     );
   }
+  addShape(slide, "ellipse", 938, -104, 390, 390, "#D6E96B26", TRANSPARENT, 0, { slideNo, role: "ambient glow top" });
+  addShape(slide, "ellipse", -92, 492, 288, 288, "#FFC4D91A", TRANSPARENT, 0, { slideNo, role: "ambient glow bottom" });
+  addShape(slide, "roundRect", 26, 22, 1228, 676, TRANSPARENT, "#49645B", 1.1, { slideNo, role: "outer frame" });
+  addShape(slide, "rect", 0, 0, W, H, "#081413D6", TRANSPARENT, 0, { slideNo, role: "global tint overlay" });
   if (opacityPanel) {
-    addShape(slide, "rect", 0, 0, W, H, "#FFFFFFB8", TRANSPARENT, 0, { slideNo, role: "plate readability overlay" });
+    addShape(slide, "rect", 0, 0, W, H, "#081413A8", TRANSPARENT, 0, { slideNo, role: "plate readability overlay" });
   }
 }
 
 function addHeader(slide, slideNo, kicker, idx, total) {
   addText(slide, slideNo, String(kicker || "").toUpperCase(), 64, 34, 430, 24, {
     size: 13,
-    color: ACCENT_DARK,
+    color: ACCENT,
     bold: true,
     face: MONO_FACE,
     checkFit: false,
@@ -546,15 +559,15 @@ function addHeader(slide, slideNo, kicker, idx, total) {
   });
   addText(slide, slideNo, `${String(idx).padStart(2, "0")} / ${String(total).padStart(2, "0")}`, 1114, 34, 104, 24, {
     size: 13,
-    color: ACCENT_DARK,
+    color: GRAPHITE,
     bold: true,
     face: MONO_FACE,
     align: "right",
     checkFit: false,
     role: "header",
   });
-  addShape(slide, "rect", 64, 64, 1152, 2, INK, TRANSPARENT, 0, { slideNo, role: "header rule" });
-  addShape(slide, "ellipse", 57, 57, 16, 16, ACCENT, INK, 2, { slideNo, role: "header marker" });
+  addShape(slide, "rect", 64, 64, 1152, 2, "#4B645B", TRANSPARENT, 0, { slideNo, role: "header rule" });
+  addShape(slide, "ellipse", 57, 57, 16, 16, ACCENT, STROKE, 1.4, { slideNo, role: "header marker" });
 }
 
 function addTitleBlock(slide, slideNo, title, subtitle = null, x = 64, y = 86, w = 780, dark = false) {
@@ -578,7 +591,7 @@ function addTitleBlock(slide, slideNo, title, subtitle = null, x = 64, y = 86, w
 }
 
 function addIconBadge(slide, slideNo, x, y, accent = ACCENT, kind = "signal") {
-  addShape(slide, "ellipse", x, y, 54, 54, PAPER_96, INK, 1.2, { slideNo, role: "icon badge" });
+  addShape(slide, "ellipse", x, y, 54, 54, PANEL_ALT, STROKE, 1.2, { slideNo, role: "icon badge" });
   if (kind === "flow") {
     addShape(slide, "ellipse", x + 13, y + 18, 10, 10, accent, INK, 1, { slideNo, role: "icon glyph" });
     addShape(slide, "ellipse", x + 31, y + 27, 10, 10, accent, INK, 1, { slideNo, role: "icon glyph" });
@@ -594,7 +607,7 @@ function addIconBadge(slide, slideNo, x, y, accent = ACCENT, kind = "signal") {
   }
 }
 
-function addCard(slide, slideNo, x, y, w, h, label, body, { accent = ACCENT, fill = PAPER_96, line = INK, iconKind = "signal" } = {}) {
+function addCard(slide, slideNo, x, y, w, h, label, body, { accent = ACCENT, fill = PAPER_96, line = STROKE, iconKind = "signal" } = {}) {
   if (h < 156) {
     throw new Error(`Card is too short for editable pro-deck copy: height=${h.toFixed(1)}, minimum=156.`);
   }
@@ -603,7 +616,7 @@ function addCard(slide, slideNo, x, y, w, h, label, body, { accent = ACCENT, fil
   addIconBadge(slide, slideNo, x + 22, y + 24, accent, iconKind);
   addText(slide, slideNo, label, x + 88, y + 22, w - 108, 28, {
     size: 14,
-    color: ACCENT_DARK,
+    color: ACCENT,
     bold: true,
     face: MONO_FACE,
     role: "card label",
@@ -626,7 +639,7 @@ function addMetricCard(slide, slideNo, x, y, w, h, metric, label, note = null, a
   if (h < 132) {
     throw new Error(`Metric card is too short for editable pro-deck copy: height=${h.toFixed(1)}, minimum=132.`);
   }
-  addShape(slide, "roundRect", x, y, w, h, PAPER_96, INK, 1.2, { slideNo, role: `metric panel: ${label}` });
+  addShape(slide, "roundRect", x, y, w, h, PAPER_96, STROKE, 1.2, { slideNo, role: `metric panel: ${label}` });
   addShape(slide, "rect", x, y, w, 7, accent, TRANSPARENT, 0, { slideNo, role: `metric accent: ${label}` });
   addText(slide, slideNo, metric, x + 22, y + 24, w - 44, 54, {
     size: 34,
@@ -675,16 +688,49 @@ function addReferenceCaption(slide, slideNo) {
   );
 }
 
+async function addHeroCollage(slide, slideNo) {
+  const positions = [
+    { left: 824, top: 108, width: 188, height: 264, rotation: -9 },
+    { left: 986, top: 182, width: 176, height: 248, rotation: 8 },
+    { left: 876, top: 364, width: 236, height: 236, rotation: -4 },
+  ];
+
+  for (let i = 0; i < Math.min(HERO_IMAGES.length, positions.length); i += 1) {
+    const frame = positions[i];
+    const framePanel = addShape(slide, "roundRect", frame.left - 12, frame.top - 12, frame.width + 24, frame.height + 24, "#10201CE6", "#59786C", 1.1, {
+      slideNo,
+      role: `hero frame ${i + 1}`,
+    });
+    framePanel.position = { left: frame.left - 12, top: frame.top - 12, width: frame.width + 24, height: frame.height + 24, rotation: frame.rotation };
+    const accentBar = addShape(slide, "rect", frame.left - 12, frame.top - 12, frame.width + 24, 8, ACCENT, TRANSPARENT, 0, {
+      slideNo,
+      role: `hero accent ${i + 1}`,
+    });
+    accentBar.position = { left: frame.left - 12, top: frame.top - 12, width: frame.width + 24, height: 8, rotation: frame.rotation };
+    const image = await addImage(
+      slide,
+      slideNo,
+      { path: HERO_IMAGES[i], fit: "cover", alt: `Hero collage image ${i + 1}` },
+      { left: frame.left, top: frame.top, width: frame.width, height: frame.height, rotation: frame.rotation },
+      `hero image ${i + 1}`,
+      HERO_IMAGES[i],
+    );
+    image.geometry = "roundRect";
+  }
+}
+
 async function slideCover(presentation) {
   const slideNo = 1;
   const data = SLIDES[0];
   const slide = presentation.slides.add();
   await addPlate(slide, slideNo);
-  addShape(slide, "rect", 0, 0, W, H, "#FFFFFFCC", TRANSPARENT, 0, { slideNo, role: "cover contrast overlay" });
+  addShape(slide, "roundRect", 52, 76, 632, 566, "#0A1716D8", "#48655B", 1.2, { slideNo, role: "cover glass block" });
   addShape(slide, "rect", 64, 86, 7, 455, ACCENT, TRANSPARENT, 0, { slideNo, role: "cover accent rule" });
+  addShape(slide, "ellipse", 764, 74, 404, 404, "#D6E96B14", TRANSPARENT, 0, { slideNo, role: "cover halo" });
+  await addHeroCollage(slide, slideNo);
   addText(slide, slideNo, data.kicker, 86, 88, 520, 26, {
     size: 13,
-    color: ACCENT_DARK,
+    color: ACCENT,
     bold: true,
     face: MONO_FACE,
     role: "kicker",
