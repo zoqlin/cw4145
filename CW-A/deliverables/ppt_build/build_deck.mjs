@@ -51,6 +51,19 @@ const HERO_IMAGES = [
   path.join(ASSET_DIR, "yangyang.png"),
 ];
 
+const DECK_IMAGES = [
+  path.join(ASSET_DIR, "photocard-kun.png"),
+  path.join(ASSET_DIR, "photocard-ten.png"),
+  path.join(ASSET_DIR, "photocard-xj.png"),
+  path.join(ASSET_DIR, "photocard-yangyang.png"),
+  path.join(ASSET_DIR, "photocard-hgh.png"),
+  path.join(ASSET_DIR, "kun.png"),
+  path.join(ASSET_DIR, "ten.png"),
+  path.join(ASSET_DIR, "xj.png"),
+  path.join(ASSET_DIR, "yangyang.png"),
+  path.join(ASSET_DIR, "hgh.png"),
+];
+
 const SOURCES = {
   site: "Replace with your own lawn photos, field notes, and annotated campus map.",
   ideation: "Replace with your own MR creative card photos and iteration sketches.",
@@ -538,6 +551,18 @@ async function addPlate(slide, slideNo, opacityPanel = false) {
       "fallback art plate",
       "fallback-data-url",
     );
+    const fallbackImage = DECK_IMAGES[(slideNo - 1) % DECK_IMAGES.length];
+    if (await pathExists(fallbackImage)) {
+      await addImage(
+        slide,
+        slideNo,
+        { path: fallbackImage, fit: "cover", alt: `Fallback themed plate for slide ${slideNo}` },
+        { left: 672, top: 48, width: 560, height: 624 },
+        "fallback themed image",
+        fallbackImage,
+      );
+      addShape(slide, "rect", 640, 0, 640, 720, "#061110B4", TRANSPARENT, 0, { slideNo, role: "themed image veil" });
+    }
   }
   addShape(slide, "ellipse", 938, -104, 390, 390, "#D6E96B26", TRANSPARENT, 0, { slideNo, role: "ambient glow top" });
   addShape(slide, "ellipse", -92, 492, 288, 288, "#FFC4D91A", TRANSPARENT, 0, { slideNo, role: "ambient glow bottom" });
@@ -719,6 +744,46 @@ async function addHeroCollage(slide, slideNo) {
   }
 }
 
+function pickDeckImage(idx, offset = 0) {
+  return DECK_IMAGES[(idx - 1 + offset + DECK_IMAGES.length) % DECK_IMAGES.length];
+}
+
+async function addFramedImage(slide, slideNo, imagePath, x, y, w, h, { rotation = 0, accent = ACCENT, role = "feature image" } = {}) {
+  const panel = addShape(slide, "roundRect", x - 14, y - 14, w + 28, h + 28, "#0B1817EC", "#5D7D71", 1.1, {
+    slideNo,
+    role: `${role} frame`,
+  });
+  panel.position = { left: x - 14, top: y - 14, width: w + 28, height: h + 28, rotation };
+  const accentBar = addShape(slide, "rect", x - 14, y - 14, w + 28, 8, accent, TRANSPARENT, 0, {
+    slideNo,
+    role: `${role} accent`,
+  });
+  accentBar.position = { left: x - 14, top: y - 14, width: w + 28, height: 8, rotation };
+  const image = await addImage(
+    slide,
+    slideNo,
+    { path: imagePath, fit: "cover", alt: `${role} for slide ${slideNo}` },
+    { left: x, top: y, width: w, height: h, rotation },
+    role,
+    imagePath,
+  );
+  image.geometry = "roundRect";
+  return image;
+}
+
+function addPill(slide, slideNo, text, x, y, w, accent = ACCENT) {
+  addShape(slide, "roundRect", x, y, w, 36, "#122220F2", accent, 1.1, { slideNo, role: `pill ${text}` });
+  addText(slide, slideNo, text, x + 16, y + 8, w - 32, 18, {
+    size: 12,
+    color: accent,
+    bold: true,
+    face: MONO_FACE,
+    align: "center",
+    checkFit: false,
+    role: "pill text",
+  });
+}
+
 async function slideCover(presentation) {
   const slideNo = 1;
   const data = SLIDES[0];
@@ -786,6 +851,109 @@ async function slideCards(presentation, idx) {
   addNotes(slide, data.notes, data.sources);
 }
 
+async function slideSplitFeature(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  await addPlate(slide, idx);
+  addShape(slide, "roundRect", 48, 82, 596, 578, "#091514E8", "#4F6D62", 1.1, { slideNo: idx, role: "split feature left panel" });
+  addHeader(slide, idx, data.kicker, idx, SLIDES.length);
+  addTitleBlock(slide, idx, data.title, data.subtitle, 72, 104, 522);
+  addPill(slide, idx, data.expectedVisual || "Prototype highlight", 74, 246, 292, ACCENT);
+
+  const cards = data.cards?.length
+    ? data.cards
+    : [["Focus", "Add a stronger visual and conceptual message for this slide."]];
+  const stackTop = 318;
+  const visibleCards = cards.slice(0, 2);
+  const stackHeight = 326;
+  const cardGap = 14;
+  const cardHeight = (stackHeight - cardGap * Math.max(0, visibleCards.length - 1)) / visibleCards.length;
+  const accents = [ACCENT, GOLD, CORAL];
+  const iconKinds = ["signal", "flow", "layers"];
+  for (let i = 0; i < visibleCards.length; i += 1) {
+    const [label, body] = visibleCards[i];
+    addCard(slide, idx, 74, stackTop + i * (cardHeight + cardGap), 546, cardHeight, label, body, {
+      accent: accents[i % accents.length],
+      iconKind: iconKinds[i % iconKinds.length],
+    });
+  }
+
+  const featureImage = pickDeckImage(idx, 0);
+  const accentImage = pickDeckImage(idx, 2);
+  await addFramedImage(slide, idx, featureImage, 732, 108, 430, 414, {
+    rotation: -4,
+    accent: GOLD,
+    role: "split hero image",
+  });
+  await addFramedImage(slide, idx, accentImage, 808, 474, 254, 150, {
+    rotation: 6,
+    accent: CORAL,
+    role: "split detail image",
+  });
+  addShape(slide, "ellipse", 1100, 80, 96, 96, "#D6E96B24", TRANSPARENT, 0, { slideNo: idx, role: "split glow" });
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
+async function slideStoryboard(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  await addPlate(slide, idx);
+  addShape(slide, "rect", 0, 0, W, H, "#0814139C", TRANSPARENT, 0, { slideNo: idx, role: "storyboard veil" });
+  addHeader(slide, idx, data.kicker, idx, SLIDES.length);
+  addTitleBlock(slide, idx, data.title, data.subtitle, 64, 88, 830);
+  addPill(slide, idx, "Embodied Journey", 64, 228, 196, CORAL);
+  await addFramedImage(slide, idx, pickDeckImage(idx, 1), 978, 96, 196, 250, {
+    rotation: 7,
+    accent: ACCENT,
+    role: "storyboard portrait",
+  });
+
+  const cards = data.cards?.length
+    ? data.cards
+    : [
+        ["Step 1", "Replace with a concrete user action."],
+        ["Step 2", "Replace with the corresponding feedback."],
+        ["Step 3", "Replace with the design outcome."],
+      ];
+  const steps = cards.slice(0, 3);
+  const stepWidth = 332;
+  const y = 332;
+  const accents = [ACCENT, CORAL, GOLD];
+  for (let i = 0; i < steps.length; i += 1) {
+    const [label, body] = steps[i];
+    const x = 72 + i * 380;
+    addShape(slide, "ellipse", x + 8, 266, 54, 54, accents[i], TRANSPARENT, 0, { slideNo: idx, role: `storyboard node ${i + 1}` });
+    addText(slide, idx, `0${i + 1}`, x + 8, 281, 54, 18, {
+      size: 14,
+      color: PAPER,
+      bold: true,
+      face: MONO_FACE,
+      align: "center",
+      checkFit: false,
+      role: "storyboard node label",
+    });
+    if (i < steps.length - 1) {
+      addShape(slide, "rect", x + 64, 291, 300, 2, accents[i], TRANSPARENT, 0, { slideNo: idx, role: "storyboard connector" });
+    }
+    addCard(slide, idx, x, y, stepWidth, 224, label, body, {
+      accent: accents[i],
+      iconKind: i === 1 ? "flow" : i === 2 ? "layers" : "signal",
+    });
+  }
+
+  addShape(slide, "roundRect", 72, 592, 1136, 68, "#0C1A18E6", "#58776C", 1.1, { slideNo: idx, role: "storyboard footer panel" });
+  addText(slide, idx, data.notes || "Replace with the main narration cue for this slide.", 96, 614, 1088, 24, {
+    size: 13,
+    color: GRAPHITE,
+    face: BODY_FACE,
+    checkFit: false,
+    role: "storyboard footer text",
+  });
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
 async function slideMetrics(presentation, idx) {
   const data = SLIDES[idx - 1];
   const slide = presentation.slides.add();
@@ -807,6 +975,57 @@ async function slideMetrics(presentation, idx) {
   addNotes(slide, data.notes, data.sources);
 }
 
+async function slideMetricsFeature(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  await addPlate(slide, idx);
+  addShape(slide, "roundRect", 54, 82, 1172, 584, "#081413C8", "#4F6D62", 1.2, { slideNo: idx, role: "metrics feature base" });
+  addHeader(slide, idx, data.kicker, idx, SLIDES.length);
+  addTitleBlock(slide, idx, data.title, data.subtitle, 76, 100, 680);
+  await addFramedImage(slide, idx, pickDeckImage(idx, 3), 850, 108, 290, 232, {
+    rotation: 5,
+    accent: GOLD,
+    role: "metrics feature image",
+  });
+
+  const metrics = data.metrics || [
+    ["00", "Replace metric", "Source"],
+    ["00", "Replace metric", "Source"],
+    ["00", "Replace metric", "Source"],
+  ];
+  addShape(slide, "roundRect", 76, 254, 720, 76, "#0D1D1AE8", ACCENT, 1.1, { slideNo: idx, role: "metrics banner" });
+  addText(slide, idx, data.expectedVisual || "Use this slide to show evidence, comparison, or validation.", 104, 276, 664, 28, {
+    size: 16,
+    color: INK,
+    face: BODY_FACE,
+    checkFit: false,
+    role: "metrics banner text",
+  });
+
+  const accents = [ACCENT, CORAL, GOLD];
+  for (let i = 0; i < Math.min(3, metrics.length); i += 1) {
+    const [metric, label, note] = metrics[i];
+    addMetricCard(slide, idx, 84 + i * 360, 372, 320, 182, metric, label, note, accents[i % accents.length]);
+  }
+  addShape(slide, "roundRect", 834, 378, 320, 180, "#101F1DF0", "#5C7B70", 1.1, { slideNo: idx, role: "metrics side commentary" });
+  addText(slide, idx, "Why it matters", 858, 398, 220, 24, {
+    size: 14,
+    color: ACCENT,
+    bold: true,
+    face: MONO_FACE,
+    checkFit: false,
+    role: "metrics side title",
+  });
+  addText(slide, idx, data.notes || "Replace with the interpretation of these results.", 858, 440, 268, 96, {
+    size: 14,
+    color: INK,
+    face: BODY_FACE,
+    role: "metrics side text",
+  });
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
 async function createDeck() {
   await ensureDirs();
   if (!SLIDES.length) {
@@ -816,8 +1035,14 @@ async function createDeck() {
   await slideCover(presentation);
   for (let idx = 2; idx <= SLIDES.length; idx += 1) {
     const data = SLIDES[idx - 1];
-    if (data.metrics) {
+    if (data.metrics && idx % 2 === 0) {
+      await slideMetricsFeature(presentation, idx);
+    } else if (data.metrics) {
       await slideMetrics(presentation, idx);
+    } else if (idx % 3 === 0) {
+      await slideSplitFeature(presentation, idx);
+    } else if (idx % 3 === 1) {
+      await slideStoryboard(presentation, idx);
     } else {
       await slideCards(presentation, idx);
     }

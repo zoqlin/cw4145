@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Meta Quest 3 MR Idol Support Stage</title>
+  <title>WayV MR Cyber Altar</title>
   <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
   <style>
     :root {
-      --bg: rgba(4, 8, 10, 0.84);
-      --panel: rgba(7, 12, 11, 0.9);
-      --panel-soft: rgba(255, 255, 255, 0.06);
-      --text: #f7fff2;
-      --muted: rgba(240, 255, 236, 0.76);
-      --accent: #e1e668;
-      --accent-soft: #ffe9f5;
-      --border: rgba(225, 230, 104, 0.24);
-      --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+      --ink: #f6fff7;
+      --muted: rgba(235, 248, 240, 0.78);
+      --champagne: #e1e668;
+      --champagne-soft: rgba(225, 230, 104, 0.22);
+      --petal: #ffe6f1;
+      --glass: rgba(6, 14, 14, 0.78);
+      --glass-strong: rgba(5, 11, 10, 0.9);
+      --line: rgba(255, 255, 255, 0.1);
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+      --card-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
     }
 
     * {
@@ -24,66 +25,86 @@
 
     html,
     body {
-      margin: 0;
       width: 100%;
       height: 100%;
+      margin: 0;
       overflow: hidden;
       font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-      color: var(--text);
+      color: var(--ink);
       background:
-        radial-gradient(circle at top, rgba(225, 230, 104, 0.22), transparent 34%),
-        linear-gradient(180deg, #05090b 0%, #030405 100%);
+        radial-gradient(circle at top, rgba(225, 230, 104, 0.18), transparent 30%),
+        radial-gradient(circle at 85% 10%, rgba(255, 230, 241, 0.15), transparent 24%),
+        linear-gradient(180deg, #05090a 0%, #020304 100%);
     }
 
     #overlay {
       position: fixed;
       inset: 0;
-      padding: 18px;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
+      padding: 18px;
       pointer-events: none;
       z-index: 10;
     }
 
     .panel {
-      width: min(470px, calc(100vw - 24px));
-      padding: 20px;
-      border-radius: 26px;
+      width: min(420px, calc(100vw - 24px));
+      border-radius: 28px;
+      border: 1px solid var(--line);
       background:
-        linear-gradient(145deg, rgba(225, 230, 104, 0.18), rgba(8, 16, 15, 0.94) 26%, rgba(5, 10, 10, 0.96)),
-        var(--panel);
-      border: 1px solid var(--border);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        var(--glass);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(18px);
+      padding: 18px 18px 16px;
       pointer-events: auto;
-      transition: transform 160ms ease, width 160ms ease, padding 160ms ease;
+    }
+
+    body.is-xr #overlay {
+      padding: 12px;
     }
 
     body.is-xr .panel {
-      width: min(360px, calc(100vw - 20px));
-      padding: 16px;
+      width: min(360px, calc(100vw - 16px));
+      padding: 14px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(5, 10, 9, 0.78), rgba(5, 10, 9, 0.64)),
+        rgba(0, 0, 0, 0.18);
     }
 
-    .eyebrow {
+    .kicker {
       margin: 0 0 10px;
       font-size: 11px;
-      letter-spacing: 0.24em;
+      letter-spacing: 0.26em;
       text-transform: uppercase;
-      color: var(--accent-soft);
+      color: var(--petal);
     }
 
     h1 {
-      margin: 0 0 10px;
-      font-size: clamp(26px, 4vw, 34px);
-      line-height: 1.08;
+      margin: 0;
+      font-size: clamp(28px, 4.2vw, 36px);
+      line-height: 1.02;
+      letter-spacing: 0.01em;
+    }
+
+    .subline {
+      margin: 10px 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
     }
 
     #status {
       margin: 0 0 14px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.55;
     }
 
     .controls {
@@ -99,49 +120,65 @@
       border-radius: 16px;
       padding: 12px 14px;
       font: inherit;
-      color: var(--text);
+      color: var(--ink);
       cursor: pointer;
       background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
         rgba(255, 255, 255, 0.03);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-      transition: transform 120ms ease, background 120ms ease;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 8px 20px rgba(0, 0, 0, 0.14);
+      transition: transform 140ms ease, filter 140ms ease, background 140ms ease;
     }
 
     button:hover {
       transform: translateY(-1px);
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08)),
-        rgba(255, 255, 255, 0.05);
+      filter: brightness(1.05);
     }
 
     #startButton {
       grid-column: 1 / -1;
+      color: #11210a;
       font-weight: 700;
-      color: #102008;
       background:
-        linear-gradient(135deg, rgba(225, 230, 104, 0.96), rgba(255, 236, 246, 0.88));
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+        linear-gradient(135deg, rgba(225, 230, 104, 0.98), rgba(255, 230, 241, 0.9));
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+        0 12px 28px rgba(225, 230, 104, 0.18);
     }
 
     .tips {
       margin-bottom: 14px;
+      border-radius: 22px;
       padding: 14px;
-      border-radius: 18px;
-      background: var(--panel-soft);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+        rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .tips strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--champagne);
+    }
+
+    .tips div {
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     .tips div + div {
       margin-top: 8px;
     }
 
-    .cards {
+    .gallery {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -149,42 +186,55 @@
       margin: 0;
       padding: 10px;
       border-radius: 18px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--card-shadow);
     }
 
     figure img {
       display: block;
       width: 100%;
-      margin-bottom: 8px;
-      border-radius: 12px;
+      height: 108px;
+      border-radius: 14px;
       object-fit: cover;
-      aspect-ratio: 3 / 4;
+      margin-bottom: 8px;
     }
 
     figcaption {
-      font-size: 12px;
-      line-height: 1.45;
+      font-size: 11px;
+      line-height: 1.5;
       color: var(--muted);
     }
 
-    code {
-      font-family: Consolas, "SFMono-Regular", monospace;
+    .asset-media {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      left: -9999px;
+      top: -9999px;
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 620px) {
       #overlay {
-        padding: 12px;
+        padding: 10px;
       }
 
       .panel {
-        width: calc(100vw - 16px);
-        padding: 16px;
+        width: calc(100vw - 12px);
+        padding: 14px;
+        border-radius: 22px;
       }
 
-      .controls,
-      .cards {
-        grid-template-columns: 1fr;
+      .gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      figure img {
+        height: 96px;
       }
     }
   </style>
@@ -192,96 +242,126 @@
 <body>
   <div id="overlay">
     <div class="panel">
-      <p class="eyebrow">A-Frame / WebXR / Quest 3</p>
-      <h1>香槟绿 MR 应援舞台</h1>
+      <p class="kicker">Meta Quest 3 / A-Frame / WebXR</p>
+      <h1>WayV MR Cyber Altar</h1>
+      <p class="subline">
+        香槟绿主光、世界锁定舞台、右手应援棒、成员弧形阵列与大屏 MV 同时构成一个可表演的校园草地混合现实现场。
+      </p>
       <p id="status">
-        点击“开始体验”后，你前方会生成中央大屏与成员弧形阵列。靠近成员卡片会先出现锁定反馈，再自动播放对应音频；如果手势可用，也可以用右手直接捏合锁定。      </p>
+        点击“开始体验”后，舞台会固定在你前方。靠近成员卡片会自动切换成员语音，右手捏合会打出激光锁定并强化应援棒反馈。
+      </p>
 
       <div class="controls">
-        <button id="startButton">开始体验</button>
-        <button id="demoNextButton">桌面测试下一位</button>
-        <button id="resetButton">重置场景</button>
+        <button id="startButton" type="button">开始体验</button>
+        <button id="demoNextButton" type="button">桌面切换成员</button>
+        <button id="resetButton" type="button">重置舞台到正前方</button>
       </div>
 
       <div class="tips">
-        <div>推荐使用 Quest 3 的 Meta Browser，通过 <code>https://</code> 或 <code>localhost</code> 打开。</div>
-        <div>当前版本先优先保证“中央大屏 + 空间音频 + 右手捏合锁定”稳定可用，再逐步叠加复杂识别。</div>
-        <div>靠近成员卡片会先高亮并显示已瞄准，继续靠近会自动开始音频；同一时间只会播放一个成员音频，背景视频与 BGM 会自动降音量。</div>
+        <strong>Interaction Rules</strong>
+        <div>接近任一成员卡片约 2.3 米内，系统会自动锁定离你最近且在视野中的成员，并只播放这一位成员的语音。</div>
+        <div>切换到另一位成员时，之前的语音会立刻停止，不会再出现多音频叠加；同时 BGM 会自动降低，方便听清语音内容。</div>
+        <div>应援棒空闲态为白光，选中成员后才会染上该成员代表色，并随着语音和挥动动作产生更强的粒子与发光反馈。</div>
       </div>
 
-      <div class="cards">
+      <div class="gallery">
         <figure>
-          <img src="assets/photocard-kun.png" alt="KUN">
-          <figcaption>KUN 卡片与语音</figcaption>
+          <img src="assets/photocard-kun.png" alt="KUN photocard">
+          <figcaption>成员卡片保留统一比例，顶部展示图切换为另一张关联照片。</figcaption>
         </figure>
         <figure>
-          <img src="assets/photocard-ten.png" alt="TEN">
-          <figcaption>TEN 卡片与语音</figcaption>
+          <img src="assets/photocard-ten.png" alt="TEN photocard">
+          <figcaption>中央 MV 静音循环，独立 BGM 常驻播放，成员语音优先级最高。</figcaption>
         </figure>
         <figure>
-          <img src="assets/photocard-xj.png" alt="XIAOJUN">
-          <figcaption>XIAOJUN 卡片与语音</figcaption>
-        </figure>
-        <figure>
-          <img src="assets/photocard-yangyang.png" alt="YANGYANG">
-          <figcaption>YANGYANG 卡片与语音</figcaption>
-        </figure>
-        <figure>
-          <img src="assets/photocard-hgh.png" alt="HENDERY">
-          <figcaption>HENDERY 卡片与语音</figcaption>
+          <img src="assets/yangyang.png" alt="YANGYANG detail">
+          <figcaption>世界锁定舞台不会跟着玩家跑，必须在草坪空间中移动靠近它。</figcaption>
         </figure>
       </div>
     </div>
   </div>
 
   <a-scene
-    id="scene"
-    embedded
-    background="color: #040607"
-    renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true"
-    vr-mode-ui="enabled: false"
+    renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: false; sortObjects: true"
     xr-mode-ui="enabled: false"
-    webxr="referenceSpaceType: local-floor; requiredFeatures: local-floor; optionalFeatures: hand-tracking, dom-overlay; overlayElement: #overlay"
+    vr-mode-ui="enabled: false"
+    loading-screen="enabled: false"
+    background="color: #000000; transparent: true"
+    webxr="optionalFeatures: local-floor, bounded-floor, hand-tracking, layers, dom-overlay; overlayElement: #overlay"
     mr-idol-experience
   >
-    <a-assets timeout="20000">
-      <img id="grassTexture" src="assets/grass.jpg" crossorigin="anonymous">
-      <img id="kunArt" src="assets/photocard-kun.png" crossorigin="anonymous">
-      <img id="tenArt" src="assets/photocard-ten.png" crossorigin="anonymous">
-      <img id="xjArt" src="assets/photocard-xj.png" crossorigin="anonymous">
-      <img id="yangArt" src="assets/photocard-yangyang.png" crossorigin="anonymous">
-      <img id="hghArt" src="assets/photocard-hgh.png" crossorigin="anonymous">
-      <img id="kunDetailArt" src="assets/kun.png" crossorigin="anonymous">
-      <img id="tenDetailArt" src="assets/ten.png" crossorigin="anonymous">
-      <img id="xjDetailArt" src="assets/xj.png" crossorigin="anonymous">
-      <img id="yangDetailArt" src="assets/yangyang.png" crossorigin="anonymous">
-      <img id="hghDetailArt" src="assets/hgh.png" crossorigin="anonymous">
-      <video id="teaserVideo" src="assets/teaser-video.mp4" preload="auto" crossorigin="anonymous" playsinline webkit-playsinline loop></video>
-      <audio id="bgmTrack" src="assets/bgm.mp4" preload="auto" crossorigin="anonymous"></audio>
+    <a-assets timeout="15000">
+      <img id="grassTex" src="assets/grass.jpg" alt="">
+      <img id="kunArt" src="assets/photocard-kun.png" alt="">
+      <img id="tenArt" src="assets/photocard-ten.png" alt="">
+      <img id="xjArt" src="assets/photocard-xj.png" alt="">
+      <img id="yangArt" src="assets/photocard-yangyang.png" alt="">
+      <img id="hghArt" src="assets/photocard-hgh.png" alt="">
+
+      <img id="kunDetailArt" src="assets/kun.png" alt="">
+      <img id="tenDetailArt" src="assets/ten.png" alt="">
+      <img id="xjDetailArt" src="assets/xj.png" alt="">
+      <img id="yangDetailArt" src="assets/yangyang.png" alt="">
+      <img id="hghDetailArt" src="assets/hgh.png" alt="">
+
+      <video
+        id="teaserVideo"
+        class="asset-media"
+        src="assets/teaser-video.mp4"
+        playsinline
+        webkit-playsinline="true"
+        muted
+        loop
+        crossorigin="anonymous"
+        preload="auto"
+      ></video>
+
+      <video
+        id="bgmTrack"
+        class="asset-media"
+        src="assets/bgm.mp4"
+        playsinline
+        webkit-playsinline="true"
+        crossorigin="anonymous"
+        preload="auto"
+      ></video>
     </a-assets>
 
     <a-entity id="previewEnvironment">
-      <a-sky color="#0b1516"></a-sky>
       <a-plane
         rotation="-90 0 0"
-        width="32"
-        height="32"
-        material="src: #grassTexture; repeat: 10 10; roughness: 1; metalness: 0; side: double"
+        width="12"
+        height="12"
+        material="src: #grassTex; repeat: 10 10; roughness: 1; metalness: 0"
       ></a-plane>
-      <a-ring
-        position="0 0.02 0"
-        rotation="-90 0 0"
-        radius-inner="1.05"
-        radius-outer="1.32"
-        material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16"
-      ></a-ring>
-      <a-text
-        value="桌面预览模式\n点击开始体验"
-        align="center"
-        width="4.6"
-        color="#ffe9f5"
-        position="0 1.95 -2.3"
-      ></a-text>
+
+      <a-entity position="0 1.6 -2.6">
+        <a-plane
+          width="3.8"
+          height="2.05"
+          material="shader: flat; color: #0a1413; transparent: true; opacity: 0.9; side: double"
+        ></a-plane>
+        <a-plane
+          width="4.2"
+          height="2.3"
+          position="0 0 -0.04"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double"
+        ></a-plane>
+        <a-text
+          value="Desktop Preview Lawn"
+          align="center"
+          width="4"
+          color="#ffe6f1"
+          position="0 0.78 0.02"
+        ></a-text>
+        <a-text
+          value="Quest 3 passthrough will keep the real campus visible while this altar stays locked in space."
+          align="center"
+          width="3.6"
+          color="#f3fff6"
+          position="0 0.22 0.02"
+        ></a-text>
+      </a-entity>
     </a-entity>
 
     <a-entity id="rig" position="0 0 2.6">
@@ -290,52 +370,60 @@
 
     <a-entity
       id="leftHand"
-      hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffc4db; modelOpacity: 0.6"
-      pinch-input="hand: left"
-    >
-    </a-entity>
+      hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
+    ></a-entity>
 
     <a-entity
       id="rightHand"
-      hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #ffc4db; modelOpacity: 0.6"
+      hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
       pinch-input="hand: right"
-    >
-      <a-entity class="wand" support-wand="hand: right; sourceHand: #rightHand"></a-entity>
-    </a-entity>
+    ></a-entity>
+
+    <a-entity
+      id="rightWand"
+      class="wand"
+      support-wand="hand: right; sourceHand: #rightHand; fallbackTarget: #userCamera"
+    ></a-entity>
 
     <a-entity id="experienceRoot" visible="false">
-      <a-entity id="stageGlow" position="0 0.01 0">
+      <a-entity id="stageGlow" position="0 0.015 0">
         <a-ring
           rotation="-90 0 0"
-          radius-inner="0.96"
-          radius-outer="1.36"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.14; side: double"
+          radius-inner="0.9"
+          radius-outer="1.34"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
+        ></a-ring>
+        <a-ring
+          rotation="-90 0 0"
+          radius-inner="1.42"
+          radius-outer="1.58"
+          material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.08; side: double"
         ></a-ring>
       </a-entity>
 
-      <a-entity id="screenRig" position="0 1.52 0">
+      <a-entity id="screenRig" position="0 1.58 0.12">
         <a-plane
-          width="2.56"
-          height="1.54"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
+          width="2.7"
+          height="1.72"
+          material="shader: flat; color: #091211; transparent: true; opacity: 0.92; side: double"
         ></a-plane>
         <a-plane
           id="screenGlow"
-          width="2.72"
-          height="1.7"
+          width="2.96"
+          height="1.96"
           position="0 0 -0.02"
           material="shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double"
         ></a-plane>
         <a-plane
-          width="2.42"
-          height="1.4"
+          width="2.56"
+          height="1.54"
           position="0 0 0.01"
-          material="shader: flat; color: #091211; transparent: true; opacity: 0.92; side: double"
+          material="shader: flat; color: #050c0c; transparent: true; opacity: 0.96; side: double"
         ></a-plane>
         <a-video
           id="mainVideoScreen"
-          width="2.24"
-          height="1.26"
+          width="2.34"
+          height="1.315"
           position="0 0.03 0.02"
           src="#teaserVideo"
           material="shader: flat; side: double"
@@ -343,54 +431,52 @@
         <a-text
           value="WAYV CYBER ALTAR"
           align="center"
-          width="4.1"
-          color="#ffe9f5"
-          position="0 -0.86 0.03"
+          width="4.2"
+          color="#ffe6f1"
+          position="0 -0.91 0.03"
         ></a-text>
         <a-text
           id="focusLabel"
-          value="靠近任意成员卡片开始体验"
-          visible="true"
+          value="Move toward a member card to begin"
           align="center"
-          width="2.5"
-          color="#ffe9f5"
-          position="0 -1.06 0.03"
+          width="2.8"
+          color="#ffe6f1"
+          position="0 -1.08 0.03"
         ></a-text>
       </a-entity>
 
-      <a-entity id="memberArc"></a-entity>
       <a-entity id="selectionBillboard" visible="false">
         <a-plane
           id="selectionPhotoGlow"
-          width="0.62"
-          height="0.82"
+          width="0.68"
+          height="0.88"
           position="0 0 -0.02"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.14; side: double"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.15; side: double"
         ></a-plane>
         <a-plane
           id="selectionPhotoBacking"
-          width="0.56"
-          height="0.76"
+          width="0.58"
+          height="0.78"
           material="shader: flat; color: #071211; transparent: true; opacity: 0.92; side: double"
         ></a-plane>
         <a-ring
           id="selectionPhotoRing"
-          radius-inner="0.28"
+          radius-inner="0.29"
           radius-outer="0.315"
-          position="0 0.03 -0.004"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.28; side: double"
+          position="0 0.03 -0.006"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.3; side: double"
         ></a-ring>
         <a-ring
           id="selectionPhotoRingOuter"
-          radius-inner="0.35"
-          radius-outer="0.366"
-          position="0 0.03 -0.01"
-          material="shader: flat; color: #ffe9f5; transparent: true; opacity: 0.12; side: double"
+          radius-inner="0.37"
+          radius-outer="0.384"
+          position="0 0.03 -0.012"
+          material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.12; side: double"
         ></a-ring>
         <a-image
           id="selectionPhoto"
-          width="0.48"
-          height="0.64"
+          width="0.52"
+          height="0.68"
           position="0 0.02 0.02"
           material="shader: flat; side: double; transparent: true"
         ></a-image>
@@ -398,36 +484,40 @@
           id="selectionCaption"
           value=""
           align="center"
-          width="1.6"
-          color="#ffe9f5"
-          position="0 -0.46 0.02"
+          width="1.8"
+          color="#ffe6f1"
+          position="0 -0.48 0.02"
         ></a-text>
       </a-entity>
+
       <a-entity id="selectionGroundCue" visible="false">
         <a-ring
           id="selectionGroundRing"
           rotation="-90 0 0"
-          radius-inner="0.16"
-          radius-outer="0.22"
-          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.4; side: double"
+          radius-inner="0.18"
+          radius-outer="0.245"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.42; side: double"
         ></a-ring>
       </a-entity>
+
       <a-entity id="selectionBeam" visible="false">
         <a-cone
           id="selectionBeamCone"
-          radius-bottom="0.28"
+          radius-bottom="0.32"
           radius-top="0.02"
-          height="2.2"
+          height="2.4"
           material="shader: flat; color: #e1e668; transparent: true; opacity: 0.1; side: double"
         ></a-cone>
       </a-entity>
+
+      <a-entity id="memberArc"></a-entity>
     </a-entity>
 
     <a-entity id="laserLine" visible="false"></a-entity>
 
-    <a-light type="ambient" intensity="0.7" color="#ffffff"></a-light>
-    <a-light type="directional" intensity="0.95" color="#fffad8" position="1.2 3 1.6"></a-light>
-    <a-light type="point" intensity="0.5" color="#e1e668" position="0 2 -1.2" distance="6"></a-light>
+    <a-light type="ambient" intensity="0.9" color="#f8fff9"></a-light>
+    <a-light type="directional" intensity="0.9" color="#fffce4" position="1.2 3 1.4"></a-light>
+    <a-light type="point" intensity="0.6" color="#e1e668" position="0 2.2 -0.8" distance="6"></a-light>
   </a-scene>
 
   <script>
@@ -435,51 +525,49 @@
       const APP_CONFIG = {
         colors: {
           accent: "#e1e668",
-          accentSoft: "#ffe9f5",
+          accentSoft: "#ffe6f1",
           panel: "#091211",
-          line: "#e1e668",
-          inactive: "#f7fbf2"
+          inactive: "#ffffff"
         },
         video: {
           baseVolume: 0,
-          duckedVolume: 0,
-          muted: true
+          duckedVolume: 0
         },
         bgm: {
-          baseVolume: 0.22,
-          duckedVolume: 0.06
+          baseVolume: 0.18,
+          duckedVolume: 0.045
         },
         voices: {
-          previewVolume: 0.7,
-          selectedVolume: 1
+          selectedVolume: 0.98
         },
         interaction: {
-          handHoverDistance: 0.48,
-          focusDistance: 2.15,
-          autoSelectDistance: 1.72,
+          handHoverDistance: 0.56,
+          focusDistance: 3.2,
+          autoSelectDistance: 2.36,
           autoSelectHoldMs: 220,
-          releaseDistance: 2.32,
-          replayCooldownMs: 1100
+          switchHoldMs: 160,
+          replayCooldownMs: 650,
+          maxViewAngleDeg: 70
         },
         layout: {
-          memberArcDegrees: 68,
-          memberArcRadiusX: 1.5,
-          memberArcDepth: 0.6,
-          memberBaseY: 0.72,
-          cardImageHeight: 0.54,
-          cardPaddingX: 0.08,
-          cardPaddingY: 0.09,
-          topPhotoHeight: 0.7
+          memberArcDegrees: 72,
+          memberArcRadiusX: 1.72,
+          memberArcDepth: 0.68,
+          memberBaseY: 0.68,
+          cardWidth: 0.48,
+          cardHeight: 0.68,
+          cardImageWidth: 0.38,
+          cardImageHeight: 0.56,
+          topPhotoHeight: 0.74
         },
         stage: {
-          distance: 2.05,
-          screenHeight: 1.52
+          distance: 2.25
         },
         members: [
           {
             key: "kun",
             name: "KUN",
-            color: "#f2f59f",
+            color: "#ffffff",
             imageId: "kunArt",
             detailImageId: "kunDetailArt",
             audioSrc: "assets/voice-kun.mp3"
@@ -487,7 +575,7 @@
           {
             key: "ten",
             name: "TEN",
-            color: "#ffd2ef",
+            color: "#ffd6ef",
             imageId: "tenArt",
             detailImageId: "tenDetailArt",
             audioSrc: "assets/voice-ten.mp4"
@@ -495,7 +583,7 @@
           {
             key: "xj",
             name: "XIAOJUN",
-            color: "#c6f0a5",
+            color: "#c8f3ab",
             imageId: "xjArt",
             detailImageId: "xjDetailArt",
             audioSrc: "assets/voice-xj.mp3"
@@ -525,19 +613,20 @@
           this.items = [];
           const geometry = new THREE.IcosahedronGeometry(1, 0);
 
-          for (let i = 0; i < 96; i += 1) {
+          for (let i = 0; i < 100; i += 1) {
             const material = new THREE.MeshBasicMaterial({
               color: APP_CONFIG.colors.accent,
               transparent: true,
               opacity: 0,
               blending: THREE.AdditiveBlending,
-              depthWrite: false
+              depthWrite: false,
+              depthTest: false
             });
 
             const mesh = new THREE.Mesh(geometry, material);
             mesh.visible = false;
-            mesh.renderOrder = 10;
-            this.el.object3D.add(mesh);
+            mesh.renderOrder = 220;
+            this.sceneEl.object3D.add(mesh);
 
             this.items.push({
               mesh,
@@ -551,28 +640,28 @@
         },
 
         spawn(position, motion, intensity, color) {
-          const count = intensity > 0.75 ? 3 : intensity > 0.38 ? 2 : 1;
+          const count = intensity > 0.78 ? 3 : intensity > 0.42 ? 2 : 1;
 
           for (let i = 0; i < count; i += 1) {
             const item = this.items[this.cursor % this.items.length];
             this.cursor += 1;
 
-            const spread = 0.014 + intensity * 0.032;
+            const spread = 0.012 + intensity * 0.034;
             item.mesh.visible = true;
             item.mesh.position.copy(position);
             item.mesh.position.x += (Math.random() - 0.5) * spread;
             item.mesh.position.y += (Math.random() - 0.5) * spread;
             item.mesh.position.z += (Math.random() - 0.5) * spread;
-            item.baseScale = 0.018 + intensity * 0.04 + Math.random() * 0.012;
+            item.baseScale = 0.016 + intensity * 0.042 + Math.random() * 0.012;
             item.mesh.scale.setScalar(item.baseScale);
             item.material.color.copy(color);
-            item.material.opacity = 0.58;
+            item.material.opacity = 0.55;
 
             item.velocity.copy(motion).multiplyScalar(-0.16);
-            item.velocity.x += (Math.random() - 0.5) * 0.2;
-            item.velocity.y += Math.random() * 0.18;
-            item.velocity.z += (Math.random() - 0.5) * 0.2;
-            item.life = 0.24 + intensity * 0.52 + Math.random() * 0.08;
+            item.velocity.x += (Math.random() - 0.5) * 0.18;
+            item.velocity.y += 0.04 + Math.random() * 0.16;
+            item.velocity.z += (Math.random() - 0.5) * 0.18;
+            item.life = 0.26 + intensity * 0.52 + Math.random() * 0.08;
             item.maxLife = item.life;
           }
         },
@@ -596,19 +685,16 @@
 
             const life01 = item.life / item.maxLife;
             item.mesh.position.addScaledVector(item.velocity, dt);
-            item.velocity.multiplyScalar(0.96);
-            item.mesh.scale.setScalar(item.baseScale + (1 - life01) * 0.06);
-            item.material.opacity = Math.pow(life01, 1.8) * 0.62;
+            item.velocity.multiplyScalar(0.965);
+            item.mesh.scale.setScalar(item.baseScale + (1 - life01) * 0.055);
+            item.material.opacity = Math.pow(life01, 1.85) * 0.62;
           }
         }
       });
 
       AFRAME.registerComponent("pinch-input", {
         dependencies: ["hand-tracking-controls"],
-
-        schema: {
-          hand: { default: "left" }
-        },
+        schema: { hand: { default: "right" } },
 
         init() {
           this.onPinchStarted = this.onPinchStarted.bind(this);
@@ -650,35 +736,39 @@
       AFRAME.registerComponent("support-wand", {
         schema: {
           hand: { default: "right" },
-          sourceHand: { type: "selector" }
+          sourceHand: { type: "selector" },
+          fallbackTarget: { type: "selector" }
         },
 
         init() {
-          this.sourceHandEl = this.data.sourceHand || this.el.parentEl;
-          this.baseColor = new THREE.Color("#f7fbf2");
-          this.activeColor = new THREE.Color(APP_CONFIG.colors.accent);
-          this.mixColor = new THREE.Color(APP_CONFIG.colors.accent);
-          this.white = new THREE.Color("#ffffff");
-          this.trailColor = new THREE.Color(APP_CONFIG.colors.accent);
+          this.sourceHandEl = this.data.sourceHand;
+          this.fallbackTargetEl = this.data.fallbackTarget;
+          this.baseColor = new THREE.Color("#ffffff");
+          this.glowColor = new THREE.Color("#ffffff");
           this.tipWorld = new THREE.Vector3();
           this.lastTipWorld = new THREE.Vector3();
           this.motion = new THREE.Vector3();
-          this.ready = false;
-          this.speed = 0;
-          this.energyTarget = 0;
-          this.energyValue = 0;
-          this.trailAccumulator = 0;
-          this.overlayPrepared = false;
-
-          const isLeft = this.data.hand === "left";
-          this.el.object3D.position.set(isLeft ? -0.05 : 0.05, -0.03, -0.02);
-          this.el.object3D.rotation.set(
+          this.anchorPosition = new THREE.Vector3();
+          this.anchorQuaternion = new THREE.Quaternion();
+          this.offset = new THREE.Vector3(0.05, -0.035, -0.018);
+          this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
+          this.handRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             THREE.MathUtils.degToRad(14),
             0,
-            THREE.MathUtils.degToRad(isLeft ? -18 : 18)
-          );
-          this.el.object3D.scale.setScalar(1.08);
-
+            THREE.MathUtils.degToRad(18)
+          ));
+          this.fallbackRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            THREE.MathUtils.degToRad(-10),
+            THREE.MathUtils.degToRad(-12),
+            THREE.MathUtils.degToRad(18)
+          ));
+          this.ready = false;
+          this.speed = 0;
+          this.energyTarget = 0.12;
+          this.energyValue = 0.12;
+          this.trailAccumulator = 0;
+          this.overlayPrepared = false;
+          this.handTracked = false;
           this.buildMesh();
         },
 
@@ -690,15 +780,15 @@
           rod.setAttribute("radius", "0.016");
           rod.setAttribute("height", "0.42");
           rod.setAttribute("position", "0 0.05 0");
-          rod.setAttribute("material", "color: #fbfcfa; roughness: 0.22; metalness: 0.18; emissive: #dce68a; emissiveIntensity: 0.45");
+          rod.setAttribute("material", "color: #fbfcfa; roughness: 0.18; metalness: 0.24; emissive: #ffffff; emissiveIntensity: 0.32");
           root.appendChild(rod);
 
           const grip = document.createElement("a-cylinder");
           grip.setAttribute("class", "wand-grip");
           grip.setAttribute("radius", "0.018");
           grip.setAttribute("height", "0.12");
-          grip.setAttribute("position", "0 -0.02 0");
-          grip.setAttribute("material", "color: #f6f8f3; roughness: 0.6; metalness: 0.06; emissive: #bfc77d; emissiveIntensity: 0.16");
+          grip.setAttribute("position", "0 -0.03 0");
+          grip.setAttribute("material", "color: #f1f3f6; roughness: 0.56; metalness: 0.08; emissive: #ffffff; emissiveIntensity: 0.08");
           root.appendChild(grip);
 
           const cap = document.createElement("a-cylinder");
@@ -706,7 +796,7 @@
           cap.setAttribute("radius", "0.021");
           cap.setAttribute("height", "0.036");
           cap.setAttribute("position", "0 0.245 0");
-          cap.setAttribute("material", "color: #ffffff; roughness: 0.2; metalness: 0.2");
+          cap.setAttribute("material", "color: #ffffff; roughness: 0.16; metalness: 0.24");
           root.appendChild(cap);
 
           const leftArm = document.createElement("a-box");
@@ -716,7 +806,7 @@
           leftArm.setAttribute("depth", "0.03");
           leftArm.setAttribute("position", "-0.055 0.355 0");
           leftArm.setAttribute("rotation", "0 0 34");
-          leftArm.setAttribute("material", "color: #e1e668; roughness: 0.14; metalness: 0.08; emissive: #e1e668; emissiveIntensity: 2.8");
+          leftArm.setAttribute("material", "color: #ffffff; roughness: 0.14; metalness: 0.08; emissive: #ffffff; emissiveIntensity: 1.8");
           root.appendChild(leftArm);
 
           const rightArm = document.createElement("a-box");
@@ -726,7 +816,7 @@
           rightArm.setAttribute("depth", "0.03");
           rightArm.setAttribute("position", "0.055 0.355 0");
           rightArm.setAttribute("rotation", "0 0 -34");
-          rightArm.setAttribute("material", "color: #e1e668; roughness: 0.14; metalness: 0.08; emissive: #e1e668; emissiveIntensity: 2.8");
+          rightArm.setAttribute("material", "color: #ffffff; roughness: 0.14; metalness: 0.08; emissive: #ffffff; emissiveIntensity: 1.8");
           root.appendChild(rightArm);
 
           const leftHalo = document.createElement("a-plane");
@@ -735,7 +825,7 @@
           leftHalo.setAttribute("height", "0.18");
           leftHalo.setAttribute("position", "-0.055 0.355 -0.018");
           leftHalo.setAttribute("rotation", "0 0 34");
-          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.12; side: double");
+          leftHalo.setAttribute("material", "shader: flat; color: #ffffff; transparent: true; opacity: 0.08; side: double");
           root.appendChild(leftHalo);
 
           const rightHalo = document.createElement("a-plane");
@@ -744,7 +834,7 @@
           rightHalo.setAttribute("height", "0.18");
           rightHalo.setAttribute("position", "0.055 0.355 -0.018");
           rightHalo.setAttribute("rotation", "0 0 -34");
-          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.12; side: double");
+          rightHalo.setAttribute("material", "shader: flat; color: #ffffff; transparent: true; opacity: 0.08; side: double");
           root.appendChild(rightHalo);
 
           const tip = document.createElement("a-entity");
@@ -755,7 +845,7 @@
           const light = document.createElement("a-entity");
           light.setAttribute("class", "wand-light");
           light.setAttribute("position", "0 0.35 0");
-          light.setAttribute("light", "type: point; color: #e1e668; intensity: 1.35; distance: 1.1; decay: 1.6");
+          light.setAttribute("light", "type: point; color: #ffffff; intensity: 1.15; distance: 1.05; decay: 1.6");
           root.appendChild(light);
 
           this.bodyEl = rod;
@@ -764,15 +854,11 @@
           this.haloEls = [leftHalo, rightHalo];
           this.tipEl = tip;
           this.lightEl = light;
-          this.bodyMesh = null;
-          this.gripMesh = null;
-          this.armMeshes = [];
-          this.haloMeshes = [];
+          this.el.object3D.scale.setScalar(1.08);
         },
 
         setActiveColor(color) {
-          this.activeColor.set(color || APP_CONFIG.colors.accent);
-          this.trailColor.copy(this.activeColor);
+          this.glowColor.set(color || "#ffffff");
         },
 
         setEnergy(value) {
@@ -780,32 +866,24 @@
         },
 
         updateMeshes() {
-          if (!this.bodyMesh && this.bodyEl) {
-            this.bodyMesh = this.bodyEl.getObject3D("mesh");
+          this.bodyMesh = this.bodyMesh || this.bodyEl.getObject3D("mesh");
+          this.gripMesh = this.gripMesh || this.gripEl.getObject3D("mesh");
+          if (!this.armMeshes) {
+            this.armMeshes = [];
           }
-
-          if (!this.gripMesh && this.gripEl) {
-            this.gripMesh = this.gripEl.getObject3D("mesh");
-          }
-
           if (!this.armMeshes.length) {
             this.armMeshes = this.armEls.map((el) => el.getObject3D("mesh")).filter(Boolean);
           }
-
+          if (!this.haloMeshes) {
+            this.haloMeshes = [];
+          }
           if (!this.haloMeshes.length) {
             this.haloMeshes = this.haloEls.map((el) => el.getObject3D("mesh")).filter(Boolean);
           }
-
           if (!this.overlayPrepared) {
-            const overlayMeshes = [
-              this.bodyMesh,
-              this.gripMesh,
-              ...this.armMeshes,
-              ...this.haloMeshes
-            ].filter(Boolean);
-
-            overlayMeshes.forEach((mesh, index) => {
-              mesh.renderOrder = 200 + index;
+            const meshes = [this.bodyMesh, this.gripMesh, ...(this.armMeshes || []), ...(this.haloMeshes || [])].filter(Boolean);
+            meshes.forEach((mesh, index) => {
+              mesh.renderOrder = 250 + index;
               if (mesh.material) {
                 mesh.material.transparent = true;
                 mesh.material.depthTest = false;
@@ -813,23 +891,49 @@
                 mesh.material.needsUpdate = true;
               }
             });
-
-            this.overlayPrepared = overlayMeshes.length > 0;
+            this.overlayPrepared = meshes.length > 0;
           }
         },
 
-        tick(time, delta) {
+        updateAnchorPose() {
           const sourceVisible = !!(this.sourceHandEl && this.sourceHandEl.object3D.visible !== false);
-          this.el.object3D.visible = sourceVisible;
+          if (sourceVisible) {
+            this.sourceHandEl.object3D.getWorldPosition(this.anchorPosition);
+            this.sourceHandEl.object3D.getWorldQuaternion(this.anchorQuaternion);
+            this.anchorPosition.add(this.offset.clone().applyQuaternion(this.anchorQuaternion));
+            this.anchorQuaternion.multiply(this.handRotation);
+            this.handTracked = true;
+            return;
+          }
 
+          const target = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+          if (!target) {
+            return;
+          }
+
+          target.getWorldPosition(this.anchorPosition);
+          target.getWorldQuaternion(this.anchorQuaternion);
+          this.anchorPosition.add(this.fallbackOffset.clone().applyQuaternion(this.anchorQuaternion));
+          this.anchorQuaternion.multiply(this.fallbackRotation);
+          this.handTracked = false;
+        },
+
+        tick(time, delta) {
+          if (!delta) {
+            return;
+          }
+
+          this.updateAnchorPose();
+          this.el.object3D.visible = true;
+          this.el.object3D.position.copy(this.anchorPosition);
+          this.el.object3D.quaternion.copy(this.anchorQuaternion);
           this.updateMeshes();
-          if (!delta || !this.tipEl || !sourceVisible) {
-            this.ready = false;
+
+          if (!this.tipEl) {
             return;
           }
 
           this.tipEl.object3D.getWorldPosition(this.tipWorld);
-
           if (!this.ready) {
             this.lastTipWorld.copy(this.tipWorld);
             this.ready = true;
@@ -838,62 +942,57 @@
 
           const dt = delta / 1000;
           this.motion.subVectors(this.tipWorld, this.lastTipWorld);
-          const instantSpeed = this.motion.length() / Math.max(dt, 0.0001);
-          this.speed = THREE.MathUtils.lerp(this.speed, instantSpeed, 0.2);
+          this.speed = THREE.MathUtils.lerp(this.speed, this.motion.length() / Math.max(dt, 0.0001), 0.22);
           this.lastTipWorld.copy(this.tipWorld);
 
           this.energyValue = THREE.MathUtils.lerp(this.energyValue, this.energyTarget, 0.18);
           this.energyTarget *= 0.988;
-
-          const motion01 = THREE.MathUtils.clamp(this.speed / 2.0, 0, 1);
-          const combined = Math.min(1, Math.max(this.energyValue, motion01 * 0.8));
-          const flashMix = Math.min(1, motion01 * 0.16 + this.energyValue * 0.86);
-          this.mixColor.copy(this.baseColor).lerp(this.activeColor, flashMix);
+          const motion01 = THREE.MathUtils.clamp(this.speed / 2.2, 0, 1);
+          const combined = Math.min(1, Math.max(this.energyValue, motion01 * 0.82));
 
           if (this.bodyMesh && this.bodyMesh.material.emissive) {
             this.bodyMesh.material.color.set("#fbfcfa");
-            this.bodyMesh.material.emissive.copy(this.mixColor);
-            this.bodyMesh.material.emissiveIntensity = 0.22 + combined * 1.15;
+            this.bodyMesh.material.emissive.set("#ffffff");
+            this.bodyMesh.material.emissiveIntensity = 0.22 + combined * 0.85;
           }
-
           if (this.gripMesh && this.gripMesh.material.emissive) {
-            this.gripMesh.material.emissive.copy(this.mixColor);
-            this.gripMesh.material.emissiveIntensity = 0.08 + combined * 0.5;
+            this.gripMesh.material.emissive.set("#ffffff");
+            this.gripMesh.material.emissiveIntensity = 0.05 + combined * 0.24;
           }
-
-          for (const armMesh of this.armMeshes) {
+          for (const armMesh of this.armMeshes || []) {
             if (!armMesh.material.emissive) {
               continue;
             }
-
-            armMesh.material.color.copy(this.mixColor).lerp(this.white, 0.12);
-            armMesh.material.emissive.copy(this.mixColor);
-            armMesh.material.emissiveIntensity = 2.0 + combined * 5.4;
+            armMesh.material.color.set("#ffffff");
+            armMesh.material.emissive.copy(this.glowColor).lerp(new THREE.Color("#ffffff"), 0.52);
+            armMesh.material.emissiveIntensity = 1.2 + combined * 3.4;
           }
-
-          for (let i = 0; i < this.haloMeshes.length; i += 1) {
+          for (let i = 0; i < (this.haloMeshes || []).length; i += 1) {
             const haloMesh = this.haloMeshes[i];
             const haloEl = this.haloEls[i];
             if (!haloMesh || !haloEl) {
               continue;
             }
-
-            haloMesh.material.color.copy(this.mixColor);
-            haloMesh.material.opacity = 0.06 + combined * 0.26;
-            haloEl.object3D.scale.setScalar(1 + combined * 0.62 + Math.sin(time * 0.012) * 0.04);
+            haloMesh.material.color.copy(this.glowColor).lerp(new THREE.Color("#ffffff"), 0.34);
+            haloMesh.material.opacity = 0.03 + combined * 0.22;
+            haloEl.object3D.scale.setScalar(1 + combined * 0.56 + Math.sin(time * 0.012) * 0.04);
           }
 
           const light = this.lightEl ? this.lightEl.getObject3D("light") : null;
           if (light) {
-            light.color.copy(this.mixColor);
-            light.intensity = 0.9 + combined * 4.2;
-            light.distance = 0.9 + combined * 1.4;
+            light.color.copy(this.glowColor).lerp(new THREE.Color("#ffffff"), 0.32);
+            light.intensity = 0.85 + combined * 3.4;
+            light.distance = 0.95 + combined * 1.4;
           }
 
           this.trailAccumulator += delta;
-          const spawnInterval = combined > 0.72 ? 18 : 36;
-          if (combined > 0.08 && this.trailAccumulator >= spawnInterval) {
-            this.el.sceneEl.systems["trail-pool"].spawn(this.tipWorld, this.motion, combined, this.trailColor);
+          const spawnInterval = combined > 0.72 ? 18 : 34;
+          if (combined > 0.1 && this.trailAccumulator >= spawnInterval) {
+            const motion = this.motion.clone();
+            if (!this.handTracked) {
+              motion.multiplyScalar(0.18);
+            }
+            this.el.sceneEl.systems["trail-pool"].spawn(this.tipWorld, motion, combined, this.glowColor);
             this.trailAccumulator = 0;
           }
         }
@@ -925,62 +1024,57 @@
           this.videoEl = document.getElementById("teaserVideo");
           this.bgmEl = document.getElementById("bgmTrack");
 
-          this.audioEl = document.createElement("audio");
-          this.audioEl.preload = "auto";
-          this.audioEl.crossOrigin = "anonymous";
-          this.audioEl.setAttribute("playsinline", "playsinline");
-          this.audioEl.style.display = "none";
-          document.body.appendChild(this.audioEl);
+          this.voiceAudioEl = document.createElement("audio");
+          this.voiceAudioEl.className = "asset-media";
+          this.voiceAudioEl.preload = "auto";
+          this.voiceAudioEl.crossOrigin = "anonymous";
+          this.voiceAudioEl.setAttribute("playsinline", "playsinline");
+          document.body.appendChild(this.voiceAudioEl);
+
+          this.voiceVideoEl = document.createElement("video");
+          this.voiceVideoEl.className = "asset-media";
+          this.voiceVideoEl.preload = "auto";
+          this.voiceVideoEl.crossOrigin = "anonymous";
+          this.voiceVideoEl.setAttribute("playsinline", "playsinline");
+          this.voiceVideoEl.setAttribute("webkit-playsinline", "true");
+          document.body.appendChild(this.voiceVideoEl);
 
           this.members = [];
           this.memberMap = new Map();
           this.hoveredByHand = { left: null, right: null };
           this.pinchingHands = { left: false, right: false };
           this.activeSelection = null;
-          this.previewTarget = null;
           this.candidateTarget = null;
           this.candidateSince = 0;
-          this.activeHand = null;
-          this.activeHandEl = null;
+          this.currentVoiceEl = null;
+          this.currentVoiceOwner = null;
           this.previewCooldownUntil = 0;
           this.started = false;
           this.preparing = false;
           this.demoIndex = 0;
-          this.stageYaw = 0;
           this.stageStartedAt = 0;
           this.cameraPosition = new THREE.Vector3();
           this.cameraDirection = new THREE.Vector3();
           this.cameraForwardFlat = new THREE.Vector3();
           this.tempWorld = new THREE.Vector3();
           this.tempWorldB = new THREE.Vector3();
-          this.tempLocal = new THREE.Vector3();
-          this.tempQuaternion = new THREE.Quaternion();
-          this.lastHandWorld = {
-            left: new THREE.Vector3(),
-            right: new THREE.Vector3()
-          };
-          this.handWorld = {
-            left: new THREE.Vector3(),
-            right: new THREE.Vector3()
-          };
-          this.handSpeed = {
-            left: 0,
-            right: 0
-          };
-          this.handHasPose = {
-            left: false,
-            right: false
-          };
+          this.handWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
+          this.lastHandWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
+          this.handSpeed = { left: 0, right: 0 };
+          this.handHasPose = { left: false, right: false };
           this.lastWaveBurstAt = 0;
+          this.activeHand = null;
+          this.activeHandEl = null;
 
-          this.onAudioEnded = this.onAudioEnded.bind(this);
+          this.onVoiceEnded = this.onVoiceEnded.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
           this.onExitXR = this.onExitXR.bind(this);
           this.startExperience = this.startExperience.bind(this);
           this.resetExperience = this.resetExperience.bind(this);
           this.demoNextMember = this.demoNextMember.bind(this);
 
-          this.audioEl.addEventListener("ended", this.onAudioEnded);
+          this.voiceAudioEl.addEventListener("ended", this.onVoiceEnded);
+          this.voiceVideoEl.addEventListener("ended", this.onVoiceEnded);
           this.startButton.addEventListener("click", this.startExperience);
           this.demoNextButton.addEventListener("click", this.demoNextMember);
           this.resetButton.addEventListener("click", this.resetExperience);
@@ -989,34 +1083,19 @@
 
           this.initAudio();
           this.buildMemberPanels();
-          this.setStatus("点击“开始体验”后，系统会在你前方生成固定在草地空间中的中央大屏和成员弧形阵列。");
+          this.updateFocusHud(null, null);
+          this.setStatus("点击“开始体验”后，舞台会固定在你正前方。靠近成员卡片即可自动切换语音。");
         },
 
         initAudio() {
-          const listener = this.el.audioListener || new THREE.AudioListener();
-          this.el.audioListener = listener;
-
-          const attachListener = () => {
-            const camera = this.el.camera || document.getElementById("userCamera").getObject3D("camera");
-            if (camera && listener.parent !== camera) {
-              camera.add(listener);
-            }
-          };
-
-          if (this.el.camera) {
-            attachListener();
-          } else {
-            this.el.addEventListener("camera-set-active", attachListener, { once: true });
-          }
-
-          this.spatialSound = new THREE.PositionalAudio(listener);
-          this.spatialSound.setRefDistance(0.45);
-          this.spatialSound.setRolloffFactor(1.42);
-          this.spatialSound.setMaxDistance(5.8);
-          this.spatialSound.setDistanceModel("exponential");
-          this.spatialSound.setVolume(1);
-          this.spatialSound.setMediaElementSource(this.audioEl);
-          this.audioAnalyser = new THREE.AudioAnalyser(this.spatialSound, 32);
+          this.videoEl.muted = true;
+          this.videoEl.volume = 0;
+          this.bgmEl.volume = 0;
+          this.bgmEl.muted = false;
+          this.voiceAudioEl.volume = 0;
+          this.voiceAudioEl.muted = false;
+          this.voiceVideoEl.volume = 0;
+          this.voiceVideoEl.muted = false;
         },
 
         buildMemberPanels() {
@@ -1029,43 +1108,41 @@
           const baseY = APP_CONFIG.layout.memberBaseY;
           const radiusX = APP_CONFIG.layout.memberArcRadiusX;
           const depth = APP_CONFIG.layout.memberArcDepth;
+          const panelWidth = APP_CONFIG.layout.cardWidth;
+          const panelHeight = APP_CONFIG.layout.cardHeight;
+          const artWidth = APP_CONFIG.layout.cardImageWidth;
+          const artHeight = APP_CONFIG.layout.cardImageHeight;
+          const glowWidth = panelWidth + 0.1;
+          const glowHeight = panelHeight + 0.1;
 
           APP_CONFIG.members.forEach((member, index) => {
             const ratio = count === 1 ? 0.5 : index / (count - 1);
             const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-maxAngle, maxAngle, ratio));
             const x = Math.sin(angle) * radiusX;
-            const z = depth - Math.cos(angle) * 0.22;
-            const imageAspect = this.getAssetAspect(member.imageId, 0.72);
-            const detailAspect = this.getAssetAspect(member.detailImageId || member.imageId, imageAspect);
-            const artHeight = APP_CONFIG.layout.cardImageHeight;
-            const artWidth = THREE.MathUtils.clamp(artHeight * imageAspect, 0.26, 0.48);
-            const panelWidth = artWidth + APP_CONFIG.layout.cardPaddingX * 2;
-            const panelHeight = artHeight + APP_CONFIG.layout.cardPaddingY * 2 + 0.1;
-            const glowWidth = panelWidth + 0.08;
-            const glowHeight = panelHeight + 0.08;
+            const z = depth - Math.cos(angle) * 0.24;
+            const detailAspect = this.getAssetAspect(member.detailImageId || member.imageId, 0.72);
+
             const cardEl = document.createElement("a-entity");
             cardEl.setAttribute("position", `${x.toFixed(4)} ${baseY.toFixed(4)} ${z.toFixed(4)}`);
-            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle) * 0.38).toFixed(2)} 0`);
-            cardEl.object3D.visible = true;
+            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle) * 0.34).toFixed(2)} 0`);
 
             const glow = document.createElement("a-plane");
             glow.setAttribute("width", glowWidth.toFixed(3));
             glow.setAttribute("height", glowHeight.toFixed(3));
-            glow.setAttribute("position", "0 0 -0.018");
-            glow.setAttribute("material", `shader: flat; color: ${APP_CONFIG.colors.accent}; transparent: true; opacity: 0.12; side: double`);
+            glow.setAttribute("position", "0 0 -0.02");
+            glow.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
             cardEl.appendChild(glow);
 
             const panel = document.createElement("a-plane");
             panel.setAttribute("width", panelWidth.toFixed(3));
             panel.setAttribute("height", panelHeight.toFixed(3));
-            panel.setAttribute("material", "shader: flat; color: #081312; transparent: true; opacity: 0.84; side: double");
+            panel.setAttribute("material", "shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double");
             cardEl.appendChild(panel);
 
             const border = document.createElement("a-ring");
-            border.setAttribute("rotation", "0 0 0");
             border.setAttribute("radius-inner", "0.3");
-            border.setAttribute("radius-outer", "0.314");
-            border.setAttribute("material", `shader: flat; color: ${APP_CONFIG.colors.accent}; transparent: true; opacity: 0.14; side: double`);
+            border.setAttribute("radius-outer", "0.312");
+            border.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double");
             border.object3D.scale.set(panelWidth / 0.62, panelHeight / 0.62, 1);
             cardEl.appendChild(border);
 
@@ -1086,8 +1163,8 @@
             cardEl.appendChild(name);
 
             const badge = document.createElement("a-plane");
-            badge.setAttribute("width", "0.28");
-            badge.setAttribute("height", "0.07");
+            badge.setAttribute("width", "0.33");
+            badge.setAttribute("height", "0.072");
             badge.setAttribute("position", "0 0.43 0.03");
             badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double");
             cardEl.appendChild(badge);
@@ -1095,7 +1172,7 @@
             const badgeText = document.createElement("a-text");
             badgeText.setAttribute("value", "");
             badgeText.setAttribute("align", "center");
-            badgeText.setAttribute("width", "0.9");
+            badgeText.setAttribute("width", "1");
             badgeText.setAttribute("position", "0 0.415 0.04");
             badgeText.setAttribute("color", "#081312");
             badgeText.setAttribute("visible", "false");
@@ -1114,22 +1191,14 @@
               baseX: x,
               baseY,
               baseZ: z,
-              glowMesh: null,
-              panelMesh: null,
-              borderMesh: null,
-              badgeMesh: null,
-              appearDelay: index * 0.12,
-              imageAspect,
-              detailAspect,
-              artWidth,
-              artHeight,
               panelWidth,
               panelHeight,
+              detailAspect,
+              appearDelay: index * 0.1,
               hoverAmount: 0,
               selectedAmount: 0,
               visibleAmount: 0,
-              forwardOffset: 0,
-              proximityAudioPlayedAt: 0
+              forwardOffset: 0
             };
 
             this.memberArcEl.appendChild(cardEl);
@@ -1142,51 +1211,8 @@
           this.statusEl.textContent = text;
         },
 
-        updateFocusHud(member, mode) {
-          if (!this.focusLabelEl || !this.selectionBillboardEl || !this.selectionPhotoEl || !this.selectionCaptionEl) {
-            return;
-          }
-
-          if (!member) {
-            this.selectionBillboardEl.object3D.visible = false;
-            this.focusLabelEl.setAttribute("value", "靠近任意成员卡片开始体验");
-            this.focusLabelEl.setAttribute("color", APP_CONFIG.colors.accentSoft);
-            this.focusLabelEl.setAttribute("visible", "true");
-            return;
-          }
-
-          this.selectionBillboardEl.object3D.visible = true;
-          this.selectionPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
-          const topPhotoHeight = APP_CONFIG.layout.topPhotoHeight;
-          const topPhotoWidth = THREE.MathUtils.clamp(topPhotoHeight * (member.detailAspect || 0.72), 0.42, 0.88);
-          this.selectionPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
-          this.selectionPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
-          if (this.selectionPhotoGlowEl) {
-            this.selectionPhotoGlowEl.setAttribute("width", (topPhotoWidth + 0.14).toFixed(3));
-            this.selectionPhotoGlowEl.setAttribute("height", (topPhotoHeight + 0.18).toFixed(3));
-            this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.16; side: double`);
-          }
-          if (this.selectionPhotoBackingEl) {
-            this.selectionPhotoBackingEl.setAttribute("width", (topPhotoWidth + 0.08).toFixed(3));
-            this.selectionPhotoBackingEl.setAttribute("height", (topPhotoHeight + 0.1).toFixed(3));
-          }
-          if (this.selectionPhotoRingEl) {
-            this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${mode === "selected" ? 0.34 : 0.22}; side: double`);
-            this.selectionPhotoRingEl.object3D.scale.set(topPhotoWidth / 0.56, topPhotoHeight / 0.56, 1);
-          }
-          if (this.selectionPhotoRingOuterEl) {
-            this.selectionPhotoRingOuterEl.object3D.scale.set((topPhotoWidth + 0.12) / 0.72, (topPhotoHeight + 0.12) / 0.72, 1);
-          }
-          this.selectionCaptionEl.setAttribute("value", mode === "selected" ? `${member.name} HIGHLIGHT` : `${member.name} TARGET`);
-          this.selectionCaptionEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
-          this.focusLabelEl.setAttribute(
-            "value",
-            mode === "selected"
-              ? `${member.name} 正在播放音频`
-              : `${member.name} 已锁定目标`
-          );
-          this.focusLabelEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
-          this.focusLabelEl.setAttribute("visible", "true");
+        getVoiceElementForMember(member) {
+          return /\.mp4($|\?)/i.test(member.audioSrc) ? this.voiceVideoEl : this.voiceAudioEl;
         },
 
         getCameraPose() {
@@ -1214,7 +1240,6 @@
           if (!handEl || handEl.object3D.visible === false) {
             return false;
           }
-
           handEl.object3D.getWorldPosition(target);
           if (!Number.isFinite(target.x) || !Number.isFinite(target.y) || !Number.isFinite(target.z)) {
             return false;
@@ -1229,8 +1254,51 @@
           if (!assetEl || !assetEl.naturalWidth || !assetEl.naturalHeight) {
             return fallback;
           }
-
           return assetEl.naturalWidth / assetEl.naturalHeight;
+        },
+
+        fadeMediaVolume(mediaEl, from, to, duration = 220, done) {
+          if (!mediaEl) {
+            if (done) {
+              done();
+            }
+            return;
+          }
+
+          mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
+          const seq = mediaEl.__fadeSeq;
+          mediaEl.volume = from;
+          const startedAt = performance.now();
+
+          const step = () => {
+            if (mediaEl.__fadeSeq !== seq) {
+              return;
+            }
+            const t = THREE.MathUtils.clamp((performance.now() - startedAt) / duration, 0, 1);
+            mediaEl.volume = THREE.MathUtils.lerp(from, to, t);
+            if (t < 1) {
+              requestAnimationFrame(step);
+              return;
+            }
+            mediaEl.volume = to;
+            if (done) {
+              done();
+            }
+          };
+
+          requestAnimationFrame(step);
+        },
+
+        setBgmVolume(volume) {
+          this.bgmEl.volume = THREE.MathUtils.clamp(volume, 0, 1);
+        },
+
+        duckBgm() {
+          this.setBgmVolume(APP_CONFIG.bgm.duckedVolume);
+        },
+
+        restoreBgm() {
+          this.setBgmVolume(APP_CONFIG.bgm.baseVolume);
         },
 
         updateVideoVolume(volume) {
@@ -1245,85 +1313,39 @@
           this.updateVideoVolume(APP_CONFIG.video.baseVolume);
         },
 
-        setBgmVolume(volume) {
-          if (!this.bgmEl) {
-            return;
-          }
-
-          this.bgmEl.volume = THREE.MathUtils.clamp(volume, 0, 1);
-        },
-
-        duckBgm() {
-          this.setBgmVolume(APP_CONFIG.bgm.duckedVolume);
-        },
-
-        restoreBgm() {
-          this.setBgmVolume(APP_CONFIG.bgm.baseVolume);
-        },
-
-        fadeMediaVolume(mediaEl, from, to, duration = 260, done) {
+        async primeSingleMedia(mediaEl) {
           if (!mediaEl) {
-            if (done) {
-              done();
-            }
             return;
           }
 
-          mediaEl.volume = from;
-          const startedAt = performance.now();
-          const step = () => {
-            const t = THREE.MathUtils.clamp((performance.now() - startedAt) / duration, 0, 1);
-            mediaEl.volume = THREE.MathUtils.lerp(from, to, t);
-            if (t < 1) {
-              requestAnimationFrame(step);
-              return;
-            }
+          const oldMuted = mediaEl.muted;
+          const oldVolume = mediaEl.volume;
+          mediaEl.muted = true;
+          mediaEl.volume = 0;
 
-            mediaEl.volume = to;
-            if (done) {
-              done();
+          try {
+            const playPromise = mediaEl.play();
+            if (playPromise && playPromise.catch) {
+              await playPromise.catch(() => {});
             }
-          };
+          } catch (error) {
+          }
 
-          requestAnimationFrame(step);
+          try {
+            mediaEl.pause();
+            mediaEl.currentTime = 0;
+          } catch (error) {
+          }
+
+          mediaEl.muted = oldMuted;
+          mediaEl.volume = oldVolume;
         },
 
         async primeMedia() {
-          if (this.spatialSound && this.spatialSound.context && this.spatialSound.context.resume) {
-            await this.spatialSound.context.resume().catch(() => {});
-          }
-
-          if (this.bgmEl) {
-            this.bgmEl.muted = true;
-            try {
-              await this.bgmEl.play();
-            } catch (error) {
-            }
-            this.bgmEl.pause();
-            this.bgmEl.currentTime = 0;
-            this.bgmEl.muted = false;
-          }
-
-          this.videoEl.muted = true;
-          this.videoEl.volume = 0;
-          try {
-            await this.videoEl.play();
-          } catch (error) {
-          }
-          this.videoEl.pause();
-          this.videoEl.currentTime = 0;
-          this.videoEl.muted = APP_CONFIG.video.muted;
-          this.videoEl.volume = APP_CONFIG.video.baseVolume;
-
-          this.audioEl.muted = true;
-          this.audioEl.src = APP_CONFIG.members[0].audioSrc;
-          try {
-            await this.audioEl.play();
-          } catch (error) {
-          }
-          this.audioEl.pause();
-          this.audioEl.currentTime = 0;
-          this.audioEl.muted = false;
+          await this.primeSingleMedia(this.videoEl);
+          await this.primeSingleMedia(this.bgmEl);
+          await this.primeSingleMedia(this.voiceAudioEl);
+          await this.primeSingleMedia(this.voiceVideoEl);
         },
 
         async startExperience() {
@@ -1335,11 +1357,11 @@
           try {
             await this.primeMedia();
 
-            if (navigator.xr && window.isSecureContext) {
+            if (navigator.xr && window.isSecureContext && this.el.enterAR) {
               try {
                 const supported = await navigator.xr.isSessionSupported("immersive-ar");
                 if (supported && !this.el.is("ar-mode")) {
-                  this.setStatus("姝ｅ湪璇锋眰 Quest 3 閫忚 MR 浼氳瘽...");
+                  this.setStatus("正在请求 Quest 3 透视 MR 会话...");
                   await this.el.enterAR();
                 }
               } catch (error) {
@@ -1347,13 +1369,14 @@
             }
 
             this.positionStageInFront();
-            await this.startVideoLoop();
-            await this.startBgmLoop();
-            this.started = true;
-            this.stageStartedAt = performance.now();
             this.stageRootEl.object3D.visible = true;
             this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
-            this.setStatus("舞台已生成。靠近成员卡片即可自动选中并播放音频，也可以捏合右手进行锁定。");
+            this.started = true;
+            this.stageStartedAt = performance.now();
+            await this.startVideoLoop();
+            await this.startBgmLoop();
+            this.updateWandsForState();
+            this.setStatus("舞台已固定在正前方。向成员卡片走近即可自动播放语音，右手捏合会打出激光锁定。");
           } finally {
             this.preparing = false;
           }
@@ -1372,16 +1395,17 @@
           this.stageRootEl.object3D.position.copy(this.tempWorld);
 
           this.tempWorldB.copy(this.cameraPosition);
-          this.tempWorldB.y = 0;
+          this.tempWorldB.y = 1.55;
           this.stageRootEl.object3D.lookAt(this.tempWorldB);
           this.stageRootEl.object3D.rotation.x = 0;
           this.stageRootEl.object3D.rotation.z = 0;
+          this.stageRootEl.object3D.rotation.y += Math.PI;
         },
 
         async startVideoLoop() {
           this.videoEl.loop = true;
+          this.videoEl.muted = true;
           this.videoEl.currentTime = 0;
-          this.videoEl.muted = APP_CONFIG.video.muted;
           this.restoreVideo();
           const promise = this.videoEl.play();
           if (promise && promise.catch) {
@@ -1390,10 +1414,6 @@
         },
 
         async startBgmLoop() {
-          if (!this.bgmEl) {
-            return;
-          }
-
           this.bgmEl.loop = true;
           this.bgmEl.currentTime = 0;
           this.bgmEl.volume = 0;
@@ -1401,143 +1421,119 @@
           if (promise && promise.catch) {
             promise.catch(() => {});
           }
-          this.fadeMediaVolume(this.bgmEl, 0, APP_CONFIG.bgm.baseVolume, 500);
+          this.fadeMediaVolume(this.bgmEl, 0, APP_CONFIG.bgm.baseVolume, 380);
         },
 
-        attachAudioToMember(member) {
+        stopVoiceImmediate() {
+          for (const mediaEl of [this.voiceAudioEl, this.voiceVideoEl]) {
+            mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
+            try {
+              mediaEl.pause();
+              mediaEl.currentTime = 0;
+            } catch (error) {
+            }
+            mediaEl.volume = 0;
+          }
+          this.currentVoiceEl = null;
+          this.currentVoiceOwner = null;
+        },
+
+        clearSelectionState() {
+          this.activeSelection = null;
+          this.activeHand = null;
+          this.activeHandEl = null;
+          this.hideLaser();
+          this.restoreBgm();
+          this.restoreVideo();
+          this.updateFocusHud(this.candidateTarget, this.candidateTarget ? "preview" : null);
+          this.updateWandsForState();
+        },
+
+        selectMember(member, reason = "proximity") {
           if (!member) {
             return;
           }
 
-          if (this.spatialSound.parent !== member.el.object3D) {
-            member.el.object3D.add(this.spatialSound);
-          }
-          this.spatialSound.position.set(0, 0.06, 0.04);
-        },
-
-        playMemberAudio(member, mode) {
-          if (!member) {
+          if (this.currentVoiceOwner && this.currentVoiceOwner.key === member.key && this.currentVoiceEl && !this.currentVoiceEl.paused) {
+            this.activeSelection = member;
+            this.candidateTarget = member;
+            this.updateFocusHud(member, "selected");
+            this.updateWandsForState();
             return;
           }
 
-          this.stopMemberAudio(false);
-          this.attachAudioToMember(member);
-
-          if (this.audioEl.src !== new URL(member.audioSrc, window.location.href).href) {
-            this.audioEl.src = member.audioSrc;
-            this.audioEl.load();
-          } else {
-            this.audioEl.currentTime = 0;
-          }
-
-          this.previewTarget = mode === "preview" ? member : null;
-          this.activeSelection = mode === "selected" ? member : null;
+          this.stopVoiceImmediate();
+          this.activeSelection = member;
           this.candidateTarget = member;
           this.candidateSince = performance.now();
-          this.audioEl.loop = false;
-          this.audioEl.volume = 0;
-          this.audioEl.currentTime = 0;
-          this.duckVideo();
-          if (mode === "selected") {
-            this.duckBgm();
+          this.currentVoiceEl = this.getVoiceElementForMember(member);
+          this.currentVoiceOwner = member;
+
+          const absoluteSrc = new URL(member.audioSrc, window.location.href).href;
+          if (this.currentVoiceEl.src !== absoluteSrc) {
+            this.currentVoiceEl.src = member.audioSrc;
+            this.currentVoiceEl.load();
           } else {
-            this.setBgmVolume(0.12);
-          }
-          this.updateFocusHud(member, mode);
-
-          if (this.spatialSound && this.spatialSound.context && this.spatialSound.context.resume) {
-            this.spatialSound.context.resume().catch(() => {});
+            this.currentVoiceEl.currentTime = 0;
           }
 
-          const promise = this.audioEl.play();
-          if (promise && promise.catch) {
-            promise.catch(() => {
-              this.setStatus(`${member.name} 已被选中，但浏览器暂时拦截了音频。请再次点击“开始体验”后重试。`);
+          this.currentVoiceEl.loop = false;
+          this.currentVoiceEl.muted = false;
+          this.currentVoiceEl.volume = 0;
+          this.currentVoiceEl.currentTime = 0;
+          this.duckBgm();
+          this.duckVideo();
+          this.updateFocusHud(member, "selected");
+          this.updateWandsForState();
+
+          const playPromise = this.currentVoiceEl.play();
+          if (playPromise && playPromise.catch) {
+            playPromise.catch(() => {
+              this.setStatus(`${member.name} 已锁定，但浏览器阻止了语音播放。请再次点击“开始体验”后重试。`);
             });
           }
-          this.fadeMediaVolume(
-            this.audioEl,
-            0,
-            mode === "selected" ? APP_CONFIG.voices.selectedVolume : APP_CONFIG.voices.previewVolume,
-            320
-          );
 
-          this.updateWandsForState();
+          this.fadeMediaVolume(this.currentVoiceEl, 0, APP_CONFIG.voices.selectedVolume, 160);
+          this.setStatus(`${member.name} 已进入 NOW PLAYING，当前只会播放这一位成员的语音。`);
 
-          if (mode === "preview") {
-            this.setStatus(`${member.name} 已瞄准。继续靠近或直接捏合，即可开始播放该成员音频。`);
-          } else {
-            this.setStatus(`${member.name} 已锁定。当前只播放这一位成员的音频，中央视频与 BGM 音量已自动降低。`);
+          if (reason === "pinch" && this.activeHandEl) {
+            this.showLaserFromHandToMember(this.activeHandEl, member);
           }
         },
 
-        stopMemberAudio(clearSelection = true) {
-          this.audioEl.pause();
-          this.audioEl.currentTime = 0;
-          this.previewTarget = null;
-          if (clearSelection) {
-            this.activeSelection = null;
-            this.candidateTarget = null;
-            this.candidateSince = 0;
-            this.activeHand = null;
-            this.activeHandEl = null;
-          }
-
-          if (!this.activeSelection) {
-            this.restoreVideo();
-            this.restoreBgm();
-          }
-
-          this.updateFocusHud(this.activeSelection || this.candidateTarget, this.activeSelection ? "selected" : "preview");
-          this.updateWandsForState();
-        },
-
-        fadeOutAudioAndClear() {
-          if (this.audioEl.paused && !this.activeSelection) {
-            this.restoreVideo();
+        updateFocusHud(member, mode) {
+          if (!member) {
+            this.selectionBillboardEl.object3D.visible = false;
+            this.focusLabelEl.setAttribute("value", "Move toward a member card to begin");
+            this.focusLabelEl.setAttribute("color", APP_CONFIG.colors.accentSoft);
             return;
           }
 
-          const startVolume = this.audioEl.volume;
-          const startedAt = performance.now();
-          const duration = 260;
+          const isSelected = mode === "selected";
+          const topPhotoHeight = APP_CONFIG.layout.topPhotoHeight;
+          const topPhotoWidth = THREE.MathUtils.clamp(topPhotoHeight * (member.detailAspect || 0.72), 0.46, 0.88);
 
-          const step = () => {
-            const elapsed = performance.now() - startedAt;
-            const t = THREE.MathUtils.clamp(elapsed / duration, 0, 1);
-            this.audioEl.volume = THREE.MathUtils.lerp(startVolume, 0, t);
-            if (t < 1 && this.activeSelection) {
-              requestAnimationFrame(step);
-              return;
-            }
-
-            this.audioEl.volume = 1;
-            this.stopMemberAudio(true);
-            this.hideLaser();
-            this.restoreBgm();
-            this.setStatus("连线已解除，应援棒回到呼吸灯待机状态。");
-          };
-
-          requestAnimationFrame(step);
+          this.selectionBillboardEl.object3D.visible = true;
+          this.selectionPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
+          this.selectionPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
+          this.selectionPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
+          this.selectionPhotoGlowEl.setAttribute("width", (topPhotoWidth + 0.14).toFixed(3));
+          this.selectionPhotoGlowEl.setAttribute("height", (topPhotoHeight + 0.18).toFixed(3));
+          this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.18 : 0.11}; side: double`);
+          this.selectionPhotoBackingEl.setAttribute("width", (topPhotoWidth + 0.08).toFixed(3));
+          this.selectionPhotoBackingEl.setAttribute("height", (topPhotoHeight + 0.1).toFixed(3));
+          this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.36 : 0.22}; side: double`);
+          this.selectionPhotoRingEl.object3D.scale.set(topPhotoWidth / 0.58, topPhotoHeight / 0.58, 1);
+          this.selectionPhotoRingOuterEl.object3D.scale.set((topPhotoWidth + 0.12) / 0.74, (topPhotoHeight + 0.12) / 0.74, 1);
+          this.selectionCaptionEl.setAttribute("value", isSelected ? `${member.name} NOW PLAYING` : `${member.name} TARGET LOCKED`);
+          this.selectionCaptionEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accentSoft);
+          this.focusLabelEl.setAttribute("value", isSelected ? `${member.name} NOW PLAYING` : `${member.name} TARGET LOCKED`);
+          this.focusLabelEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accentSoft);
         },
 
         updateWandsForState() {
-          const color = this.activeSelection
-            ? this.activeSelection.color
-            : this.previewTarget
-              ? this.previewTarget.color
-              : this.candidateTarget
-                ? this.candidateTarget.color
-              : APP_CONFIG.colors.accent;
-
-          const energy = this.activeSelection
-            ? 1
-            : this.previewTarget
-              ? 0.34
-              : this.candidateTarget
-                ? 0.2
-              : 0.12;
-
+          const color = this.activeSelection ? this.activeSelection.color : this.candidateTarget ? this.candidateTarget.color : "#ffffff";
+          const energy = this.activeSelection ? 1 : this.candidateTarget ? 0.28 : 0.12;
           document.querySelectorAll(".wand").forEach((el) => {
             const component = el.components["support-wand"];
             if (!component) {
@@ -1548,74 +1544,44 @@
           });
         },
 
-        findBestTargetForHand(hand) {
-          const hoveredKey = this.hoveredByHand[hand];
-          if (hoveredKey && this.memberMap.has(hoveredKey)) {
-            return this.memberMap.get(hoveredKey);
-          }
-
-          const handPos = this.handWorld[hand];
-          let best = null;
-          let bestDistance = Infinity;
-
-          for (const member of this.members) {
-            member.el.object3D.getWorldPosition(this.tempWorld);
-            const distance = handPos.distanceTo(this.tempWorld);
-            if (distance < 0.45 && distance < bestDistance) {
-              best = member;
-              bestDistance = distance;
-            }
-          }
-
-          return best;
-        },
-
         handlePinchStart(hand, handEl, pinchPosition) {
-          if (!this.started) {
+          if (!this.started || hand !== "right") {
             return;
           }
 
           this.pinchingHands[hand] = true;
+          this.activeHand = hand;
+          this.activeHandEl = handEl;
           if (pinchPosition) {
             this.handWorld[hand].copy(pinchPosition);
           } else {
             this.getHandWorldPosition(hand, this.handWorld[hand]);
           }
 
-          const target = this.findBestTargetForHand(hand) || this.previewTarget;
+          const target = this.hoveredByHand[hand] ? this.memberMap.get(this.hoveredByHand[hand]) : this.candidateTarget || this.activeSelection;
           if (!target) {
-            this.setStatus("这次捏合没有命中成员卡片。请先把右手靠近某张图片，再进行捏合。");
+            this.setStatus("右手捏合未命中成员卡片。请先将手靠近卡片，或直接走近成员。");
             return;
           }
 
-          this.hideLaser();
           this.showLaserFromHandToMember(handEl, target);
-          this.activeHand = hand;
-          this.activeHandEl = handEl;
-          this.playMemberAudio(target, "selected");
+          this.selectMember(target, "pinch");
         },
 
         handlePinchMove(hand, pinchPosition) {
           if (!pinchPosition) {
             return;
           }
-
           this.handWorld[hand].copy(pinchPosition);
-
-          if (this.activeSelection && this.activeHand === hand) {
+          if (this.pinchingHands[hand] && this.activeSelection) {
             this.updateLaserFollow();
           }
         },
 
         handlePinchEnd(hand) {
           this.pinchingHands[hand] = false;
-          const otherHandActive = this.pinchingHands.left || this.pinchingHands.right;
-          if (otherHandActive) {
-            return;
-          }
-
-          if (this.activeSelection) {
-            this.fadeOutAudioAndClear();
+          if (hand === "right") {
+            this.hideLaser();
           }
         },
 
@@ -1628,12 +1594,8 @@
           this.tempWorld.y += 0.015;
           member.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
-
           this.laserEl.object3D.visible = true;
-          this.laserEl.setAttribute(
-            "line",
-            `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${member.color}; opacity: 0.88`
-          );
+          this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${member.color}; opacity: 0.9`);
         },
 
         hideLaser() {
@@ -1641,107 +1603,66 @@
         },
 
         updateLaserFollow() {
-          if (!this.activeSelection || !this.laserEl.object3D.visible) {
+          if (!this.activeSelection || !this.laserEl.object3D.visible || !this.activeHandEl) {
             return;
           }
 
-          if (this.activeHand && this.handWorld[this.activeHand]) {
-            this.tempWorld.copy(this.handWorld[this.activeHand]);
-          } else if (this.activeHandEl) {
+          if (this.handHasPose.right) {
+            this.tempWorld.copy(this.handWorld.right);
+          } else {
             this.activeHandEl.object3D.getWorldPosition(this.tempWorld);
             this.tempWorld.y += 0.015;
-          } else {
-            return;
           }
-
           this.activeSelection.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
-
-          this.laserEl.setAttribute(
-            "line",
-            `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${this.activeSelection.color}; opacity: 0.88`
-          );
+          this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${this.activeSelection.color}; opacity: 0.9`);
         },
 
-        updateAudioReactiveState() {
-          if (this.audioEl.paused || this.audioEl.ended) {
-            return;
-          }
-
-          const focus = this.activeSelection || this.previewTarget;
-          if (!focus) {
-            return;
-          }
-
-          const average = this.audioAnalyser ? this.audioAnalyser.getAverageFrequency() / 255 : 0;
-          const energy = this.activeSelection
-            ? 0.54 + average * 0.62
-            : 0.18 + average * 0.22;
-
-          document.querySelectorAll(".wand").forEach((el) => {
-            const component = el.components["support-wand"];
-            if (!component) {
-              return;
-            }
-            component.setActiveColor(focus.color);
-            component.setEnergy(energy);
-          });
-        },
-
-        onAudioEnded() {
-          if (this.activeSelection) {
-            this.activeSelection = null;
-            this.candidateTarget = null;
-            this.candidateSince = 0;
-            this.activeHand = null;
-            this.activeHandEl = null;
-            this.hideLaser();
-            this.restoreVideo();
-            this.restoreBgm();
-            this.updateFocusHud(null, null);
-            this.updateWandsForState();
-            this.setStatus("当前成员音频已播放完毕。你可以继续靠近其他卡片，或再次捏合重新锁定。");
-            return;
-          }
-
-          if (this.previewTarget) {
-            this.previewTarget = null;
-            this.restoreVideo();
-            this.restoreBgm();
-            this.updateFocusHud(this.candidateTarget, "preview");
-            this.updateWandsForState();
-          }
+        onVoiceEnded() {
+          this.stopVoiceImmediate();
+          this.activeSelection = null;
+          this.hideLaser();
+          this.restoreBgm();
+          this.restoreVideo();
+          this.updateFocusHud(this.candidateTarget, this.candidateTarget ? "preview" : null);
+          this.updateWandsForState();
+          this.setStatus("当前语音已播放完毕。继续靠近其他成员卡片即可切换。");
         },
 
         updateMemberVisuals(time, delta) {
           const now = performance.now();
           const stageElapsed = (now - this.stageStartedAt) / 1000;
           const dt = Math.max((delta || 16) / 1000, 0.0001);
-
           this.getCameraPose();
           this.handHasPose.left = this.getHandWorldPosition("left", this.handWorld.left);
           this.handHasPose.right = this.getHandWorldPosition("right", this.handWorld.right);
+
           for (const hand of ["left", "right"]) {
             if (this.handHasPose[hand]) {
               this.handSpeed[hand] = this.handWorld[hand].distanceTo(this.lastHandWorld[hand]) / dt;
               this.lastHandWorld[hand].copy(this.handWorld[hand]);
             } else {
-              this.handSpeed[hand] = THREE.MathUtils.lerp(this.handSpeed[hand], 0, 0.25);
+              this.handSpeed[hand] = THREE.MathUtils.lerp(this.handSpeed[hand], 0, 0.24);
             }
           }
+
           this.hoveredByHand.left = null;
           this.hoveredByHand.right = null;
 
-          let closestPreview = null;
-          let closestPreviewDistance = Infinity;
+          let closestMember = null;
+          let closestScore = Infinity;
+          let closestCameraDistance = Infinity;
 
           for (const member of this.members) {
             member.glowMesh = member.glowMesh || member.glowEl.getObject3D("mesh");
             member.panelMesh = member.panelMesh || member.panelEl.getObject3D("mesh");
             member.borderMesh = member.borderMesh || member.borderEl.getObject3D("mesh");
             member.badgeMesh = member.badgeMesh || member.badgeEl.getObject3D("mesh");
-
             member.el.object3D.getWorldPosition(this.tempWorld);
+
+            const toMember = this.tempWorldB.copy(this.tempWorld).sub(this.cameraPosition).normalize();
+            const cameraDistance = this.cameraPosition.distanceTo(this.tempWorld);
+            const angleDeg = THREE.MathUtils.radToDeg(this.cameraDirection.angleTo(toMember));
 
             let handDistance = Infinity;
             let handSource = null;
@@ -1749,7 +1670,6 @@
               if (!this.handHasPose[hand]) {
                 continue;
               }
-
               const distance = this.handWorld[hand].distanceTo(this.tempWorld);
               if (distance < handDistance) {
                 handDistance = distance;
@@ -1757,200 +1677,129 @@
               }
             }
 
-            const cameraDistance = this.cameraPosition.distanceTo(this.tempWorld);
+            const score = cameraDistance + angleDeg * 0.016 - Math.max(0, 0.38 - Math.min(handDistance, 0.38));
+            if (angleDeg < APP_CONFIG.interaction.maxViewAngleDeg && score < closestScore) {
+              closestScore = score;
+              closestMember = member;
+              closestCameraDistance = cameraDistance;
+            }
+
             const hoverTarget = handDistance < APP_CONFIG.interaction.handHoverDistance
               ? 1 - handDistance / APP_CONFIG.interaction.handHoverDistance
               : 0;
-            const nearTarget = cameraDistance < APP_CONFIG.interaction.focusDistance
+            const focusTarget = cameraDistance < APP_CONFIG.interaction.focusDistance && angleDeg < APP_CONFIG.interaction.maxViewAngleDeg
               ? 1 - cameraDistance / APP_CONFIG.interaction.focusDistance
               : 0;
             const selectedTarget = this.activeSelection && this.activeSelection.key === member.key ? 1 : 0;
+            const candidateTarget = this.candidateTarget && this.candidateTarget.key === member.key ? 1 : 0;
 
-            member.hoverAmount = THREE.MathUtils.lerp(member.hoverAmount, Math.max(hoverTarget, nearTarget * 0.56), 0.18);
-            member.selectedAmount = THREE.MathUtils.lerp(member.selectedAmount, selectedTarget, 0.16);
+            member.hoverAmount = THREE.MathUtils.lerp(member.hoverAmount, Math.max(hoverTarget, focusTarget * 0.72, candidateTarget * 0.28), 0.18);
+            member.selectedAmount = THREE.MathUtils.lerp(member.selectedAmount, selectedTarget, 0.18);
 
             if (hoverTarget > 0.1 && handSource) {
               this.hoveredByHand[handSource] = member.key;
             }
 
-            const appear = THREE.MathUtils.clamp((stageElapsed - member.appearDelay) / 0.7, 0, 1);
+            const appear = THREE.MathUtils.clamp((stageElapsed - member.appearDelay) / 0.68, 0, 1);
             member.visibleAmount = appear;
-
-            const forward = member.hoverAmount * 0.06 + member.selectedAmount * 0.1;
+            const forward = member.hoverAmount * 0.048 + member.selectedAmount * 0.09;
             member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.18);
-            member.el.object3D.scale.setScalar(0.76 + appear * 0.24 + member.selectedAmount * 0.06);
+            member.el.object3D.scale.setScalar(0.82 + appear * 0.18 + member.selectedAmount * 0.05);
             member.el.object3D.position.x = member.baseX;
-            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.12 + Math.sin(time * 0.0012 + member.appearDelay * 4) * 0.012;
+            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.14 + Math.sin(time * 0.0012 + member.appearDelay * 5) * 0.01;
             member.el.object3D.position.z = member.baseZ + member.forwardOffset;
 
             const memberColor = new THREE.Color(member.color);
             const glowColor = new THREE.Color(APP_CONFIG.colors.accent).lerp(memberColor, Math.max(member.hoverAmount, member.selectedAmount));
-
             if (member.glowMesh) {
               member.glowMesh.material.color.copy(glowColor);
-              member.glowMesh.material.opacity = (0.08 + member.hoverAmount * 0.2 + member.selectedAmount * 0.28) * appear;
+              member.glowMesh.material.opacity = (0.05 + member.hoverAmount * 0.2 + member.selectedAmount * 0.24) * appear;
             }
-
             if (member.panelMesh) {
-              member.panelMesh.material.opacity = 0.7 + member.hoverAmount * 0.14 + member.selectedAmount * 0.1;
+              member.panelMesh.material.opacity = 0.8 + member.hoverAmount * 0.1 + member.selectedAmount * 0.08;
             }
-
             if (member.borderMesh) {
               member.borderMesh.material.color.copy(glowColor);
-              member.borderMesh.material.opacity = (0.12 + member.hoverAmount * 0.26 + member.selectedAmount * 0.26) * appear;
+              member.borderMesh.material.opacity = (0.14 + member.hoverAmount * 0.22 + member.selectedAmount * 0.24) * appear;
               member.borderEl.object3D.scale.set(
-                member.panelWidth / 0.62 + member.hoverAmount * 0.06 + member.selectedAmount * 0.08,
-                member.panelHeight / 0.62 + member.hoverAmount * 0.08 + member.selectedAmount * 0.1,
+                member.panelWidth / 0.62 + member.hoverAmount * 0.04 + member.selectedAmount * 0.06,
+                member.panelHeight / 0.62 + member.hoverAmount * 0.05 + member.selectedAmount * 0.08,
                 1
               );
             }
-
             member.nameEl.setAttribute("color", member.selectedAmount > 0.1 ? member.color : APP_CONFIG.colors.accentSoft);
 
             const isCandidate = this.candidateTarget && this.candidateTarget.key === member.key;
             const isSelected = this.activeSelection && this.activeSelection.key === member.key;
-            const badgeOpacity = isSelected ? 0.92 : isCandidate ? 0.76 : 0;
+            const badgeOpacity = isSelected ? 0.92 : isCandidate ? 0.74 : 0;
             if (member.badgeMesh) {
               member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
               member.badgeMesh.material.opacity = badgeOpacity * appear;
             }
-            member.badgeTextEl.setAttribute("value", isSelected ? "正在播放" : isCandidate ? "锁定目标" : "");
+            member.badgeTextEl.setAttribute("value", isSelected ? "NOW PLAYING" : isCandidate ? "TARGET" : "");
             member.badgeTextEl.setAttribute("visible", badgeOpacity > 0.01);
-
-            if (!this.activeSelection && cameraDistance < APP_CONFIG.interaction.focusDistance && cameraDistance < closestPreviewDistance) {
-              closestPreview = member;
-              closestPreviewDistance = cameraDistance;
-            }
           }
 
-          if (!this.activeSelection) {
-            if (closestPreview) {
-              if (!this.candidateTarget || this.candidateTarget.key !== closestPreview.key) {
-                this.candidateTarget = closestPreview;
-                this.candidateSince = now;
-                this.updateFocusHud(closestPreview, "preview");
-                this.setStatus(`${closestPreview.name} 已瞄准。再靠近一点即可自动播放，或者直接用右手捏合锁定。`);
-              } else if (
-                now > this.previewCooldownUntil &&
-                closestPreviewDistance < APP_CONFIG.interaction.autoSelectDistance &&
-                now - this.candidateSince > APP_CONFIG.interaction.autoSelectHoldMs &&
-                (!this.activeSelection || this.activeSelection.key !== closestPreview.key)
-              ) {
-                this.playMemberAudio(closestPreview, "selected");
-                this.previewCooldownUntil = now + APP_CONFIG.interaction.replayCooldownMs;
-              }
-            } else {
+          if (!closestMember) {
+            if (!this.activeSelection) {
               this.candidateTarget = null;
               this.candidateSince = 0;
               this.updateFocusHud(null, null);
+              this.updateWandsForState();
             }
+            return;
+          }
 
-            if (
-              this.previewTarget &&
-              closestPreview !== this.previewTarget &&
-              (!closestPreview || closestPreviewDistance > APP_CONFIG.interaction.releaseDistance)
-            ) {
-              this.stopMemberAudio(true);
-              this.restoreVideo();
+          const switchingToAnother = this.activeSelection && this.activeSelection.key !== closestMember.key;
+          if (!this.candidateTarget || this.candidateTarget.key !== closestMember.key) {
+            this.candidateTarget = closestMember;
+            this.candidateSince = now;
+            if (!this.activeSelection || switchingToAnother) {
+              this.updateFocusHud(closestMember, "preview");
+              this.setStatus(`${closestMember.name} 已进入目标区。再靠近一点或右手捏合即可强化锁定。`);
             }
+            this.updateWandsForState();
+          }
+
+          const holdMs = switchingToAnother ? APP_CONFIG.interaction.switchHoldMs : APP_CONFIG.interaction.autoSelectHoldMs;
+          if (
+            now > this.previewCooldownUntil &&
+            closestCameraDistance < APP_CONFIG.interaction.autoSelectDistance &&
+            now - this.candidateSince > holdMs &&
+            (!this.activeSelection || this.activeSelection.key !== closestMember.key)
+          ) {
+            this.selectMember(closestMember, "proximity");
+            this.previewCooldownUntil = now + APP_CONFIG.interaction.replayCooldownMs;
           }
         },
 
         updateSelectionPresentation() {
           const target = this.activeSelection || this.candidateTarget;
-
           if (!target) {
-            if (this.selectionBillboardEl) {
-              this.selectionBillboardEl.object3D.visible = false;
-            }
-            if (this.selectionGroundCueEl) {
-              this.selectionGroundCueEl.object3D.visible = false;
-            }
-            if (this.selectionBeamEl) {
-              this.selectionBeamEl.object3D.visible = false;
-            }
+            this.selectionBillboardEl.object3D.visible = false;
+            this.selectionGroundCueEl.object3D.visible = false;
+            this.selectionBeamEl.object3D.visible = false;
             return;
           }
 
-          const x = target.baseX;
-          const z = target.baseZ + target.forwardOffset;
           const isSelected = this.activeSelection && this.activeSelection.key === target.key;
+          this.selectionBillboardEl.object3D.visible = true;
+          this.selectionBillboardEl.object3D.position.set(0, 2.38 + (isSelected ? 0.04 : 0), 0.18);
+          this.selectionBillboardEl.object3D.rotation.set(0, 0, 0);
+          this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 1.03 : 0.96);
 
-          if (this.selectionBillboardEl) {
-            this.selectionBillboardEl.object3D.visible = true;
-            this.selectionBillboardEl.object3D.position.set(x, 1.62 + (isSelected ? 0.08 : 0), z + 0.22);
-            this.selectionBillboardEl.object3D.rotation.set(0, 0, 0);
-            this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 1.02 : 0.94);
-          }
+          this.selectionGroundCueEl.object3D.visible = true;
+          this.selectionGroundCueEl.object3D.position.set(target.baseX, 0.03, target.baseZ + target.forwardOffset);
+          this.selectionGroundCueEl.object3D.scale.setScalar(isSelected ? 1.18 : 1);
+          this.selectionGroundRingEl.setAttribute("material", `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.52 : 0.3}; side: double`);
 
-          if (this.selectionGroundCueEl) {
-            this.selectionGroundCueEl.object3D.visible = true;
-            this.selectionGroundCueEl.object3D.position.set(x, 0.03, z);
-            this.selectionGroundCueEl.object3D.scale.setScalar(isSelected ? 1.18 : 1);
-          }
-
-          if (this.selectionGroundRingEl) {
-            this.selectionGroundRingEl.setAttribute(
-              "material",
-              `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.5 : 0.28}; side: double`
-            );
-          }
-
-          if (this.selectionBeamEl) {
-            this.selectionBeamEl.object3D.visible = true;
-            this.selectionBeamEl.object3D.position.set(x, 1.15, z);
-            this.selectionBeamEl.object3D.scale.setScalar(isSelected ? 1.12 : 0.9);
-          }
-
-          if (this.selectionBeamConeEl) {
-            this.selectionBeamConeEl.setAttribute(
-              "material",
-              `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.15 : 0.08}; side: double`
-            );
-          }
+          this.selectionBeamEl.object3D.visible = true;
+          this.selectionBeamEl.object3D.position.set(target.baseX, 1.18, target.baseZ + target.forwardOffset);
+          this.selectionBeamEl.object3D.scale.setScalar(isSelected ? 1.08 : 0.94);
+          this.selectionBeamConeEl.setAttribute("material", `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.14 : 0.08}; side: double`);
         },
 
-        updatePerformanceParticles(now) {
-          if (!this.activeSelection) {
-            return;
-          }
-
-          const systems = this.el.systems["trail-pool"];
-          if (!systems) {
-            return;
-          }
-
-          let triggerHand = null;
-          for (const hand of ["left", "right"]) {
-            if (!this.handHasPose[hand] || this.handSpeed[hand] < 0.75) {
-              continue;
-            }
-
-            this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
-            if (this.handWorld[hand].distanceTo(this.tempWorld) < 0.75) {
-              triggerHand = hand;
-              break;
-            }
-          }
-
-          if (!triggerHand || now - this.lastWaveBurstAt < 90) {
-            return;
-          }
-
-          this.lastWaveBurstAt = now;
-          this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
-          this.tempWorld.y += 0.18 + Math.random() * 0.22;
-          this.tempWorld.x += (Math.random() - 0.5) * 0.18;
-          this.tempWorld.z += (Math.random() - 0.5) * 0.18;
-          this.tempWorldB.set(
-            (Math.random() - 0.5) * 0.08,
-            0.08 + Math.random() * 0.12,
-            (Math.random() - 0.5) * 0.08
-          );
-          systems.spawn(this.tempWorld, this.tempWorldB, 0.95, new THREE.Color(this.activeSelection.color));
-        },
-
-        updateScreenVisuals(delta) {
+        updateScreenVisuals() {
           const glowMesh = this.screenGlowEl.getObject3D("mesh");
           if (!glowMesh) {
             return;
@@ -1960,11 +1809,36 @@
             ? this.activeSelection.color
             : this.candidateTarget
               ? this.candidateTarget.color
-            : APP_CONFIG.colors.accent;
+              : APP_CONFIG.colors.accent;
           glowMesh.material.color.set(targetColor);
-          const strength = this.activeSelection ? 0.22 : this.candidateTarget ? 0.14 : 0.08;
-          glowMesh.material.opacity = THREE.MathUtils.lerp(glowMesh.material.opacity || 0.08, strength, 0.12);
+          glowMesh.material.opacity = THREE.MathUtils.lerp(
+            glowMesh.material.opacity || 0.08,
+            this.activeSelection ? 0.24 : this.candidateTarget ? 0.14 : 0.08,
+            0.12
+          );
           this.screenGlowEl.object3D.scale.setScalar(this.activeSelection ? 1.03 : this.candidateTarget ? 1.015 : 1);
+        },
+
+        updatePerformanceParticles(now) {
+          if (!this.activeSelection || !this.handHasPose.right) {
+            return;
+          }
+          const system = this.el.systems["trail-pool"];
+          if (!system || this.handSpeed.right < 0.7 || now - this.lastWaveBurstAt < 90) {
+            return;
+          }
+
+          this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
+          if (this.handWorld.right.distanceTo(this.tempWorld) > 0.82) {
+            return;
+          }
+
+          this.lastWaveBurstAt = now;
+          this.tempWorld.y += 0.18 + Math.random() * 0.22;
+          this.tempWorld.x += (Math.random() - 0.5) * 0.18;
+          this.tempWorld.z += (Math.random() - 0.5) * 0.18;
+          this.tempWorldB.set((Math.random() - 0.5) * 0.08, 0.08 + Math.random() * 0.12, (Math.random() - 0.5) * 0.08);
+          system.spawn(this.tempWorld, this.tempWorldB, 0.98, new THREE.Color(this.activeSelection.color));
         },
 
         demoNextMember() {
@@ -1975,41 +1849,42 @@
 
           const member = this.members[this.demoIndex % this.members.length];
           this.demoIndex += 1;
-          this.playMemberAudio(member, "selected");
-          this.hideLaser();
-          this.setStatus(`桌面模式已切换到 ${member.name}。如果你在 Quest 3 中，请直接靠近卡片并用右手捏合测试。`);
+          this.candidateTarget = member;
+          this.candidateSince = performance.now();
+          this.selectMember(member, "desktop");
+          this.setStatus(`桌面调试模式已切换到 ${member.name}。Quest 3 中可直接靠近卡片或用右手捏合测试。`);
         },
 
         resetExperience() {
-          this.audioEl.pause();
-          this.audioEl.currentTime = 0;
-          if (this.bgmEl) {
-            this.bgmEl.pause();
-            this.bgmEl.currentTime = 0;
-          }
-          this.videoEl.pause();
-          this.videoEl.currentTime = 0;
-          this.restoreVideo();
-          this.restoreBgm();
+          this.stopVoiceImmediate();
           this.activeSelection = null;
-          this.previewTarget = null;
           this.candidateTarget = null;
           this.candidateSince = 0;
-          this.activeHand = null;
-          this.activeHandEl = null;
           this.pinchingHands.left = false;
           this.pinchingHands.right = false;
+          this.activeHand = null;
+          this.activeHandEl = null;
           this.hideLaser();
+
+          try {
+            this.bgmEl.pause();
+            this.bgmEl.currentTime = 0;
+          } catch (error) {
+          }
+          try {
+            this.videoEl.pause();
+            this.videoEl.currentTime = 0;
+          } catch (error) {
+          }
+
+          this.positionStageInFront();
           this.updateFocusHud(null, null);
           this.updateWandsForState();
-          this.positionStageInFront();
-
           if (this.started) {
             this.startVideoLoop();
             this.startBgmLoop();
           }
-
-          this.setStatus("场景已重置。你可以重新靠近成员卡片测试空间音频，或再次用右手捏合锁定。");
+          this.setStatus("舞台已重置到你的正前方。现在重新靠近任意成员卡片即可测试语音切换。");
         },
 
         onEnterXR() {
@@ -2033,24 +1908,25 @@
 
           this.updateMemberVisuals(time, delta);
           this.updateSelectionPresentation();
-          this.updateScreenVisuals(delta);
+          this.updateScreenVisuals();
           this.updateLaserFollow();
-          this.updateAudioReactiveState();
           this.updatePerformanceParticles(performance.now());
 
           if (this.activeSelection) {
             this.duckVideo();
-          } else if ((this.audioEl.paused || this.audioEl.ended) && !this.previewTarget) {
+            this.duckBgm();
+          } else if (!this.currentVoiceEl || this.currentVoiceEl.paused || this.currentVoiceEl.ended) {
             this.restoreVideo();
+            this.restoreBgm();
+            this.updateWandsForState();
           }
         },
 
         remove() {
-          this.audioEl.removeEventListener("ended", this.onAudioEnded);
-          this.audioEl.remove();
-          if (this.bgmEl) {
-            this.bgmEl.pause();
-          }
+          this.voiceAudioEl.removeEventListener("ended", this.onVoiceEnded);
+          this.voiceVideoEl.removeEventListener("ended", this.onVoiceEnded);
+          this.voiceAudioEl.remove();
+          this.voiceVideoEl.remove();
           this.startButton.removeEventListener("click", this.startExperience);
           this.demoNextButton.removeEventListener("click", this.demoNextMember);
           this.resetButton.removeEventListener("click", this.resetExperience);
