@@ -195,7 +195,7 @@
       <p class="eyebrow">A-Frame / WebXR / Quest 3</p>
       <h1>香槟绿 MR 应援舞台</h1>
       <p id="status">
-        点击“开始体验”后，会在你前方生成中央大屏与成员弧形阵列。距离成员面板约 1.8 米内会自动播放空间音频预览，手靠近到约 45 厘米内再捏合即可锁定该成员。
+        点击“开始体验”后，会在你前方生成中央大屏与成员弧形阵列。靠近成员面板后会先出现“已瞄准”反馈，再自动锁定并播放该成员音频；如果手势可用，也可以直接捏合锁定。
       </p>
 
       <div class="controls">
@@ -207,7 +207,7 @@
       <div class="tips">
         <div>推荐使用 Quest 3 的 Meta Browser，通过 <code>https://</code> 或 <code>localhost</code> 打开。</div>
         <div>当前版本不再依赖图片识别，先优先保证“中央大屏 + 空间音频 + 捏合锁定”稳定可用。</div>
-        <div>靠近面板会出现前馈高亮并自动预览音频；捏合后只会播放一个成员音频，中央视频音量会自动降低。</div>
+        <div>靠近面板会先高亮并显示已瞄准，继续靠近会自动开始音频；同一时间只会播放一个成员音频，中央视频音量会自动降低。</div>
       </div>
 
       <div class="cards">
@@ -337,6 +337,23 @@
           width="4.1"
           color="#ffe9f5"
           position="0 -0.86 0.03"
+        ></a-text>
+        <a-image
+          id="focusArt"
+          visible="false"
+          width="0.36"
+          height="0.52"
+          position="1 -0.08 0.03"
+          material="shader: flat; side: double; transparent: true"
+        ></a-image>
+        <a-text
+          id="focusLabel"
+          value="Walk closer to a member panel"
+          visible="true"
+          align="center"
+          width="2.5"
+          color="#ffe9f5"
+          position="0 -1.06 0.03"
         ></a-text>
       </a-entity>
 
@@ -551,13 +568,13 @@
           this.trailAccumulator = 0;
 
           const isLeft = this.data.hand === "left";
-          this.el.object3D.position.set(isLeft ? -0.012 : 0.012, -0.02, 0.006);
+          this.el.object3D.position.set(isLeft ? -0.05 : 0.05, -0.03, -0.02);
           this.el.object3D.rotation.set(
-            THREE.MathUtils.degToRad(6),
+            THREE.MathUtils.degToRad(14),
             0,
-            THREE.MathUtils.degToRad(isLeft ? -8 : 8)
+            THREE.MathUtils.degToRad(isLeft ? -18 : 18)
           );
-          this.el.object3D.scale.setScalar(1.02);
+          this.el.object3D.scale.setScalar(1.08);
 
           this.buildMesh();
         },
@@ -679,7 +696,7 @@
 
         tick(time, delta) {
           const inXR = this.el.sceneEl.is("ar-mode") || this.el.sceneEl.is("vr-mode");
-          this.el.object3D.visible = inXR;
+          this.el.object3D.visible = !!(inXR || (this.sourceHandEl && this.sourceHandEl.object3D.visible !== false));
 
           this.updateMeshes();
           if (!delta || !this.tipEl) {
@@ -767,6 +784,8 @@
           this.stageRootEl = document.getElementById("experienceRoot");
           this.memberArcEl = document.getElementById("memberArc");
           this.screenGlowEl = document.getElementById("screenGlow");
+          this.focusArtEl = document.getElementById("focusArt");
+          this.focusLabelEl = document.getElementById("focusLabel");
           this.laserEl = document.getElementById("laserLine");
           this.videoEl = document.getElementById("teaserVideo");
 
@@ -783,6 +802,8 @@
           this.pinchingHands = { left: false, right: false };
           this.activeSelection = null;
           this.previewTarget = null;
+          this.candidateTarget = null;
+          this.candidateSince = 0;
           this.activeHand = null;
           this.activeHandEl = null;
           this.previewCooldownUntil = 0;
@@ -911,6 +932,22 @@
             name.setAttribute("color", APP_CONFIG.colors.accentSoft);
             cardEl.appendChild(name);
 
+            const badge = document.createElement("a-plane");
+            badge.setAttribute("width", "0.28");
+            badge.setAttribute("height", "0.07");
+            badge.setAttribute("position", "0 0.43 0.03");
+            badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double");
+            cardEl.appendChild(badge);
+
+            const badgeText = document.createElement("a-text");
+            badgeText.setAttribute("value", "");
+            badgeText.setAttribute("align", "center");
+            badgeText.setAttribute("width", "0.9");
+            badgeText.setAttribute("position", "0 0.415 0.04");
+            badgeText.setAttribute("color", "#081312");
+            badgeText.setAttribute("visible", "false");
+            cardEl.appendChild(badgeText);
+
             const memberState = {
               ...member,
               el: cardEl,
@@ -919,12 +956,15 @@
               borderEl: border,
               artEl: art,
               nameEl: name,
+              badgeEl: badge,
+              badgeTextEl: badgeText,
               baseX: x,
               baseY,
               baseZ: z,
               glowMesh: null,
               panelMesh: null,
               borderMesh: null,
+              badgeMesh: null,
               appearDelay: index * 0.12,
               hoverAmount: 0,
               selectedAmount: 0,
@@ -941,6 +981,31 @@
 
         setStatus(text) {
           this.statusEl.textContent = text;
+        },
+
+        updateFocusHud(member, mode) {
+          if (!this.focusArtEl || !this.focusLabelEl) {
+            return;
+          }
+
+          if (!member) {
+            this.focusArtEl.setAttribute("visible", "false");
+            this.focusLabelEl.setAttribute("value", "Walk closer to a member panel");
+            this.focusLabelEl.setAttribute("color", APP_CONFIG.colors.accentSoft);
+            this.focusLabelEl.setAttribute("visible", "true");
+            return;
+          }
+
+          this.focusArtEl.setAttribute("src", `#${member.imageId}`);
+          this.focusArtEl.setAttribute("visible", "true");
+          this.focusLabelEl.setAttribute(
+            "value",
+            mode === "selected"
+              ? `${member.name} NOW PLAYING`
+              : `${member.name} LOCK TARGET`
+          );
+          this.focusLabelEl.setAttribute("color", mode === "selected" ? member.color : APP_CONFIG.colors.accentSoft);
+          this.focusLabelEl.setAttribute("visible", "true");
         },
 
         getCameraPose() {
@@ -988,6 +1053,10 @@
         },
 
         async primeMedia() {
+          if (this.spatialSound && this.spatialSound.context && this.spatialSound.context.resume) {
+            await this.spatialSound.context.resume().catch(() => {});
+          }
+
           this.videoEl.muted = true;
           try {
             await this.videoEl.play();
@@ -1097,20 +1166,29 @@
 
           this.previewTarget = mode === "preview" ? member : null;
           this.activeSelection = mode === "selected" ? member : null;
+          this.candidateTarget = member;
+          this.candidateSince = performance.now();
           this.audioEl.loop = false;
           this.audioEl.volume = 1;
           this.audioEl.currentTime = 0;
           this.duckVideo();
+          this.updateFocusHud(member, mode);
+
+          if (this.spatialSound && this.spatialSound.context && this.spatialSound.context.resume) {
+            this.spatialSound.context.resume().catch(() => {});
+          }
 
           const promise = this.audioEl.play();
           if (promise && promise.catch) {
-            promise.catch(() => {});
+            promise.catch(() => {
+              this.setStatus(`${member.name} 已被选中，但浏览器暂时拦截了音频。请再次点击“开始体验”后重试。`);
+            });
           }
 
           this.updateWandsForState();
 
           if (mode === "preview") {
-            this.setStatus(`${member.name} 进入近距离感应区，正在从该面板位置播放空间音频预览。`);
+            this.setStatus(`${member.name} 已瞄准。继续靠近或直接捏合，即可开始播放该成员音频。`);
           } else {
             this.setStatus(`${member.name} 已锁定。当前只播放这一位成员的音频，中央视频音量已自动降低。`);
           }
@@ -1122,6 +1200,8 @@
           this.previewTarget = null;
           if (clearSelection) {
             this.activeSelection = null;
+            this.candidateTarget = null;
+            this.candidateSince = 0;
             this.activeHand = null;
             this.activeHandEl = null;
           }
@@ -1130,6 +1210,7 @@
             this.restoreVideo();
           }
 
+          this.updateFocusHud(this.activeSelection || this.candidateTarget, this.activeSelection ? "selected" : "preview");
           this.updateWandsForState();
         },
 
@@ -1166,12 +1247,16 @@
             ? this.activeSelection.color
             : this.previewTarget
               ? this.previewTarget.color
+              : this.candidateTarget
+                ? this.candidateTarget.color
               : APP_CONFIG.colors.accent;
 
           const energy = this.activeSelection
             ? 1
             : this.previewTarget
               ? 0.34
+              : this.candidateTarget
+                ? 0.2
               : 0.12;
 
           document.querySelectorAll(".wand").forEach((el) => {
@@ -1327,10 +1412,13 @@
         onAudioEnded() {
           if (this.activeSelection) {
             this.activeSelection = null;
+            this.candidateTarget = null;
+            this.candidateSince = 0;
             this.activeHand = null;
             this.activeHandEl = null;
             this.hideLaser();
             this.restoreVideo();
+            this.updateFocusHud(null, null);
             this.updateWandsForState();
             this.setStatus("当前成员音频已播放完毕。你可以靠近其他面板继续探索，或再次捏合重新锁定。");
             return;
@@ -1339,6 +1427,7 @@
           if (this.previewTarget) {
             this.previewTarget = null;
             this.restoreVideo();
+            this.updateFocusHud(this.candidateTarget, "preview");
             this.updateWandsForState();
           }
         },
@@ -1360,6 +1449,7 @@
             member.glowMesh = member.glowMesh || member.glowEl.getObject3D("mesh");
             member.panelMesh = member.panelMesh || member.panelEl.getObject3D("mesh");
             member.borderMesh = member.borderMesh || member.borderEl.getObject3D("mesh");
+            member.badgeMesh = member.badgeMesh || member.badgeEl.getObject3D("mesh");
 
             member.el.object3D.getWorldPosition(this.tempWorld);
 
@@ -1423,6 +1513,16 @@
 
             member.nameEl.setAttribute("color", member.selectedAmount > 0.1 ? member.color : APP_CONFIG.colors.accentSoft);
 
+            const isCandidate = this.candidateTarget && this.candidateTarget.key === member.key;
+            const isSelected = this.activeSelection && this.activeSelection.key === member.key;
+            const badgeOpacity = isSelected ? 0.92 : isCandidate ? 0.76 : 0;
+            if (member.badgeMesh) {
+              member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
+              member.badgeMesh.material.opacity = badgeOpacity * appear;
+            }
+            member.badgeTextEl.setAttribute("value", isSelected ? "NOW PLAYING" : isCandidate ? "LOCK TARGET" : "");
+            member.badgeTextEl.setAttribute("visible", badgeOpacity > 0.01);
+
             if (!this.activeSelection && cameraDistance < 1.85 && cameraDistance < closestPreviewDistance) {
               closestPreview = member;
               closestPreviewDistance = cameraDistance;
@@ -1430,9 +1530,20 @@
           }
 
           if (!this.activeSelection) {
-            if (closestPreview && now > this.previewCooldownUntil && (!this.previewTarget || this.previewTarget.key !== closestPreview.key)) {
-              this.playMemberAudio(closestPreview, "preview");
-              this.previewCooldownUntil = now + 900;
+            if (closestPreview) {
+              if (!this.candidateTarget || this.candidateTarget.key !== closestPreview.key) {
+                this.candidateTarget = closestPreview;
+                this.candidateSince = now;
+                this.updateFocusHud(closestPreview, "preview");
+                this.setStatus(`${closestPreview.name} 已瞄准。再靠近一点即可自动播放，或者直接捏合锁定。`);
+              } else if (closestPreviewDistance < 1.25 && now - this.candidateSince > 320 && (!this.activeSelection || this.activeSelection.key !== closestPreview.key)) {
+                this.playMemberAudio(closestPreview, "selected");
+                this.previewCooldownUntil = now + 900;
+              }
+            } else {
+              this.candidateTarget = null;
+              this.candidateSince = 0;
+              this.updateFocusHud(null, null);
             }
 
             if (this.previewTarget && closestPreview !== this.previewTarget && (!closestPreview || closestPreviewDistance > 2.05)) {
@@ -1450,11 +1561,13 @@
 
           const targetColor = this.activeSelection
             ? this.activeSelection.color
+            : this.candidateTarget
+              ? this.candidateTarget.color
             : APP_CONFIG.colors.accent;
           glowMesh.material.color.set(targetColor);
-          const strength = this.activeSelection ? 0.22 : 0.08;
+          const strength = this.activeSelection ? 0.22 : this.candidateTarget ? 0.14 : 0.08;
           glowMesh.material.opacity = THREE.MathUtils.lerp(glowMesh.material.opacity || 0.08, strength, 0.12);
-          this.screenGlowEl.object3D.scale.setScalar(this.activeSelection ? 1.03 : 1);
+          this.screenGlowEl.object3D.scale.setScalar(this.activeSelection ? 1.03 : this.candidateTarget ? 1.015 : 1);
         },
 
         demoNextMember() {
@@ -1478,11 +1591,14 @@
           this.restoreVideo();
           this.activeSelection = null;
           this.previewTarget = null;
+          this.candidateTarget = null;
+          this.candidateSince = 0;
           this.activeHand = null;
           this.activeHandEl = null;
           this.pinchingHands.left = false;
           this.pinchingHands.right = false;
           this.hideLaser();
+          this.updateFocusHud(null, null);
           this.updateWandsForState();
           this.positionStageInFront();
 
