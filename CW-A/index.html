@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WayV MR Cyber Altar</title>
   <link rel="icon" href="data:,">
-  <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
+  <script src="assets/vendor/aframe.min.js"></script>
   <style>
     :root {
       --ink: #f6fff7;
@@ -260,9 +260,9 @@
 
       <div class="tips">
         <strong>Interaction Rules</strong>
-        <div>接近任一成员卡片约 2.3 米内，系统会自动锁定离你最近且在视野中的成员，并只播放这一位成员的语音。</div>
+        <div>接近任一成员卡片约 2.1 米内，系统会自动锁定离你最近且在视野中的成员，并只播放这一位成员的语音。</div>
         <div>切换到另一位成员时，之前的语音会立刻停止，不会再出现多音频叠加；同时 BGM 会自动降低，方便听清语音内容。</div>
-        <div>应援棒空闲态为白光，选中成员后才会染上该成员代表色，并随着语音和挥动动作产生更强的粒子与发光反馈。</div>
+        <div>右手应援棒空闲态为香槟绿色呼吸光，选中成员后会强化发光、粒子与挥动反馈，帮助用户明确当前应援状态。</div>
       </div>
 
       <div class="gallery">
@@ -543,11 +543,12 @@
         },
         interaction: {
           handHoverDistance: 0.56,
-          focusDistance: 3.2,
-          autoSelectDistance: 2.36,
+          focusDistance: 3.85,
+          autoSelectDistance: 2.05,
           autoSelectHoldMs: 220,
           switchHoldMs: 160,
           replayCooldownMs: 650,
+          autoSelectWarmupMs: 1200,
           maxViewAngleDeg: 70
         },
         layout: {
@@ -562,13 +563,13 @@
           topPhotoHeight: 0.74
         },
         stage: {
-          distance: 2.25
+          distance: 2.6
         },
         members: [
           {
             key: "kun",
             name: "KUN",
-            color: "#ffffff",
+            color: "#e1e668",
             imageId: "kunArt",
             detailImageId: "kunDetailArt",
             audioSrc: "assets/voice-kun.mp3"
@@ -744,8 +745,8 @@
         init() {
           this.sourceHandEl = this.data.sourceHand;
           this.fallbackTargetEl = this.data.fallbackTarget;
-          this.baseColor = new THREE.Color("#ffffff");
-          this.glowColor = new THREE.Color("#ffffff");
+          this.baseColor = new THREE.Color("#e1e668");
+          this.glowColor = new THREE.Color("#e1e668");
           this.tipWorld = new THREE.Vector3();
           this.lastTipWorld = new THREE.Vector3();
           this.motion = new THREE.Vector3();
@@ -780,24 +781,24 @@
           rod.setAttribute("class", "wand-body");
           rod.setAttribute("radius", "0.016");
           rod.setAttribute("height", "0.42");
-          rod.setAttribute("position", "0 0.05 0");
-          rod.setAttribute("material", "color: #fbfcfa; roughness: 0.18; metalness: 0.24; emissive: #ffffff; emissiveIntensity: 0.32");
+          rod.setAttribute("position", "0 0.13 0");
+          rod.setAttribute("material", "color: #f1f3c4; roughness: 0.18; metalness: 0.24; emissive: #e1e668; emissiveIntensity: 0.46");
           root.appendChild(rod);
 
           const grip = document.createElement("a-cylinder");
           grip.setAttribute("class", "wand-grip");
           grip.setAttribute("radius", "0.018");
           grip.setAttribute("height", "0.12");
-          grip.setAttribute("position", "0 -0.03 0");
-          grip.setAttribute("material", "color: #f1f3f6; roughness: 0.56; metalness: 0.08; emissive: #ffffff; emissiveIntensity: 0.08");
+          grip.setAttribute("position", "0 0.01 0");
+          grip.setAttribute("material", "color: #d8dda3; roughness: 0.56; metalness: 0.08; emissive: #c7cf5c; emissiveIntensity: 0.14");
           root.appendChild(grip);
 
           const cap = document.createElement("a-cylinder");
           cap.setAttribute("class", "wand-cap");
           cap.setAttribute("radius", "0.021");
           cap.setAttribute("height", "0.036");
-          cap.setAttribute("position", "0 0.245 0");
-          cap.setAttribute("material", "color: #ffffff; roughness: 0.16; metalness: 0.24");
+          cap.setAttribute("position", "0 0.325 0");
+          cap.setAttribute("material", "color: #edf09f; roughness: 0.16; metalness: 0.24");
           root.appendChild(cap);
 
           const leftArm = document.createElement("a-box");
@@ -805,9 +806,9 @@
           leftArm.setAttribute("width", "0.06");
           leftArm.setAttribute("height", "0.18");
           leftArm.setAttribute("depth", "0.03");
-          leftArm.setAttribute("position", "-0.055 0.355 0");
+          leftArm.setAttribute("position", "-0.055 0.435 0");
           leftArm.setAttribute("rotation", "0 0 34");
-          leftArm.setAttribute("material", "color: #ffffff; roughness: 0.14; metalness: 0.08; emissive: #ffffff; emissiveIntensity: 1.8");
+          leftArm.setAttribute("material", "color: #edf09f; roughness: 0.14; metalness: 0.08; emissive: #e1e668; emissiveIntensity: 2");
           root.appendChild(leftArm);
 
           const rightArm = document.createElement("a-box");
@@ -815,38 +816,38 @@
           rightArm.setAttribute("width", "0.06");
           rightArm.setAttribute("height", "0.18");
           rightArm.setAttribute("depth", "0.03");
-          rightArm.setAttribute("position", "0.055 0.355 0");
+          rightArm.setAttribute("position", "0.055 0.435 0");
           rightArm.setAttribute("rotation", "0 0 -34");
-          rightArm.setAttribute("material", "color: #ffffff; roughness: 0.14; metalness: 0.08; emissive: #ffffff; emissiveIntensity: 1.8");
+          rightArm.setAttribute("material", "color: #edf09f; roughness: 0.14; metalness: 0.08; emissive: #e1e668; emissiveIntensity: 2");
           root.appendChild(rightArm);
 
           const leftHalo = document.createElement("a-plane");
           leftHalo.setAttribute("class", "wand-halo");
           leftHalo.setAttribute("width", "0.12");
           leftHalo.setAttribute("height", "0.18");
-          leftHalo.setAttribute("position", "-0.055 0.355 -0.018");
+          leftHalo.setAttribute("position", "-0.055 0.435 -0.018");
           leftHalo.setAttribute("rotation", "0 0 34");
-          leftHalo.setAttribute("material", "shader: flat; color: #ffffff; transparent: true; opacity: 0.08; side: double");
+          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
           root.appendChild(leftHalo);
 
           const rightHalo = document.createElement("a-plane");
           rightHalo.setAttribute("class", "wand-halo");
           rightHalo.setAttribute("width", "0.12");
           rightHalo.setAttribute("height", "0.18");
-          rightHalo.setAttribute("position", "0.055 0.355 -0.018");
+          rightHalo.setAttribute("position", "0.055 0.435 -0.018");
           rightHalo.setAttribute("rotation", "0 0 -34");
-          rightHalo.setAttribute("material", "shader: flat; color: #ffffff; transparent: true; opacity: 0.08; side: double");
+          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
           root.appendChild(rightHalo);
 
           const tip = document.createElement("a-entity");
           tip.setAttribute("class", "wand-tip");
-          tip.setAttribute("position", "0 0.45 0");
+          tip.setAttribute("position", "0 0.53 0");
           root.appendChild(tip);
 
           const light = document.createElement("a-entity");
           light.setAttribute("class", "wand-light");
-          light.setAttribute("position", "0 0.35 0");
-          light.setAttribute("light", "type: point; color: #ffffff; intensity: 1.15; distance: 1.05; decay: 1.6");
+          light.setAttribute("position", "0 0.43 0");
+          light.setAttribute("light", "type: point; color: #e1e668; intensity: 1.15; distance: 1.05; decay: 1.6");
           root.appendChild(light);
 
           this.bodyEl = rod;
@@ -859,7 +860,7 @@
         },
 
         setActiveColor(color) {
-          this.glowColor.set(color || "#ffffff");
+          this.glowColor.set(color || "#e1e668");
         },
 
         setEnergy(value) {
@@ -952,20 +953,20 @@
           const combined = Math.min(1, Math.max(this.energyValue, motion01 * 0.82));
 
           if (this.bodyMesh && this.bodyMesh.material.emissive) {
-            this.bodyMesh.material.color.set("#fbfcfa");
-            this.bodyMesh.material.emissive.set("#ffffff");
+            this.bodyMesh.material.color.set("#eef2b2");
+            this.bodyMesh.material.emissive.set("#e1e668");
             this.bodyMesh.material.emissiveIntensity = 0.22 + combined * 0.85;
           }
           if (this.gripMesh && this.gripMesh.material.emissive) {
-            this.gripMesh.material.emissive.set("#ffffff");
+            this.gripMesh.material.emissive.set("#cfd65f");
             this.gripMesh.material.emissiveIntensity = 0.05 + combined * 0.24;
           }
           for (const armMesh of this.armMeshes || []) {
             if (!armMesh.material.emissive) {
               continue;
             }
-            armMesh.material.color.set("#ffffff");
-            armMesh.material.emissive.copy(this.glowColor).lerp(new THREE.Color("#ffffff"), 0.52);
+            armMesh.material.color.set("#edf09f");
+            armMesh.material.emissive.copy(this.glowColor).lerp(new THREE.Color("#f6f8d3"), 0.18);
             armMesh.material.emissiveIntensity = 1.2 + combined * 3.4;
           }
           for (let i = 0; i < (this.haloMeshes || []).length; i += 1) {
@@ -974,14 +975,14 @@
             if (!haloMesh || !haloEl) {
               continue;
             }
-            haloMesh.material.color.copy(this.glowColor).lerp(new THREE.Color("#ffffff"), 0.34);
+            haloMesh.material.color.copy(this.glowColor).lerp(new THREE.Color("#f8f9dc"), 0.22);
             haloMesh.material.opacity = 0.03 + combined * 0.22;
             haloEl.object3D.scale.setScalar(1 + combined * 0.56 + Math.sin(time * 0.012) * 0.04);
           }
 
           const light = this.lightEl ? this.lightEl.getObject3D("light") : null;
           if (light) {
-            light.color.copy(this.glowColor).lerp(new THREE.Color("#ffffff"), 0.32);
+            light.color.copy(this.glowColor).lerp(new THREE.Color("#f8f9dc"), 0.18);
             light.intensity = 0.85 + combined * 3.4;
             light.distance = 0.95 + combined * 1.4;
           }
@@ -1007,6 +1008,7 @@
           this.resetButton = document.getElementById("resetButton");
           this.previewEnvironmentEl = document.getElementById("previewEnvironment");
           this.stageRootEl = document.getElementById("experienceRoot");
+          this.screenRigEl = document.getElementById("screenRig");
           this.memberArcEl = document.getElementById("memberArc");
           this.screenGlowEl = document.getElementById("screenGlow");
           this.focusLabelEl = document.getElementById("focusLabel");
@@ -1049,6 +1051,7 @@
           this.candidateSince = 0;
           this.currentVoiceEl = null;
           this.currentVoiceOwner = null;
+          this.voiceMediaByKey = new Map();
           this.previewCooldownUntil = 0;
           this.started = false;
           this.preparing = false;
@@ -1066,6 +1069,7 @@
           this.lastWaveBurstAt = 0;
           this.activeHand = null;
           this.activeHandEl = null;
+          this.stageRealignTimerIds = [];
 
           this.onVoiceEnded = this.onVoiceEnded.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
@@ -1097,6 +1101,25 @@
           this.voiceAudioEl.muted = false;
           this.voiceVideoEl.volume = 0;
           this.voiceVideoEl.muted = false;
+          this.voiceMediaByKey.clear();
+
+          APP_CONFIG.members.forEach((member) => {
+            const isVideoAudio = /\.mp4($|\?)/i.test(member.audioSrc);
+            const mediaEl = document.createElement(isVideoAudio ? "video" : "audio");
+            mediaEl.className = "asset-media";
+            mediaEl.preload = "auto";
+            mediaEl.crossOrigin = "anonymous";
+            mediaEl.src = member.audioSrc;
+            mediaEl.loop = false;
+            mediaEl.volume = 0;
+            mediaEl.muted = false;
+            mediaEl.dataset.prepared = "true";
+            mediaEl.setAttribute("playsinline", "playsinline");
+            mediaEl.setAttribute("webkit-playsinline", "true");
+            mediaEl.addEventListener("ended", this.onVoiceEnded);
+            document.body.appendChild(mediaEl);
+            this.voiceMediaByKey.set(member.key, mediaEl);
+          });
         },
 
         buildMemberPanels() {
@@ -1213,15 +1236,21 @@
         },
 
         getVoiceElementForMember(member) {
-          return /\.mp4($|\?)/i.test(member.audioSrc) ? this.voiceVideoEl : this.voiceAudioEl;
+          return this.voiceMediaByKey.get(member.key) || (/\.mp4($|\?)/i.test(member.audioSrc) ? this.voiceVideoEl : this.voiceAudioEl);
         },
 
         getCameraPose() {
-          const xrCamera = this.el.camera;
-          if (xrCamera && (this.el.is("ar-mode") || this.el.is("vr-mode"))) {
-            xrCamera.getWorldPosition(this.cameraPosition);
-            xrCamera.getWorldDirection(this.cameraDirection);
-            return;
+          this.el.object3D.updateMatrixWorld(true);
+
+          const xrManager = this.el.renderer && this.el.renderer.xr;
+          if (xrManager && xrManager.isPresenting && this.el.camera) {
+            const xrCamera = xrManager.getCamera(this.el.camera);
+            if (xrCamera) {
+              xrCamera.updateMatrixWorld(true);
+              xrCamera.getWorldPosition(this.cameraPosition);
+              xrCamera.getWorldDirection(this.cameraDirection);
+              return;
+            }
           }
 
           const cameraEl = document.getElementById("userCamera");
@@ -1347,6 +1376,9 @@
           await this.primeSingleMedia(this.bgmEl);
           await this.primeSingleMedia(this.voiceAudioEl);
           await this.primeSingleMedia(this.voiceVideoEl);
+          for (const mediaEl of this.voiceMediaByKey.values()) {
+            await this.primeSingleMedia(mediaEl);
+          }
         },
 
         waitForSceneReady() {
@@ -1421,6 +1453,7 @@
             this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
             this.started = true;
             this.stageStartedAt = performance.now();
+            this.scheduleStageRealign();
             await this.startVideoLoop();
             await this.startBgmLoop();
             this.updateWandsForState();
@@ -1448,12 +1481,43 @@
           this.tempWorld.y = 0;
           this.stageRootEl.object3D.position.copy(this.tempWorld);
 
-          this.tempWorldB.copy(this.cameraPosition);
-          this.tempWorldB.y = 1.55;
-          this.stageRootEl.object3D.lookAt(this.tempWorldB);
-          this.stageRootEl.object3D.rotation.x = 0;
-          this.stageRootEl.object3D.rotation.z = 0;
-          this.stageRootEl.object3D.rotation.y += Math.PI;
+          const yaw = Math.atan2(-this.cameraForwardFlat.x, -this.cameraForwardFlat.z);
+          this.stageRootEl.object3D.rotation.set(0, yaw, 0);
+          this.stageRootEl.object3D.updateMatrixWorld(true);
+
+          if (this.screenRigEl) {
+            const screenPosition = new THREE.Vector3();
+            const screenQuaternion = new THREE.Quaternion();
+            const screenFront = new THREE.Vector3(0, 0, 1);
+            const toCamera = new THREE.Vector3();
+
+            this.screenRigEl.object3D.getWorldPosition(screenPosition);
+            this.screenRigEl.object3D.getWorldQuaternion(screenQuaternion);
+            screenFront.applyQuaternion(screenQuaternion).normalize();
+            toCamera.copy(this.cameraPosition).sub(screenPosition).setY(0);
+
+            if (toCamera.lengthSq() > 0.0001) {
+              toCamera.normalize();
+              if (screenFront.dot(toCamera) < 0) {
+                this.stageRootEl.object3D.rotation.y += Math.PI;
+                this.stageRootEl.object3D.updateMatrixWorld(true);
+              }
+            }
+          }
+        },
+
+        scheduleStageRealign() {
+          this.stageRealignTimerIds.forEach((timerId) => window.clearTimeout(timerId));
+          this.stageRealignTimerIds = [];
+          [0, 120, 360, 900, 1800].forEach((delayMs) => {
+            const timerId = window.setTimeout(() => {
+              if (!this.started && delayMs !== 0) {
+                return;
+              }
+              this.positionStageInFront();
+            }, delayMs);
+            this.stageRealignTimerIds.push(timerId);
+          });
         },
 
         async startVideoLoop() {
@@ -1479,7 +1543,7 @@
         },
 
         stopVoiceImmediate() {
-          for (const mediaEl of [this.voiceAudioEl, this.voiceVideoEl]) {
+          for (const mediaEl of [this.voiceAudioEl, this.voiceVideoEl, ...this.voiceMediaByKey.values()]) {
             mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
             try {
               mediaEl.pause();
@@ -1586,8 +1650,8 @@
         },
 
         updateWandsForState() {
-          const color = this.activeSelection ? this.activeSelection.color : this.candidateTarget ? this.candidateTarget.color : "#ffffff";
-          const energy = this.activeSelection ? 1 : this.candidateTarget ? 0.28 : 0.12;
+          const color = "#e1e668";
+          const energy = this.activeSelection ? 1 : this.candidateTarget ? 0.34 : 0.18;
           document.querySelectorAll(".wand").forEach((el) => {
             const component = el.components["support-wand"];
             if (!component) {
@@ -1817,6 +1881,7 @@
 
           const holdMs = switchingToAnother ? APP_CONFIG.interaction.switchHoldMs : APP_CONFIG.interaction.autoSelectHoldMs;
           if (
+            now - this.stageStartedAt > APP_CONFIG.interaction.autoSelectWarmupMs &&
             now > this.previewCooldownUntil &&
             closestCameraDistance < APP_CONFIG.interaction.autoSelectDistance &&
             now - this.candidateSince > holdMs &&
@@ -1932,6 +1997,7 @@
           }
 
           this.positionStageInFront();
+          this.scheduleStageRealign();
           this.updateFocusHud(null, null);
           this.updateWandsForState();
           if (this.started) {
@@ -1946,6 +2012,7 @@
           if (this.started) {
             this.previewEnvironmentEl.object3D.visible = false;
             this.positionStageInFront();
+            this.scheduleStageRealign();
           }
         },
 
@@ -1977,6 +2044,11 @@
         },
 
         remove() {
+          this.stageRealignTimerIds.forEach((timerId) => window.clearTimeout(timerId));
+          this.voiceMediaByKey.forEach((mediaEl) => {
+            mediaEl.removeEventListener("ended", this.onVoiceEnded);
+            mediaEl.remove();
+          });
           this.voiceAudioEl.removeEventListener("ended", this.onVoiceEnded);
           this.voiceVideoEl.removeEventListener("ended", this.onVoiceEnded);
           this.voiceAudioEl.remove();

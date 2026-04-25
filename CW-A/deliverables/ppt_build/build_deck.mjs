@@ -37,6 +37,10 @@ const CORAL = "#D9B7B1";
 const STROKE = "#7B7C66";
 const PANEL_ALT = "#151515F2";
 const TRANSPARENT = "#00000000";
+const PAPER_LIGHT = "#F4EBDD";
+const PAPER_LIGHT_2 = "#EEE4D1";
+const MOSS = "#5E6C3D";
+const INK_DARK = "#171512";
 
 const TITLE_FACE = "Aptos Display";
 const BODY_FACE = "Aptos";
@@ -784,6 +788,333 @@ function addPill(slide, slideNo, text, x, y, w, accent = ACCENT) {
   });
 }
 
+function getSlideHighlights(data) {
+  if (data.cards?.length) {
+    return data.cards.map(([label, body]) => ({ label, body }));
+  }
+  if (data.metrics?.length) {
+    return data.metrics.map(([metric, label, note]) => ({
+      label,
+      body: [metric, note].filter(Boolean).join(" / "),
+    }));
+  }
+  return [
+    { label: "Point One", body: "Replace with a sourced point for this slide." },
+    { label: "Point Two", body: "Replace with a second clear takeaway." },
+    { label: "Point Three", body: "Replace with a final supporting note." },
+  ];
+}
+
+async function slideNotebookBoard(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  slide.background.fill = PAPER_LIGHT;
+  addShape(slide, "roundRect", 22, 18, 1236, 684, PAPER_LIGHT, "#C8BCA9", 1.2, { slideNo: idx, role: "notebook frame" });
+  addShape(slide, "rect", 54, 58, 1172, 2, "#D4C7B3", TRANSPARENT, 0, { slideNo: idx, role: "notebook rule top" });
+  for (let y = 118; y <= 646; y += 62) {
+    addShape(slide, "rect", 62, y, 1156, 1.2, "#DCCFBF", TRANSPARENT, 0, { slideNo: idx, role: "notebook line" });
+  }
+  addShape(slide, "rect", 118, 44, 3, 622, "#D8B6AB", TRANSPARENT, 0, { slideNo: idx, role: "notebook margin" });
+  addText(slide, idx, String(data.kicker || "").toUpperCase(), 76, 36, 340, 24, {
+    size: 13,
+    color: MOSS,
+    bold: true,
+    face: MONO_FACE,
+    checkFit: false,
+    role: "notebook header",
+  });
+  addText(slide, idx, `${String(idx).padStart(2, "0")} / ${String(SLIDES.length).padStart(2, "0")}`, 1110, 36, 112, 24, {
+    size: 13,
+    color: "#8B816F",
+    bold: true,
+    face: MONO_FACE,
+    align: "right",
+    checkFit: false,
+    role: "notebook header",
+  });
+  addText(slide, idx, data.title, 154, 86, 470, 136, {
+    size: 40,
+    color: INK_DARK,
+    bold: true,
+    face: TITLE_FACE,
+    role: "notebook title",
+  });
+  addText(slide, idx, data.subtitle, 158, 236, 440, 92, {
+    size: 18,
+    color: "#5B554A",
+    face: BODY_FACE,
+    role: "notebook subtitle",
+  });
+
+  await addFramedImage(slide, idx, pickDeckImage(idx, 0), 760, 92, 248, 308, {
+    rotation: -5,
+    accent: ACCENT,
+    role: "notebook hero image",
+  });
+  await addFramedImage(slide, idx, pickDeckImage(idx, 2), 1000, 132, 150, 214, {
+    rotation: 7,
+    accent: CORAL,
+    role: "notebook detail image",
+  });
+  await addFramedImage(slide, idx, pickDeckImage(idx, 4), 844, 332, 236, 176, {
+    rotation: 4,
+    accent: GOLD,
+    role: "notebook support image",
+  });
+
+  const points = getSlideHighlights(data).slice(0, 3);
+  const noteColors = ["#FFF6A8", "#DFF4D7", "#FFD8E6"];
+  const noteAccents = [ACCENT, MOSS, CORAL];
+  for (let i = 0; i < points.length; i += 1) {
+    const x = 152 + i * 332;
+    const y = 432 + (i % 2) * 18;
+    const panel = addShape(slide, "roundRect", x, y, 280, 164, noteColors[i % noteColors.length], "#C7B58F", 1, {
+      slideNo: idx,
+      role: `sticky note ${i + 1}`,
+    });
+    panel.position = { left: x, top: y, width: 280, height: 164, rotation: i === 1 ? -2 : i === 2 ? 3 : -3 };
+    const tape = addShape(slide, "rect", x + 96, y - 12, 86, 18, "#FFFFFF8C", TRANSPARENT, 0, {
+      slideNo: idx,
+      role: `sticky tape ${i + 1}`,
+    });
+    tape.position = { left: x + 96, top: y - 12, width: 86, height: 18, rotation: i === 1 ? 2 : -5 };
+    addText(slide, idx, points[i].label, x + 20, y + 24, 236, 28, {
+      size: 17,
+      color: noteAccents[i % noteAccents.length],
+      bold: true,
+      face: MONO_FACE,
+      role: "sticky label",
+    });
+    addText(slide, idx, wrapText(points[i].body, 28), x + 20, y + 58, 236, 88, {
+      size: 14,
+      color: INK_DARK,
+      face: BODY_FACE,
+      role: "sticky body",
+    });
+  }
+
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
+async function slideComparisonBoard(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  await addPlate(slide, idx);
+  addShape(slide, "rect", 0, 0, W, H, "#030404D8", TRANSPARENT, 0, { slideNo: idx, role: "comparison veil" });
+  addHeader(slide, idx, data.kicker, idx, SLIDES.length);
+  addText(slide, idx, data.title, 86, 90, 840, 88, {
+    size: 42,
+    color: INK,
+    bold: true,
+    face: TITLE_FACE,
+    role: "comparison title",
+  });
+  addText(slide, idx, data.subtitle, 90, 178, 720, 52, {
+    size: 18,
+    color: GRAPHITE,
+    face: BODY_FACE,
+    role: "comparison subtitle",
+  });
+
+  const points = getSlideHighlights(data);
+  const left = points[0] || { label: "Before", body: "Replace with your first state." };
+  const right = points[1] || { label: "After", body: "Replace with your second state." };
+  const result = points[2] || { label: "Result", body: "Replace with the resulting design insight." };
+
+  addShape(slide, "roundRect", 88, 270, 468, 266, "#0B0D0CEB", "#6A6C59", 1.2, { slideNo: idx, role: "comparison left panel" });
+  addShape(slide, "roundRect", 724, 270, 468, 266, "#0B0D0CEB", "#A48D71", 1.2, { slideNo: idx, role: "comparison right panel" });
+  addShape(slide, "roundRect", 590, 356, 98, 92, "#E8DEC9", "#C7B58E", 1.2, { slideNo: idx, role: "comparison center chip" });
+  addText(slide, idx, "SHIFT", 608, 386, 62, 20, {
+    size: 16,
+    color: PAPER,
+    bold: true,
+    face: MONO_FACE,
+    align: "center",
+    checkFit: false,
+    role: "comparison chip",
+  });
+
+  addText(slide, idx, left.label, 124, 306, 360, 34, {
+    size: 22,
+    color: ACCENT,
+    bold: true,
+    face: TITLE_FACE,
+    role: "comparison label",
+  });
+  addText(slide, idx, wrapText(left.body, 35), 124, 360, 384, 112, {
+    size: 19,
+    color: INK,
+    face: BODY_FACE,
+    role: "comparison body",
+  });
+
+  addText(slide, idx, right.label, 760, 306, 360, 34, {
+    size: 22,
+    color: GOLD,
+    bold: true,
+    face: TITLE_FACE,
+    role: "comparison label",
+  });
+  addText(slide, idx, wrapText(right.body, 35), 760, 360, 384, 112, {
+    size: 19,
+    color: INK,
+    face: BODY_FACE,
+    role: "comparison body",
+  });
+
+  addShape(slide, "roundRect", 150, 578, 980, 88, "#F1E8D9", "#C5B497", 1.1, { slideNo: idx, role: "comparison result panel" });
+  addText(slide, idx, `${result.label}: ${result.body}`, 184, 608, 912, 28, {
+    size: 18,
+    color: PAPER,
+    face: BODY_FACE,
+    align: "center",
+    checkFit: false,
+    role: "comparison result",
+  });
+
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
+async function slideEditorialFeature(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  slide.background.fill = "#0A0B0A";
+  addShape(slide, "rect", 0, 0, 460, H, "#111714", TRANSPARENT, 0, { slideNo: idx, role: "editorial image bay" });
+  await addImage(
+    slide,
+    idx,
+    { path: pickDeckImage(idx, 1), fit: "cover", alt: `Editorial feature image ${idx}` },
+    { left: 42, top: 56, width: 372, height: 608 },
+    "editorial feature image",
+    pickDeckImage(idx, 1),
+  );
+  addShape(slide, "rect", 42, 56, 372, 608, "#07100C70", TRANSPARENT, 0, { slideNo: idx, role: "editorial image tint" });
+  addText(slide, idx, String(idx).padStart(2, "0"), 504, 54, 120, 72, {
+    size: 58,
+    color: "#324331",
+    bold: true,
+    face: TITLE_FACE,
+    checkFit: false,
+    role: "editorial number",
+  });
+  addText(slide, idx, String(data.kicker || "").toUpperCase(), 612, 74, 400, 24, {
+    size: 13,
+    color: ACCENT,
+    bold: true,
+    face: MONO_FACE,
+    checkFit: false,
+    role: "editorial kicker",
+  });
+  addText(slide, idx, data.title, 610, 118, 558, 140, {
+    size: 42,
+    color: INK,
+    bold: true,
+    face: TITLE_FACE,
+    role: "editorial title",
+  });
+  addText(slide, idx, data.subtitle, 614, 270, 526, 72, {
+    size: 19,
+    color: GRAPHITE,
+    face: BODY_FACE,
+    role: "editorial subtitle",
+  });
+
+  const points = getSlideHighlights(data).slice(0, 3);
+  const accents = [ACCENT, CORAL, GOLD];
+  for (let i = 0; i < points.length; i += 1) {
+    const y = 372 + i * 92;
+    addShape(slide, "rect", 614, y + 10, 10, 48, accents[i % accents.length], TRANSPARENT, 0, { slideNo: idx, role: "editorial accent bar" });
+    addText(slide, idx, points[i].label, 644, y, 440, 28, {
+      size: 18,
+      color: accents[i % accents.length],
+      bold: true,
+      face: MONO_FACE,
+      role: "editorial label",
+    });
+    addText(slide, idx, wrapText(points[i].body, 48), 644, y + 32, 468, 58, {
+      size: 16,
+      color: INK,
+      face: BODY_FACE,
+      role: "editorial body",
+    });
+  }
+
+  addShape(slide, "roundRect", 610, 620, 538, 40, "#131815", "#415042", 1, { slideNo: idx, role: "editorial footer chip" });
+  addText(slide, idx, data.expectedVisual || "Prototype evidence and design rationale should be shown here.", 632, 631, 494, 18, {
+    size: 12,
+    color: GRAPHITE,
+    face: BODY_FACE,
+    align: "center",
+    checkFit: false,
+    role: "editorial footer",
+  });
+
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
+async function slidePosterStatement(presentation, idx) {
+  const data = SLIDES[idx - 1];
+  const slide = presentation.slides.add();
+  slide.background.fill = "#050605";
+  addShape(slide, "ellipse", -140, -80, 460, 460, "#97A15818", TRANSPARENT, 0, { slideNo: idx, role: "poster glow left" });
+  addShape(slide, "ellipse", 1010, 440, 380, 380, "#D9B7B116", TRANSPARENT, 0, { slideNo: idx, role: "poster glow right" });
+  addText(slide, idx, String(data.kicker || "").toUpperCase(), 92, 76, 380, 24, {
+    size: 14,
+    color: ACCENT,
+    bold: true,
+    face: MONO_FACE,
+    checkFit: false,
+    role: "poster kicker",
+  });
+  addText(slide, idx, data.title, 88, 132, 1100, 158, {
+    size: 54,
+    color: INK,
+    bold: true,
+    face: TITLE_FACE,
+    role: "poster title",
+  });
+  addText(slide, idx, data.subtitle, 94, 312, 734, 54, {
+    size: 20,
+    color: GRAPHITE,
+    face: BODY_FACE,
+    role: "poster subtitle",
+  });
+
+  const points = getSlideHighlights(data).slice(0, 3);
+  for (let i = 0; i < points.length; i += 1) {
+    const x = 96 + i * 356;
+    addShape(slide, "roundRect", x, 436, 320, 154, "#0B100EDB", "#5E6A56", 1.1, { slideNo: idx, role: "poster card" });
+    addText(slide, idx, points[i].label, x + 24, 466, 272, 26, {
+      size: 18,
+      color: ACCENT,
+      bold: true,
+      face: MONO_FACE,
+      role: "poster label",
+    });
+    addText(slide, idx, wrapText(points[i].body, 30), x + 24, 504, 272, 72, {
+      size: 15,
+      color: INK,
+      face: BODY_FACE,
+      role: "poster body",
+    });
+  }
+
+  addText(slide, idx, `${String(idx).padStart(2, "0")} / ${String(SLIDES.length).padStart(2, "0")}`, 1106, 78, 112, 24, {
+    size: 13,
+    color: GRAPHITE,
+    bold: true,
+    face: MONO_FACE,
+    align: "right",
+    checkFit: false,
+    role: "poster page",
+  });
+  addReferenceCaption(slide, idx);
+  addNotes(slide, data.notes, data.sources);
+}
+
 async function slideCover(presentation) {
   const slideNo = 1;
   const data = SLIDES[0];
@@ -1030,10 +1361,31 @@ async function createDeck() {
     throw new Error("SLIDES must contain at least one slide.");
   }
   const presentation = Presentation.create({ slideSize: { width: W, height: H } });
+  const layoutOverrides = {
+    3: "notebook",
+    4: "comparison",
+    5: "notebook",
+    6: "comparison",
+    7: "editorial",
+    11: "editorial",
+    13: "notebook",
+    15: "comparison",
+    18: "poster",
+    19: "poster",
+  };
   await slideCover(presentation);
   for (let idx = 2; idx <= SLIDES.length; idx += 1) {
     const data = SLIDES[idx - 1];
-    if (data.metrics && idx % 2 === 0) {
+    const override = layoutOverrides[idx];
+    if (override === "notebook") {
+      await slideNotebookBoard(presentation, idx);
+    } else if (override === "comparison") {
+      await slideComparisonBoard(presentation, idx);
+    } else if (override === "editorial") {
+      await slideEditorialFeature(presentation, idx);
+    } else if (override === "poster") {
+      await slidePosterStatement(presentation, idx);
+    } else if (data.metrics && idx % 2 === 0) {
       await slideMetricsFeature(presentation, idx);
     } else if (data.metrics) {
       await slideMetrics(presentation, idx);
