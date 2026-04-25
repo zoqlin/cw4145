@@ -24,22 +24,22 @@ const VERIFICATION_DIR = path.join(SCRATCH_DIR, "verification");
 const INSPECT_PATH = path.join(SCRATCH_DIR, "inspect.ndjson");
 const MAX_RENDER_VERIFY_LOOPS = 3;
 
-const INK = "#F4FFF8";
-const GRAPHITE = "#C0D2C8";
-const MUTED = "#88A095";
-const PAPER = "#061110";
-const PAPER_96 = "#11201CF0";
+const INK = "#F7F1E6";
+const GRAPHITE = "#D4CEC3";
+const MUTED = "#9E998F";
+const PAPER = "#050505";
+const PAPER_96 = "#101010F0";
 const WHITE = "#FFFFFF";
-const ACCENT = "#D6E96B";
-const ACCENT_DARK = "#112014";
-const GOLD = "#FFD9A1";
-const CORAL = "#FFC4D9";
-const STROKE = "#7FA794";
-const PANEL_ALT = "#152523F2";
+const ACCENT = "#97A158";
+const ACCENT_DARK = "#1A1C12";
+const GOLD = "#D7C49B";
+const CORAL = "#D9B7B1";
+const STROKE = "#7B7C66";
+const PANEL_ALT = "#151515F2";
 const TRANSPARENT = "#00000000";
 
-const TITLE_FACE = "Caladea";
-const BODY_FACE = "Lato";
+const TITLE_FACE = "Aptos Display";
+const BODY_FACE = "Aptos";
 const MONO_FACE = "Aptos Mono";
 
 const FALLBACK_PLATE_DATA_URL =
@@ -564,12 +564,12 @@ async function addPlate(slide, slideNo, opacityPanel = false) {
       addShape(slide, "rect", 640, 0, 640, 720, "#061110B4", TRANSPARENT, 0, { slideNo, role: "themed image veil" });
     }
   }
-  addShape(slide, "ellipse", 938, -104, 390, 390, "#D6E96B26", TRANSPARENT, 0, { slideNo, role: "ambient glow top" });
-  addShape(slide, "ellipse", -92, 492, 288, 288, "#FFC4D91A", TRANSPARENT, 0, { slideNo, role: "ambient glow bottom" });
-  addShape(slide, "roundRect", 26, 22, 1228, 676, TRANSPARENT, "#49645B", 1.1, { slideNo, role: "outer frame" });
-  addShape(slide, "rect", 0, 0, W, H, "#081413D6", TRANSPARENT, 0, { slideNo, role: "global tint overlay" });
+  addShape(slide, "ellipse", 938, -104, 390, 390, "#97A15818", TRANSPARENT, 0, { slideNo, role: "ambient glow top" });
+  addShape(slide, "ellipse", -92, 492, 288, 288, "#D9B7B114", TRANSPARENT, 0, { slideNo, role: "ambient glow bottom" });
+  addShape(slide, "roundRect", 26, 22, 1228, 676, TRANSPARENT, "#515145", 1.1, { slideNo, role: "outer frame" });
+  addShape(slide, "rect", 0, 0, W, H, "#050505D9", TRANSPARENT, 0, { slideNo, role: "global tint overlay" });
   if (opacityPanel) {
-    addShape(slide, "rect", 0, 0, W, H, "#081413A8", TRANSPARENT, 0, { slideNo, role: "plate readability overlay" });
+    addShape(slide, "rect", 0, 0, W, H, "#050505B0", TRANSPARENT, 0, { slideNo, role: "plate readability overlay" });
   }
 }
 
@@ -664,25 +664,25 @@ function addMetricCard(slide, slideNo, x, y, w, h, metric, label, note = null, a
   if (h < 132) {
     throw new Error(`Metric card is too short for editable pro-deck copy: height=${h.toFixed(1)}, minimum=132.`);
   }
-  addShape(slide, "roundRect", x, y, w, h, PAPER_96, STROKE, 1.2, { slideNo, role: `metric panel: ${label}` });
+  addShape(slide, "roundRect", x, y, w, h, "#F2EBDE", STROKE, 1.2, { slideNo, role: `metric panel: ${label}` });
   addShape(slide, "rect", x, y, w, 7, accent, TRANSPARENT, 0, { slideNo, role: `metric accent: ${label}` });
   addText(slide, slideNo, metric, x + 22, y + 24, w - 44, 54, {
     size: 34,
-    color: INK,
+    color: PAPER,
     bold: true,
     face: TITLE_FACE,
     role: "metric value",
   });
   addText(slide, slideNo, label, x + 24, y + 82, w - 48, 38, {
     size: 16,
-    color: GRAPHITE,
+    color: PAPER,
     face: BODY_FACE,
     role: "metric label",
   });
   if (note) {
     addText(slide, slideNo, note, x + 24, y + h - 42, w - 48, 22, {
       size: 10,
-      color: MUTED,
+      color: "#635F58",
       face: BODY_FACE,
       role: "metric note",
     });
@@ -698,15 +698,15 @@ function addReferenceCaption(slide, slideNo) {
   addText(
     slide,
     slideNo,
-    "Generated art plate is used as visual direction; all meaningful copy and structure are editable PowerPoint objects.",
+    "WAYV MR CYBER ALTAR / CW4145",
     64,
     674,
     980,
     22,
     {
       size: 10,
-      color: MUTED,
-      face: BODY_FACE,
+      color: ACCENT,
+      face: MONO_FACE,
       checkFit: false,
       role: "caption",
     },
@@ -789,9 +789,9 @@ async function slideCover(presentation) {
   const data = SLIDES[0];
   const slide = presentation.slides.add();
   await addPlate(slide, slideNo);
-  addShape(slide, "roundRect", 52, 76, 632, 566, "#0A1716D8", "#48655B", 1.2, { slideNo, role: "cover glass block" });
+  addShape(slide, "roundRect", 52, 76, 632, 566, "#080808EC", "#5E5B4A", 1.2, { slideNo, role: "cover glass block" });
   addShape(slide, "rect", 64, 86, 7, 455, ACCENT, TRANSPARENT, 0, { slideNo, role: "cover accent rule" });
-  addShape(slide, "ellipse", 764, 74, 404, 404, "#D6E96B14", TRANSPARENT, 0, { slideNo, role: "cover halo" });
+  addShape(slide, "ellipse", 764, 74, 404, 404, "#97A15816", TRANSPARENT, 0, { slideNo, role: "cover halo" });
   await addHeroCollage(slide, slideNo);
   addText(slide, slideNo, data.kicker, 86, 88, 520, 26, {
     size: 13,
@@ -802,7 +802,7 @@ async function slideCover(presentation) {
   });
   addText(slide, slideNo, data.title, 82, 130, 785, 184, {
     size: 48,
-    color: INK,
+    color: ACCENT,
     bold: true,
     face: TITLE_FACE,
     role: "cover title",
@@ -813,10 +813,10 @@ async function slideCover(presentation) {
     face: BODY_FACE,
     role: "cover subtitle",
   });
-  addShape(slide, "roundRect", 86, 456, 390, 92, PAPER_96, INK, 1.2, { slideNo, role: "cover moment panel" });
+  addShape(slide, "roundRect", 86, 456, 390, 92, "#F2EBDE", "#D1C7B5", 1.2, { slideNo, role: "cover moment panel" });
   addText(slide, slideNo, data.moment || "Replace with core idea", 112, 478, 336, 40, {
     size: 23,
-    color: INK,
+    color: PAPER,
     bold: true,
     face: TITLE_FACE,
     role: "cover moment",
@@ -829,7 +829,6 @@ async function slideCards(presentation, idx) {
   const data = SLIDES[idx - 1];
   const slide = presentation.slides.add();
   await addPlate(slide, idx);
-  addShape(slide, "rect", 0, 0, W, H, "#FFFFFFB8", TRANSPARENT, 0, { slideNo: idx, role: "content contrast overlay" });
   addHeader(slide, idx, data.kicker, idx, SLIDES.length);
   addTitleBlock(slide, idx, data.title, data.subtitle, 64, 86, 760);
   const cards = data.cards?.length
@@ -855,7 +854,7 @@ async function slideSplitFeature(presentation, idx) {
   const data = SLIDES[idx - 1];
   const slide = presentation.slides.add();
   await addPlate(slide, idx);
-  addShape(slide, "roundRect", 48, 82, 596, 578, "#091514E8", "#4F6D62", 1.1, { slideNo: idx, role: "split feature left panel" });
+  addShape(slide, "roundRect", 48, 82, 596, 578, "#080808EE", "#5B594B", 1.1, { slideNo: idx, role: "split feature left panel" });
   addHeader(slide, idx, data.kicker, idx, SLIDES.length);
   addTitleBlock(slide, idx, data.title, data.subtitle, 72, 104, 522);
   addPill(slide, idx, data.expectedVisual || "Prototype highlight", 74, 246, 292, ACCENT);
@@ -890,7 +889,7 @@ async function slideSplitFeature(presentation, idx) {
     accent: CORAL,
     role: "split detail image",
   });
-  addShape(slide, "ellipse", 1100, 80, 96, 96, "#D6E96B24", TRANSPARENT, 0, { slideNo: idx, role: "split glow" });
+  addShape(slide, "ellipse", 1100, 80, 96, 96, "#97A15824", TRANSPARENT, 0, { slideNo: idx, role: "split glow" });
   addReferenceCaption(slide, idx);
   addNotes(slide, data.notes, data.sources);
 }
@@ -899,7 +898,7 @@ async function slideStoryboard(presentation, idx) {
   const data = SLIDES[idx - 1];
   const slide = presentation.slides.add();
   await addPlate(slide, idx);
-  addShape(slide, "rect", 0, 0, W, H, "#0814139C", TRANSPARENT, 0, { slideNo: idx, role: "storyboard veil" });
+  addShape(slide, "rect", 0, 0, W, H, "#0505059C", TRANSPARENT, 0, { slideNo: idx, role: "storyboard veil" });
   addHeader(slide, idx, data.kicker, idx, SLIDES.length);
   addTitleBlock(slide, idx, data.title, data.subtitle, 64, 88, 830);
   addPill(slide, idx, "Embodied Journey", 64, 228, 196, CORAL);
@@ -958,7 +957,6 @@ async function slideMetrics(presentation, idx) {
   const data = SLIDES[idx - 1];
   const slide = presentation.slides.add();
   await addPlate(slide, idx);
-  addShape(slide, "rect", 0, 0, W, H, "#FFFFFFBD", TRANSPARENT, 0, { slideNo: idx, role: "metrics contrast overlay" });
   addHeader(slide, idx, data.kicker, idx, SLIDES.length);
   addTitleBlock(slide, idx, data.title, data.subtitle, 64, 86, 700);
   const metrics = data.metrics || [
@@ -979,7 +977,7 @@ async function slideMetricsFeature(presentation, idx) {
   const data = SLIDES[idx - 1];
   const slide = presentation.slides.add();
   await addPlate(slide, idx);
-  addShape(slide, "roundRect", 54, 82, 1172, 584, "#081413C8", "#4F6D62", 1.2, { slideNo: idx, role: "metrics feature base" });
+  addShape(slide, "roundRect", 54, 82, 1172, 584, "#080808D4", "#5B5A4C", 1.2, { slideNo: idx, role: "metrics feature base" });
   addHeader(slide, idx, data.kicker, idx, SLIDES.length);
   addTitleBlock(slide, idx, data.title, data.subtitle, 76, 100, 680);
   await addFramedImage(slide, idx, pickDeckImage(idx, 3), 850, 108, 290, 232, {
@@ -993,7 +991,7 @@ async function slideMetricsFeature(presentation, idx) {
     ["00", "Replace metric", "Source"],
     ["00", "Replace metric", "Source"],
   ];
-  addShape(slide, "roundRect", 76, 254, 720, 76, "#0D1D1AE8", ACCENT, 1.1, { slideNo: idx, role: "metrics banner" });
+  addShape(slide, "roundRect", 76, 254, 720, 76, "#111111F0", ACCENT, 1.1, { slideNo: idx, role: "metrics banner" });
   addText(slide, idx, data.expectedVisual || "Use this slide to show evidence, comparison, or validation.", 104, 276, 664, 28, {
     size: 16,
     color: INK,
@@ -1007,7 +1005,7 @@ async function slideMetricsFeature(presentation, idx) {
     const [metric, label, note] = metrics[i];
     addMetricCard(slide, idx, 84 + i * 360, 372, 320, 182, metric, label, note, accents[i % accents.length]);
   }
-  addShape(slide, "roundRect", 834, 378, 320, 180, "#101F1DF0", "#5C7B70", 1.1, { slideNo: idx, role: "metrics side commentary" });
+  addShape(slide, "roundRect", 834, 378, 320, 180, "#F2EBDE", "#CDBFA2", 1.1, { slideNo: idx, role: "metrics side commentary" });
   addText(slide, idx, "Why it matters", 858, 398, 220, 24, {
     size: 14,
     color: ACCENT,
@@ -1018,7 +1016,7 @@ async function slideMetricsFeature(presentation, idx) {
   });
   addText(slide, idx, data.notes || "Replace with the interpretation of these results.", 858, 440, 268, 96, {
     size: 14,
-    color: INK,
+    color: PAPER,
     face: BODY_FACE,
     role: "metrics side text",
   });

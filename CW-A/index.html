@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WayV MR Cyber Altar</title>
+  <link rel="icon" href="data:,">
   <script src="https://aframe.io/releases/1.7.1/aframe.min.js"></script>
   <style>
     :root {
@@ -282,12 +283,12 @@
   </div>
 
   <a-scene
-    renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: false; sortObjects: true"
+    renderer="alpha: true; antialias: true; colorManagement: true; sortTransparentObjects: true"
     xr-mode-ui="enabled: false"
     vr-mode-ui="enabled: false"
     loading-screen="enabled: false"
     background="color: #000000; transparent: true"
-    webxr="optionalFeatures: local-floor, bounded-floor, hand-tracking, layers, dom-overlay; overlayElement: #overlay"
+    webxr="optionalFeatures: bounded-floor, hand-tracking, layers"
     mr-idol-experience
   >
     <a-assets timeout="15000">
@@ -1348,6 +1349,59 @@
           await this.primeSingleMedia(this.voiceVideoEl);
         },
 
+        waitForSceneReady() {
+          if (this.el.hasLoaded) {
+            return Promise.resolve();
+          }
+          return new Promise((resolve) => {
+            this.el.addEventListener("loaded", () => resolve(), { once: true });
+          });
+        },
+
+        withTimeout(promise, timeoutMs = 5000) {
+          let timeoutId = null;
+          const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = window.setTimeout(() => reject(new Error("Timed out")), timeoutMs);
+          });
+          return Promise.race([promise, timeoutPromise]).finally(() => {
+            if (timeoutId !== null) {
+              window.clearTimeout(timeoutId);
+            }
+          });
+        },
+
+        async tryEnterImmersiveMode() {
+          if (!navigator.xr || !window.isSecureContext) {
+            return "inline";
+          }
+
+          if (this.el.enterAR) {
+            try {
+              const arSupported = await navigator.xr.isSessionSupported("immersive-ar");
+              if (arSupported && !this.el.is("ar-mode")) {
+                this.setStatus("正在尝试进入 Quest 3 透视 MR 模式...");
+                await this.withTimeout(this.el.enterAR(), 6000);
+                return "ar";
+              }
+            } catch (error) {
+            }
+          }
+
+          if (this.el.enterVR) {
+            try {
+              const vrSupported = await navigator.xr.isSessionSupported("immersive-vr");
+              if (vrSupported && !this.el.is("vr-mode")) {
+                this.setStatus("透视模式未成功，正在切换到沉浸式模式继续运行...");
+                await this.withTimeout(this.el.enterVR(), 6000);
+                return "vr";
+              }
+            } catch (error) {
+            }
+          }
+
+          return "inline";
+        },
+
         async startExperience() {
           if (this.preparing) {
             return;
@@ -1355,18 +1409,12 @@
 
           this.preparing = true;
           try {
-            await this.primeMedia();
-
-            if (navigator.xr && window.isSecureContext && this.el.enterAR) {
-              try {
-                const supported = await navigator.xr.isSessionSupported("immersive-ar");
-                if (supported && !this.el.is("ar-mode")) {
-                  this.setStatus("正在请求 Quest 3 透视 MR 会话...");
-                  await this.el.enterAR();
-                }
-              } catch (error) {
-              }
+            await this.waitForSceneReady();
+            try {
+              await this.withTimeout(this.primeMedia(), 1800);
+            } catch (error) {
             }
+            const mode = await this.tryEnterImmersiveMode();
 
             this.positionStageInFront();
             this.stageRootEl.object3D.visible = true;
@@ -1376,7 +1424,13 @@
             await this.startVideoLoop();
             await this.startBgmLoop();
             this.updateWandsForState();
-            this.setStatus("舞台已固定在正前方。向成员卡片走近即可自动播放语音，右手捏合会打出激光锁定。");
+            if (mode === "ar") {
+              this.setStatus("舞台已固定在你前方的 MR 空间中。向成员卡片走近即可自动播放语音，右手捏合会打出激光锁定。");
+            } else if (mode === "vr") {
+              this.setStatus("已切换到沉浸式模式继续运行。舞台在你前方，向成员卡片走近即可自动切换语音。");
+            } else {
+              this.setStatus("场景已在当前页面成功启动。若 Quest 没有进入沉浸模式，请先确认浏览器权限，再重新点击开始体验。");
+            }
           } finally {
             this.preparing = false;
           }
