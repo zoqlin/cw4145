@@ -752,12 +752,17 @@
           this.motion = new THREE.Vector3();
           this.anchorPosition = new THREE.Vector3();
           this.anchorQuaternion = new THREE.Quaternion();
-          this.offset = new THREE.Vector3(0.05, -0.035, -0.018);
+          this.anchorScale = new THREE.Vector3(1, 1, 1);
+          this.offsetWorld = new THREE.Vector3();
+          this.cameraWorld = new THREE.Vector3();
+          this.savedHandPosition = new THREE.Vector3();
+          this.savedHandQuaternion = new THREE.Quaternion();
+          this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
           this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
           this.handRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-            THREE.MathUtils.degToRad(14),
-            0,
-            THREE.MathUtils.degToRad(18)
+            THREE.MathUtils.degToRad(8),
+            THREE.MathUtils.degToRad(-6),
+            THREE.MathUtils.degToRad(8)
           ));
           this.fallbackRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             THREE.MathUtils.degToRad(-10),
@@ -771,6 +776,7 @@
           this.trailAccumulator = 0;
           this.overlayPrepared = false;
           this.handTracked = false;
+          this.lastTrackedAt = 0;
           this.buildMesh();
         },
 
@@ -898,24 +904,49 @@
         },
 
         updateAnchorPose() {
-          const sourceVisible = !!(this.sourceHandEl && this.sourceHandEl.object3D.visible !== false);
-          if (sourceVisible) {
-            this.sourceHandEl.object3D.getWorldPosition(this.anchorPosition);
-            this.sourceHandEl.object3D.getWorldQuaternion(this.anchorQuaternion);
-            this.anchorPosition.add(this.offset.clone().applyQuaternion(this.anchorQuaternion));
-            this.anchorQuaternion.multiply(this.handRotation);
-            this.handTracked = true;
+          const now = performance.now();
+          const handObject = this.sourceHandEl && this.sourceHandEl.object3D;
+          const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+
+          if (handObject && fallbackObject) {
+            handObject.updateMatrixWorld(true);
+            fallbackObject.updateMatrixWorld(true);
+            handObject.matrixWorld.decompose(this.anchorPosition, this.anchorQuaternion, this.anchorScale);
+            fallbackObject.getWorldPosition(this.cameraWorld);
+
+            const handPoseLooksValid =
+              Number.isFinite(this.anchorPosition.x) &&
+              Number.isFinite(this.anchorPosition.y) &&
+              Number.isFinite(this.anchorPosition.z) &&
+              this.anchorPosition.y > 0.2 &&
+              this.anchorPosition.distanceTo(this.cameraWorld) < 1.6;
+
+            if (handPoseLooksValid) {
+              this.offsetWorld.copy(this.offset).applyQuaternion(this.anchorQuaternion);
+              this.anchorPosition.add(this.offsetWorld);
+              this.anchorQuaternion.multiply(this.handRotation);
+              this.savedHandPosition.copy(this.anchorPosition);
+              this.savedHandQuaternion.copy(this.anchorQuaternion);
+              this.lastTrackedAt = now;
+              this.handTracked = true;
+              return;
+            }
+
+            if (this.handTracked && now - this.lastTrackedAt < 160) {
+              this.anchorPosition.copy(this.savedHandPosition);
+              this.anchorQuaternion.copy(this.savedHandQuaternion);
+              return;
+            }
+          }
+
+          if (!fallbackObject) {
             return;
           }
 
-          const target = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
-          if (!target) {
-            return;
-          }
-
-          target.getWorldPosition(this.anchorPosition);
-          target.getWorldQuaternion(this.anchorQuaternion);
-          this.anchorPosition.add(this.fallbackOffset.clone().applyQuaternion(this.anchorQuaternion));
+          fallbackObject.getWorldPosition(this.anchorPosition);
+          fallbackObject.getWorldQuaternion(this.anchorQuaternion);
+          this.offsetWorld.copy(this.fallbackOffset).applyQuaternion(this.anchorQuaternion);
+          this.anchorPosition.add(this.offsetWorld);
           this.anchorQuaternion.multiply(this.fallbackRotation);
           this.handTracked = false;
         },
@@ -1060,6 +1091,7 @@
           this.cameraPosition = new THREE.Vector3();
           this.cameraDirection = new THREE.Vector3();
           this.cameraForwardFlat = new THREE.Vector3();
+          this.accentColor = new THREE.Color(APP_CONFIG.colors.accent);
           this.tempWorld = new THREE.Vector3();
           this.tempWorldB = new THREE.Vector3();
           this.handWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
@@ -1202,7 +1234,7 @@
             badgeText.setAttribute("visible", "false");
             cardEl.appendChild(badgeText);
 
-            const memberState = {
+          const memberState = {
               ...member,
               el: cardEl,
               glowEl: glow,
@@ -1218,11 +1250,16 @@
               panelWidth,
               panelHeight,
               detailAspect,
+              memberColor: new THREE.Color(member.color),
+              glowColor: new THREE.Color(APP_CONFIG.colors.accent),
               appearDelay: index * 0.1,
               hoverAmount: 0,
               selectedAmount: 0,
               visibleAmount: 0,
-              forwardOffset: 0
+              forwardOffset: 0,
+              lastNameColor: null,
+              lastBadgeText: null,
+              lastBadgeVisible: null
             };
 
             this.memberArcEl.appendChild(cardEl);
@@ -1811,8 +1848,8 @@
             const selectedTarget = this.activeSelection && this.activeSelection.key === member.key ? 1 : 0;
             const candidateTarget = this.candidateTarget && this.candidateTarget.key === member.key ? 1 : 0;
 
-            member.hoverAmount = THREE.MathUtils.lerp(member.hoverAmount, Math.max(hoverTarget, focusTarget * 0.72, candidateTarget * 0.28), 0.18);
-            member.selectedAmount = THREE.MathUtils.lerp(member.selectedAmount, selectedTarget, 0.18);
+            member.hoverAmount = THREE.MathUtils.lerp(member.hoverAmount, Math.max(hoverTarget, focusTarget * 0.72, candidateTarget * 0.28), 0.12);
+            member.selectedAmount = THREE.MathUtils.lerp(member.selectedAmount, selectedTarget, 0.14);
 
             if (hoverTarget > 0.1 && handSource) {
               this.hoveredByHand[handSource] = member.key;
@@ -1820,32 +1857,35 @@
 
             const appear = THREE.MathUtils.clamp((stageElapsed - member.appearDelay) / 0.68, 0, 1);
             member.visibleAmount = appear;
-            const forward = member.hoverAmount * 0.048 + member.selectedAmount * 0.09;
-            member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.18);
-            member.el.object3D.scale.setScalar(0.82 + appear * 0.18 + member.selectedAmount * 0.05);
+            const forward = member.hoverAmount * 0.04 + member.selectedAmount * 0.075;
+            member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.12);
+            member.el.object3D.scale.setScalar(0.82 + appear * 0.18 + member.selectedAmount * 0.04);
             member.el.object3D.position.x = member.baseX;
-            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.14 + Math.sin(time * 0.0012 + member.appearDelay * 5) * 0.01;
+            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.12 + Math.sin(time * 0.0008 + member.appearDelay * 4) * 0.004;
             member.el.object3D.position.z = member.baseZ + member.forwardOffset;
 
-            const memberColor = new THREE.Color(member.color);
-            const glowColor = new THREE.Color(APP_CONFIG.colors.accent).lerp(memberColor, Math.max(member.hoverAmount, member.selectedAmount));
+            const glowColor = member.glowColor.copy(this.accentColor).lerp(member.memberColor, Math.max(member.hoverAmount, member.selectedAmount));
             if (member.glowMesh) {
               member.glowMesh.material.color.copy(glowColor);
-              member.glowMesh.material.opacity = (0.05 + member.hoverAmount * 0.2 + member.selectedAmount * 0.24) * appear;
+              member.glowMesh.material.opacity = (0.05 + member.hoverAmount * 0.16 + member.selectedAmount * 0.2) * appear;
             }
             if (member.panelMesh) {
-              member.panelMesh.material.opacity = 0.8 + member.hoverAmount * 0.1 + member.selectedAmount * 0.08;
+              member.panelMesh.material.opacity = 0.82 + member.hoverAmount * 0.08 + member.selectedAmount * 0.06;
             }
             if (member.borderMesh) {
               member.borderMesh.material.color.copy(glowColor);
-              member.borderMesh.material.opacity = (0.14 + member.hoverAmount * 0.22 + member.selectedAmount * 0.24) * appear;
+              member.borderMesh.material.opacity = (0.14 + member.hoverAmount * 0.18 + member.selectedAmount * 0.2) * appear;
               member.borderEl.object3D.scale.set(
-                member.panelWidth / 0.62 + member.hoverAmount * 0.04 + member.selectedAmount * 0.06,
-                member.panelHeight / 0.62 + member.hoverAmount * 0.05 + member.selectedAmount * 0.08,
+                member.panelWidth / 0.62 + member.hoverAmount * 0.03 + member.selectedAmount * 0.05,
+                member.panelHeight / 0.62 + member.hoverAmount * 0.04 + member.selectedAmount * 0.06,
                 1
               );
             }
-            member.nameEl.setAttribute("color", member.selectedAmount > 0.1 ? member.color : APP_CONFIG.colors.accentSoft);
+            const nameColor = member.selectedAmount > 0.1 ? member.color : APP_CONFIG.colors.accentSoft;
+            if (member.lastNameColor !== nameColor) {
+              member.nameEl.setAttribute("color", nameColor);
+              member.lastNameColor = nameColor;
+            }
 
             const isCandidate = this.candidateTarget && this.candidateTarget.key === member.key;
             const isSelected = this.activeSelection && this.activeSelection.key === member.key;
@@ -1854,8 +1894,16 @@
               member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
               member.badgeMesh.material.opacity = badgeOpacity * appear;
             }
-            member.badgeTextEl.setAttribute("value", isSelected ? "NOW PLAYING" : isCandidate ? "TARGET" : "");
-            member.badgeTextEl.setAttribute("visible", badgeOpacity > 0.01);
+            const badgeText = isSelected ? "NOW PLAYING" : isCandidate ? "TARGET" : "";
+            const badgeVisible = badgeOpacity > 0.01;
+            if (member.lastBadgeText !== badgeText) {
+              member.badgeTextEl.setAttribute("value", badgeText);
+              member.lastBadgeText = badgeText;
+            }
+            if (member.lastBadgeVisible !== badgeVisible) {
+              member.badgeTextEl.setAttribute("visible", badgeVisible);
+              member.lastBadgeVisible = badgeVisible;
+            }
           }
 
           if (!closestMember) {
@@ -1903,19 +1951,27 @@
 
           const isSelected = this.activeSelection && this.activeSelection.key === target.key;
           this.selectionBillboardEl.object3D.visible = true;
-          this.selectionBillboardEl.object3D.position.set(0, 2.38 + (isSelected ? 0.04 : 0), 0.18);
+          this.selectionBillboardEl.object3D.position.set(0, 2.22 + (isSelected ? 0.03 : 0), 0.56);
           this.selectionBillboardEl.object3D.rotation.set(0, 0, 0);
-          this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 1.03 : 0.96);
+          this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 1 : 0.94);
 
           this.selectionGroundCueEl.object3D.visible = true;
           this.selectionGroundCueEl.object3D.position.set(target.baseX, 0.03, target.baseZ + target.forwardOffset);
           this.selectionGroundCueEl.object3D.scale.setScalar(isSelected ? 1.18 : 1);
-          this.selectionGroundRingEl.setAttribute("material", `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.52 : 0.3}; side: double`);
+          this.selectionGroundRingMesh = this.selectionGroundRingMesh || this.selectionGroundRingEl.getObject3D("mesh");
+          if (this.selectionGroundRingMesh) {
+            this.selectionGroundRingMesh.material.color.set(target.color);
+            this.selectionGroundRingMesh.material.opacity = isSelected ? 0.52 : 0.3;
+          }
 
           this.selectionBeamEl.object3D.visible = true;
           this.selectionBeamEl.object3D.position.set(target.baseX, 1.18, target.baseZ + target.forwardOffset);
           this.selectionBeamEl.object3D.scale.setScalar(isSelected ? 1.08 : 0.94);
-          this.selectionBeamConeEl.setAttribute("material", `shader: flat; color: ${target.color}; transparent: true; opacity: ${isSelected ? 0.14 : 0.08}; side: double`);
+          this.selectionBeamConeMesh = this.selectionBeamConeMesh || this.selectionBeamConeEl.getObject3D("mesh");
+          if (this.selectionBeamConeMesh) {
+            this.selectionBeamConeMesh.material.color.set(target.color);
+            this.selectionBeamConeMesh.material.opacity = isSelected ? 0.14 : 0.08;
+          }
         },
 
         updateScreenVisuals() {
