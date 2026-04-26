@@ -874,7 +874,7 @@
           leftHalo.setAttribute("height", "0.18");
           leftHalo.setAttribute("position", "-0.055 0.435 -0.018");
           leftHalo.setAttribute("rotation", "0 0 34");
-          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
+          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double; depthTest: false; depthWrite: false");
           root.appendChild(leftHalo);
 
           const rightHalo = document.createElement("a-plane");
@@ -883,7 +883,7 @@
           rightHalo.setAttribute("height", "0.18");
           rightHalo.setAttribute("position", "0.055 0.435 -0.018");
           rightHalo.setAttribute("rotation", "0 0 -34");
-          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
+          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double; depthTest: false; depthWrite: false");
           root.appendChild(rightHalo);
 
           const tip = document.createElement("a-entity");
@@ -1028,29 +1028,6 @@
           const handObject = this.resolveHandAnchorObject();
           const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
 
-          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
-            fallbackObject && fallbackObject.updateMatrixWorld(true);
-            fallbackObject.getWorldPosition(this.cameraWorld);
-
-            const controllerPoseLooksValid =
-              Number.isFinite(this.anchorPosition.x) &&
-              Number.isFinite(this.anchorPosition.y) &&
-              Number.isFinite(this.anchorPosition.z) &&
-              this.anchorPosition.y > 0.2 &&
-              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
-
-            if (controllerPoseLooksValid) {
-              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.controllerRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
-              this.handTracked = true;
-              return;
-            }
-          }
-
           if (handObject && fallbackObject) {
             handObject.updateMatrixWorld(true);
             fallbackObject.updateMatrixWorld(true);
@@ -1062,8 +1039,7 @@
               Number.isFinite(this.rootPosition.x) &&
               Number.isFinite(this.rootPosition.y) &&
               Number.isFinite(this.rootPosition.z) &&
-              this.rootPosition.y > 0.2 &&
-              this.rootPosition.distanceTo(this.cameraWorld) < 1.6;
+              this.rootPosition.distanceTo(this.cameraWorld) < 2.2;
 
             if (rootPoseLooksValid) {
               this.anchorPosition.copy(this.rootPosition);
@@ -1077,7 +1053,7 @@
                   Number.isFinite(this.detailPosition.x) &&
                   Number.isFinite(this.detailPosition.y) &&
                   Number.isFinite(this.detailPosition.z) &&
-                  this.detailPosition.distanceTo(this.rootPosition) < 0.28;
+                  this.detailPosition.distanceTo(this.rootPosition) < 0.34;
 
                 if (detailPoseLooksValid) {
                   this.anchorPosition.copy(this.detailPosition);
@@ -1094,12 +1070,35 @@
               this.handTracked = true;
               return;
             }
+          }
 
-            if (this.handTracked && now - this.lastTrackedAt < 160) {
-              this.anchorPosition.copy(this.savedHandPosition);
-              this.anchorQuaternion.copy(this.savedHandQuaternion);
+          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
+            fallbackObject.updateMatrixWorld(true);
+            fallbackObject.getWorldPosition(this.cameraWorld);
+
+            const controllerPoseLooksValid =
+              Number.isFinite(this.anchorPosition.x) &&
+              Number.isFinite(this.anchorPosition.y) &&
+              Number.isFinite(this.anchorPosition.z) &&
+              this.anchorPosition.y > 0.18 &&
+              this.anchorPosition.distanceTo(this.cameraWorld) < 2.9;
+
+            if (controllerPoseLooksValid) {
+              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
+              this.anchorPosition.add(this.offsetWorld);
+              this.anchorQuaternion.multiply(this.controllerRotation);
+              this.savedHandPosition.copy(this.anchorPosition);
+              this.savedHandQuaternion.copy(this.anchorQuaternion);
+              this.lastTrackedAt = now;
+              this.handTracked = true;
               return;
             }
+          }
+
+          if (this.handTracked && now - this.lastTrackedAt < 160) {
+            this.anchorPosition.copy(this.savedHandPosition);
+            this.anchorQuaternion.copy(this.savedHandQuaternion);
+            return;
           }
 
           if (!fallbackObject) {
@@ -1358,19 +1357,19 @@
             glow.setAttribute("width", glowWidth.toFixed(3));
             glow.setAttribute("height", glowHeight.toFixed(3));
             glow.setAttribute("position", "0 0 -0.02");
-            glow.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
+            glow.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double; depthTest: false; depthWrite: false");
             cardEl.appendChild(glow);
 
             const panel = document.createElement("a-plane");
             panel.setAttribute("width", panelWidth.toFixed(3));
             panel.setAttribute("height", panelHeight.toFixed(3));
-            panel.setAttribute("material", "shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double");
+            panel.setAttribute("material", "shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double; depthTest: false; depthWrite: false");
             cardEl.appendChild(panel);
 
             const border = document.createElement("a-ring");
             border.setAttribute("radius-inner", "0.3");
             border.setAttribute("radius-outer", "0.312");
-            border.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double");
+            border.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double; depthTest: false; depthWrite: false");
             border.object3D.scale.set(panelWidth / 0.62, panelHeight / 0.62, 1);
             cardEl.appendChild(border);
 
@@ -1379,7 +1378,7 @@
             art.setAttribute("width", artWidth.toFixed(3));
             art.setAttribute("height", artHeight.toFixed(3));
             art.setAttribute("position", "0 0.04 0.01");
-            art.setAttribute("material", "shader: flat; side: double; transparent: true");
+            art.setAttribute("material", "shader: flat; side: double; transparent: true; depthTest: false; depthWrite: false");
             cardEl.appendChild(art);
 
             const name = document.createElement("a-text");
@@ -1394,7 +1393,7 @@
             badge.setAttribute("width", "0.33");
             badge.setAttribute("height", "0.072");
             badge.setAttribute("position", "0 0.43 0.03");
-            badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double");
+            badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double; depthTest: false; depthWrite: false");
             cardEl.appendChild(badge);
 
             const badgeText = document.createElement("a-text");
@@ -1513,13 +1512,23 @@
         },
 
         getActiveEmitterWorldPosition(target) {
-          if (this.activeHand === "controller" && this.getControllerWorldPosition("right", target, this.tempQuaternion)) {
-            this.tempWorldB.set(0.012, -0.004, -0.028).applyQuaternion(this.tempQuaternion);
-            target.add(this.tempWorldB);
+          const rightHandEl = document.getElementById("rightHand");
+          const rightWandEl = document.getElementById("rightWand");
+          const wandComponent = rightWandEl && rightWandEl.components && rightWandEl.components["support-wand"];
+          if (wandComponent && wandComponent.el && wandComponent.el.object3D) {
+            wandComponent.el.object3D.updateMatrixWorld(true);
+            wandComponent.tipEl && wandComponent.tipEl.object3D.updateMatrixWorld(true);
+            if (wandComponent.tipEl) {
+              wandComponent.tipEl.object3D.getWorldPosition(target);
+              return true;
+            }
+          }
+          if (rightHandEl && this.getHandWorldPosition("right", target)) {
             return true;
           }
-          if (this.handHasPose.right) {
-            target.copy(this.handWorld.right);
+          if (this.activeHand === "controller" && this.getControllerWorldPosition("right", target, this.tempQuaternion)) {
+            this.tempWorldB.set(0.0, -0.01, -0.06).applyQuaternion(this.tempQuaternion);
+            target.add(this.tempWorldB);
             return true;
           }
           if (this.activeHandEl) {
@@ -1793,6 +1802,21 @@
           this.fadeMediaVolume(this.bgmEl, 0, APP_CONFIG.bgm.baseVolume, 380);
         },
 
+        stopAllOtherVoices(keepEl) {
+          for (const mediaEl of this.voiceMediaByKey.values()) {
+            if (!mediaEl || mediaEl === keepEl) {
+              continue;
+            }
+            mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
+            try {
+              mediaEl.pause();
+              mediaEl.currentTime = 0;
+            } catch (error) {
+            }
+            mediaEl.volume = 0;
+          }
+        },
+
         stopVoiceImmediate() {
           for (const mediaEl of [this.voiceAudioEl, this.voiceVideoEl, ...this.voiceMediaByKey.values()]) {
             mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
@@ -1805,7 +1829,7 @@
           }
           this.currentVoiceEl = null;
           this.currentVoiceOwner = null;
-        },
+        }
 
         resumeBgmAfterVoice() {
           if (!this.started) {
@@ -1847,7 +1871,6 @@
             return;
           }
 
-          this.stopVoiceImmediate();
           this.activeSelection = member;
           this.candidateTarget = member;
           this.candidateSince = performance.now();
@@ -1866,8 +1889,10 @@
           this.currentVoiceEl.muted = false;
           this.currentVoiceEl.defaultMuted = false;
           this.currentVoiceEl.removeAttribute("muted");
-          this.currentVoiceEl.volume = 0.42;
+          this.currentVoiceEl.volume = 0;
           this.currentVoiceEl.currentTime = 0;
+
+          this.stopAllOtherVoices(this.currentVoiceEl);
           this.bgmWasPlayingBeforeVoice = this.bgmWasPlayingBeforeVoice || !this.bgmEl.paused;
           try {
             this.bgmEl.pause();
@@ -1885,7 +1910,7 @@
             });
           }
 
-          this.fadeMediaVolume(this.currentVoiceEl, 0.42, APP_CONFIG.voices.selectedVolume, 120);
+          this.fadeMediaVolume(this.currentVoiceEl, 0, APP_CONFIG.voices.selectedVolume, 160);
           this.setStatus(`${member.name} 已进入 NOW PLAYING，当前只会播放这一位成员的语音。`);
 
           if ((reason === "pinch" || reason === "controller") && this.activeHandEl) {
@@ -1912,10 +1937,10 @@
           this.selectionPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
           this.selectionPhotoGlowEl.setAttribute("width", (topPhotoWidth + 0.14).toFixed(3));
           this.selectionPhotoGlowEl.setAttribute("height", (topPhotoHeight + 0.18).toFixed(3));
-          this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.18 : 0.11}; side: double`);
+          this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.18 : 0.11}; side: double; depthTest: false; depthWrite: false`);
           this.selectionPhotoBackingEl.setAttribute("width", (topPhotoWidth + 0.08).toFixed(3));
           this.selectionPhotoBackingEl.setAttribute("height", (topPhotoHeight + 0.1).toFixed(3));
-          this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.36 : 0.22}; side: double`);
+          this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.36 : 0.22}; side: double; depthTest: false; depthWrite: false`);
           this.selectionPhotoRingEl.object3D.scale.set(topPhotoWidth / 0.58, topPhotoHeight / 0.58, 1);
           this.selectionPhotoRingOuterEl.object3D.scale.set((topPhotoWidth + 0.12) / 0.74, (topPhotoHeight + 0.12) / 0.74, 1);
           this.selectionCaptionEl.setAttribute("value", `${stateLabel} · ${member.name}`);
@@ -2033,6 +2058,7 @@
           this.tempWorldB.y += 0.06;
           this.laserEl.object3D.visible = true;
           this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${member.color}; opacity: 0.9`);
+          this.laserEl.object3D.scale.setScalar(0.001);
         },
 
         hideLaser() {
@@ -2050,6 +2076,7 @@
           this.activeSelection.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
           this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${this.activeSelection.color}; opacity: 0.9`);
+          this.laserEl.object3D.scale.set(0.001, 0.001, 0.001);
         },
 
         onVoiceEnded() {
@@ -2155,13 +2182,19 @@
             if (member.glowMesh) {
               member.glowMesh.material.color.copy(glowColor);
               member.glowMesh.material.opacity = (0.07 + member.hoverAmount * 0.24 + member.selectedAmount * 0.24) * appear;
+              member.glowMesh.material.depthTest = false;
+              member.glowMesh.material.depthWrite = false;
             }
             if (member.panelMesh) {
               member.panelMesh.material.opacity = 0.74 + member.hoverAmount * 0.12 + member.selectedAmount * 0.1;
+              member.panelMesh.material.depthTest = false;
+              member.panelMesh.material.depthWrite = false;
             }
             if (member.borderMesh) {
               member.borderMesh.material.color.copy(glowColor);
               member.borderMesh.material.opacity = (0.18 + member.hoverAmount * 0.26 + member.selectedAmount * 0.22) * appear;
+              member.borderMesh.material.depthTest = false;
+              member.borderMesh.material.depthWrite = false;
               member.borderEl.object3D.scale.set(
                 member.panelWidth / 0.62 + member.hoverAmount * 0.07 + member.selectedAmount * 0.08,
                 member.panelHeight / 0.62 + member.hoverAmount * 0.08 + member.selectedAmount * 0.1,
@@ -2180,6 +2213,8 @@
             if (member.badgeMesh) {
               member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
               member.badgeMesh.material.opacity = badgeOpacity * appear;
+              member.badgeMesh.material.depthTest = false;
+              member.badgeMesh.material.depthWrite = false;
             }
             const badgeText = isSelected ? "NOW PLAYING" : isCandidate ? "LOCK TARGET" : "";
             const badgeVisible = badgeOpacity > 0.01;
