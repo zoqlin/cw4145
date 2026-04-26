@@ -441,9 +441,9 @@
         ></a-ring>
         <a-text
           id="unlockOrbLabel"
-          value="ENERGY LINK"
+          value="PLEASE STAND HERE"
           align="center"
-          width="1.6"
+          width="1.9"
           color="#ffe6f1"
           position="0 -0.38 0"
         ></a-text>
@@ -629,8 +629,8 @@
         },
         interaction: {
           handHoverDistance: 0.56,
-          focusDistance: 4.8,
-          autoSelectDistance: 3.2,
+          focusDistance: 4.7,
+          autoSelectDistance: 3.25,
           autoSelectHoldMs: 180,
           switchHoldMs: 160,
           replayCooldownMs: 650,
@@ -638,18 +638,18 @@
           maxViewAngleDeg: 96
         },
         layout: {
-          memberArcDegrees: 120,
-          memberArcRadiusX: 2.04,
-          memberArcDepth: 0.92,
-          memberBaseY: 0.78,
-          cardWidth: 0.52,
+          memberArcDegrees: 86,
+          memberArcRadiusX: 1.36,
+          memberArcDepth: 0.46,
+          memberBaseY: 0.86,
+          cardWidth: 0.56,
           cardHeight: 0.74,
           cardImageWidth: 0.4,
           cardImageHeight: 0.58,
           topPhotoHeight: 0.74
         },
         stage: {
-          distance: 2.85
+          distance: 2.45
         },
         unlockOrb: {
           activationDistance: 0.52,
@@ -1498,9 +1498,10 @@
 
           APP_CONFIG.members.forEach((member, index) => {
             const ratio = count === 1 ? 0.5 : index / (count - 1);
-            const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-maxAngle, maxAngle, ratio));
-            const x = Math.sin(angle) * radiusX;
-            const z = userCenteredArcOffset - Math.cos(angle) * radiusX;
+            const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-maxAngle / 2, maxAngle / 2, ratio));
+            const edgePullIn = Math.abs(ratio - 0.5) * 2;
+            const x = Math.sin(angle) * radiusX * (1 - edgePullIn * 0.08);
+            const z = userCenteredArcOffset - Math.cos(angle) * radiusX + edgePullIn * APP_CONFIG.layout.memberArcDepth;
             const detailAspect = this.getAssetAspect(member.detailImageId || member.imageId, 0.72);
 
             const cardEl = document.createElement("a-entity");
