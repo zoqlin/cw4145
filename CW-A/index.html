@@ -381,9 +381,15 @@
     ></a-entity>
 
     <a-entity
+      id="rightController"
+      meta-touch-controls="hand: right; model: false"
+      controller-select-input="hand: right"
+    ></a-entity>
+
+    <a-entity
       id="rightWand"
       class="wand"
-      support-wand="hand: right; sourceHand: #rightHand; fallbackTarget: #userCamera"
+      support-wand="hand: right; sourceHand: #rightHand; sourceController: #rightController; fallbackTarget: #userCamera"
     ></a-entity>
 
     <a-entity id="experienceRoot" visible="false">
@@ -543,13 +549,13 @@
         },
         interaction: {
           handHoverDistance: 0.56,
-          focusDistance: 3.25,
-          autoSelectDistance: 2.25,
-          autoSelectHoldMs: 260,
+          focusDistance: 4.2,
+          autoSelectDistance: 2.9,
+          autoSelectHoldMs: 180,
           switchHoldMs: 160,
           replayCooldownMs: 650,
-          autoSelectWarmupMs: 1200,
-          maxViewAngleDeg: 70
+          autoSelectWarmupMs: 320,
+          maxViewAngleDeg: 88
         },
         layout: {
           memberArcDegrees: 72,
@@ -735,10 +741,32 @@
         }
       });
 
+      AFRAME.registerComponent("controller-select-input", {
+        schema: { hand: { default: "right" } },
+
+        init() {
+          this.onSelect = this.onSelect.bind(this);
+          this.events = ["triggerdown", "gripdown", "abuttondown", "bbuttondown", "selectstart"];
+          this.events.forEach((eventName) => this.el.addEventListener(eventName, this.onSelect));
+        },
+
+        onSelect() {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience) {
+            experience.handleControllerSelect(this.el);
+          }
+        },
+
+        remove() {
+          this.events.forEach((eventName) => this.el.removeEventListener(eventName, this.onSelect));
+        }
+      });
+
       AFRAME.registerComponent("support-wand", {
         schema: {
           hand: { default: "right" },
           sourceHand: { type: "selector" },
+          sourceController: { type: "selector" },
           fallbackTarget: { type: "selector" }
         },
 
@@ -763,11 +791,17 @@
           this.savedHandQuaternion = new THREE.Quaternion();
           this.handAnchorObject = null;
           this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
+          this.controllerOffset = new THREE.Vector3(0, -0.028, -0.15);
           this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
           this.handRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             THREE.MathUtils.degToRad(8),
             THREE.MathUtils.degToRad(-6),
             THREE.MathUtils.degToRad(8)
+          ));
+          this.controllerRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            THREE.MathUtils.degToRad(84),
+            THREE.MathUtils.degToRad(2),
+            THREE.MathUtils.degToRad(-4)
           ));
           this.fallbackRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             THREE.MathUtils.degToRad(-10),
@@ -963,9 +997,42 @@
 
         updateAnchorPose() {
           const now = performance.now();
+          const controllerEl = this.data.sourceController;
+          const controllerObject = controllerEl && controllerEl.object3D;
+          const controllerComponent = controllerEl && controllerEl.components && (controllerEl.components["meta-touch-controls"] || controllerEl.components["oculus-touch-controls"]);
+          const trackedController = controllerEl && controllerEl.components && controllerEl.components["tracked-controls"];
           const handObject = this.resolveHandAnchorObject();
           const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
           const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+
+          if (controllerObject && ((controllerComponent && controllerComponent.controllerPresent) || (trackedController && trackedController.controller))) {
+            controllerObject.updateMatrixWorld(true);
+            fallbackObject && fallbackObject.updateMatrixWorld(true);
+            controllerObject.getWorldPosition(this.anchorPosition);
+            controllerObject.getWorldQuaternion(this.anchorQuaternion);
+            if (!fallbackObject) {
+              return;
+            }
+            fallbackObject.getWorldPosition(this.cameraWorld);
+
+            const controllerPoseLooksValid =
+              Number.isFinite(this.anchorPosition.x) &&
+              Number.isFinite(this.anchorPosition.y) &&
+              Number.isFinite(this.anchorPosition.z) &&
+              this.anchorPosition.y > 0.2 &&
+              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
+
+            if (controllerPoseLooksValid) {
+              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
+              this.anchorPosition.add(this.offsetWorld);
+              this.anchorQuaternion.multiply(this.controllerRotation);
+              this.savedHandPosition.copy(this.anchorPosition);
+              this.savedHandQuaternion.copy(this.anchorQuaternion);
+              this.lastTrackedAt = now;
+              this.handTracked = true;
+              return;
+            }
+          }
 
           if (handObject && fallbackObject) {
             handObject.updateMatrixWorld(true);
@@ -1141,6 +1208,7 @@
           this.laserEl = document.getElementById("laserLine");
           this.videoEl = document.getElementById("teaserVideo");
           this.bgmEl = document.getElementById("bgmTrack");
+          this.rightControllerEl = document.getElementById("rightController");
 
           this.voiceAudioEl = document.createElement("audio");
           this.voiceAudioEl.className = "asset-media";
@@ -1186,6 +1254,7 @@
           this.activeHand = null;
           this.activeHandEl = null;
           this.stageRealignTimerIds = [];
+          this.controllerSelectCooldownUntil = 0;
 
           this.onVoiceEnded = this.onVoiceEnded.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
@@ -1721,7 +1790,9 @@
 
           this.currentVoiceEl.loop = false;
           this.currentVoiceEl.muted = false;
-          this.currentVoiceEl.volume = 0;
+          this.currentVoiceEl.defaultMuted = false;
+          this.currentVoiceEl.removeAttribute("muted");
+          this.currentVoiceEl.volume = 0.01;
           this.currentVoiceEl.currentTime = 0;
           this.duckBgm();
           this.duckVideo();
@@ -1735,10 +1806,10 @@
             });
           }
 
-          this.fadeMediaVolume(this.currentVoiceEl, 0, APP_CONFIG.voices.selectedVolume, 160);
+          this.fadeMediaVolume(this.currentVoiceEl, 0.01, APP_CONFIG.voices.selectedVolume, 160);
           this.setStatus(`${member.name} 已进入 NOW PLAYING，当前只会播放这一位成员的语音。`);
 
-          if (reason === "pinch" && this.activeHandEl) {
+          if ((reason === "pinch" || reason === "controller") && this.activeHandEl) {
             this.showLaserFromHandToMember(this.activeHandEl, member);
           }
         },
@@ -1785,6 +1856,49 @@
             component.setActiveColor(color);
             component.setEnergy(energy);
           });
+        },
+
+        getBestVisibleMember() {
+          this.getCameraPose();
+          let bestMember = null;
+          let bestScore = Infinity;
+          for (const member of this.members) {
+            member.el.object3D.getWorldPosition(this.tempWorld);
+            const toMember = this.tempWorldB.copy(this.tempWorld).sub(this.cameraPosition).normalize();
+            const distance = this.cameraPosition.distanceTo(this.tempWorld);
+            const angleDeg = THREE.MathUtils.radToDeg(this.cameraDirection.angleTo(toMember));
+            if (angleDeg > 95) {
+              continue;
+            }
+            const score = distance + angleDeg * 0.018;
+            if (score < bestScore) {
+              bestScore = score;
+              bestMember = member;
+            }
+          }
+          return bestMember;
+        },
+
+        handleControllerSelect(controllerEl) {
+          if (!this.started) {
+            return;
+          }
+          const now = performance.now();
+          if (now < this.controllerSelectCooldownUntil) {
+            return;
+          }
+          this.controllerSelectCooldownUntil = now + 220;
+          this.activeHand = "controller";
+          this.activeHandEl = controllerEl || this.rightControllerEl;
+          const target = this.candidateTarget || this.activeSelection || this.getBestVisibleMember();
+          if (!target) {
+            this.setStatus("请先将视线对准并靠近成员卡片，再按右手手柄按键进行选中。");
+            return;
+          }
+          if (this.activeHandEl) {
+            this.showLaserFromHandToMember(this.activeHandEl, target);
+          }
+          this.selectMember(target, "controller");
         },
 
         handlePinchStart(hand, handEl, pinchPosition) {
@@ -2043,9 +2157,13 @@
 
           const isSelected = this.activeSelection && this.activeSelection.key === target.key;
           this.selectionBillboardEl.object3D.visible = true;
-          this.selectionBillboardEl.object3D.position.set(1.72, 1.93 + (isSelected ? 0.04 : 0), 0.38);
-          this.selectionBillboardEl.object3D.rotation.set(0, 0, 0);
-          this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 1 : 0.96);
+          this.selectionBillboardEl.object3D.position.set(
+            target.baseX,
+            target.baseY + target.panelHeight * 0.96 + (isSelected ? 0.28 : 0.22),
+            target.baseZ + target.forwardOffset + 0.04
+          );
+          this.selectionBillboardEl.object3D.rotation.set(0, target.el.object3D.rotation.y, 0);
+          this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 0.9 : 0.82);
 
           this.selectionGroundCueEl.object3D.visible = true;
           this.selectionGroundCueEl.object3D.position.set(target.baseX, 0.03, target.baseZ + target.forwardOffset);
@@ -2056,16 +2174,7 @@
             this.selectionGroundRingMesh.material.opacity = isSelected ? 0.52 : 0.3;
           }
 
-          this.selectionBeamEl.object3D.visible = !!isSelected;
-          if (isSelected) {
-            this.selectionBeamEl.object3D.position.set(target.baseX, 1.18, target.baseZ + target.forwardOffset);
-            this.selectionBeamEl.object3D.scale.setScalar(1.08);
-            this.selectionBeamConeMesh = this.selectionBeamConeMesh || this.selectionBeamConeEl.getObject3D("mesh");
-            if (this.selectionBeamConeMesh) {
-              this.selectionBeamConeMesh.material.color.set(target.color);
-              this.selectionBeamConeMesh.material.opacity = 0.14;
-            }
-          }
+          this.selectionBeamEl.object3D.visible = false;
         },
 
         updateScreenVisuals() {
