@@ -638,9 +638,9 @@
           maxViewAngleDeg: 96
         },
         layout: {
-          memberArcDegrees: 86,
-          memberArcRadiusX: 1.36,
-          memberArcDepth: 0.46,
+          memberArcDegrees: 100,
+          memberArcRadiusX: 1.48,
+          memberArcDepth: 0.56,
           memberBaseY: 0.86,
           cardWidth: 0.56,
           cardHeight: 0.74,
@@ -1560,6 +1560,40 @@
             badgeText.setAttribute("visible", "false");
             cardEl.appendChild(badgeText);
 
+            const autoWand = document.createElement("a-entity");
+            autoWand.setAttribute("visible", "false");
+            autoWand.object3D.position.set(0.24, -0.18, 0.16);
+            autoWand.object3D.rotation.set(
+              THREE.MathUtils.degToRad(16),
+              THREE.MathUtils.degToRad(-12),
+              THREE.MathUtils.degToRad(-24)
+            );
+            const autoRod = document.createElement("a-cylinder");
+            autoRod.setAttribute("radius", "0.012");
+            autoRod.setAttribute("height", "0.36");
+            autoRod.setAttribute("position", "0 0.12 0");
+            autoRod.setAttribute("material", `color: #f1f3c4; roughness: 0.18; metalness: 0.18; emissive: ${member.color}; emissiveIntensity: 0.8`);
+            autoWand.appendChild(autoRod);
+            const autoGrip = document.createElement("a-cylinder");
+            autoGrip.setAttribute("radius", "0.015");
+            autoGrip.setAttribute("height", "0.1");
+            autoGrip.setAttribute("position", "0 -0.05 0");
+            autoGrip.setAttribute("material", "color: #d8dda3; roughness: 0.56; metalness: 0.08");
+            autoWand.appendChild(autoGrip);
+            const autoTip = document.createElement("a-sphere");
+            autoTip.setAttribute("radius", "0.042");
+            autoTip.setAttribute("position", "0 0.34 0");
+            autoTip.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.72`);
+            autoWand.appendChild(autoTip);
+            const autoLight = document.createElement("a-light");
+            autoLight.setAttribute("type", "point");
+            autoLight.setAttribute("color", member.color);
+            autoLight.setAttribute("intensity", "1.2");
+            autoLight.setAttribute("distance", "1.2");
+            autoLight.setAttribute("position", "0 0.34 0");
+            autoWand.appendChild(autoLight);
+            cardEl.appendChild(autoWand);
+
           const memberState = {
               ...member,
               el: cardEl,
@@ -1570,6 +1604,10 @@
               nameEl: name,
               badgeEl: badge,
               badgeTextEl: badgeText,
+              autoWandEl: autoWand,
+              autoWandRodEl: autoRod,
+              autoWandTipEl: autoTip,
+              autoWandLightEl: autoLight,
               baseX: x,
               baseY,
               baseZ: z,
@@ -1864,15 +1902,15 @@
             this.membersActivated = false;
             this.membersActivationAt = 0;
             this.stageStartedAt = 0;
-            this.unlockOrbEl.object3D.visible = false;
+            this.unlockOrbEl.object3D.visible = true;
             this.memberArcEl.object3D.visible = false;
             this.scheduleStageRealign();
             await this.startVideoLoop();
             await this.startBgmLoop();
             this.updateWandsForState();
             this.setStatus(mode === "ar"
-              ? "舞台已固定在你前方的 MR 空间中。成员阵列将在 5 秒后自动展开。"
-              : "场景已启动。成员阵列将在 5 秒后自动展开。"
+              ? "请站到前方 PLEASE STAND HERE 能量球位置。成员阵列将在 5 秒后自动展开。"
+              : "请看向前方 PLEASE STAND HERE 能量球位置。成员阵列将在 5 秒后自动展开。"
             );
           } finally {
             this.preparing = false;
@@ -2187,7 +2225,7 @@
           this.unlockOrbEl.object3D.visible = false;
           this.memberArcEl.object3D.visible = true;
           this.playUnlockBoom();
-          this.setStatus("成员阵列正在以 120 度展开。现在可以用手柄或捏合选择成员。");
+          this.setStatus("成员阵列正在以 100 度展开。现在可以用手柄或捏合选择成员。");
           return true;
         },
 
@@ -2446,6 +2484,37 @@
               member.badgeTextEl.setAttribute("visible", badgeVisible);
               member.lastBadgeVisible = badgeVisible;
             }
+
+            if (member.autoWandEl) {
+              const wandVisible = isSelected && appear > 0.2;
+              member.autoWandEl.object3D.visible = wandVisible;
+              if (wandVisible) {
+                const wave = Math.sin(time * 0.008);
+                const waveFast = Math.sin(time * 0.017 + member.appearDelay * 8);
+                member.autoWandEl.object3D.position.set(0.23 + wave * 0.025, -0.18 + waveFast * 0.012, 0.18);
+                member.autoWandEl.object3D.rotation.set(
+                  THREE.MathUtils.degToRad(14 + waveFast * 5),
+                  THREE.MathUtils.degToRad(-12 + wave * 7),
+                  THREE.MathUtils.degToRad(-24 + wave * 16)
+                );
+                member.autoWandEl.object3D.scale.setScalar(0.96 + selectedTarget * 0.16);
+                const tipMesh = member.autoWandTipEl && member.autoWandTipEl.getObject3D("mesh");
+                const rodMesh = member.autoWandRodEl && member.autoWandRodEl.getObject3D("mesh");
+                const light = member.autoWandLightEl && member.autoWandLightEl.getObject3D("light");
+                if (tipMesh) {
+                  tipMesh.material.color.set(member.color);
+                  tipMesh.material.opacity = 0.56 + pulse * 0.28;
+                }
+                if (rodMesh && rodMesh.material.emissive) {
+                  rodMesh.material.emissive.set(member.color);
+                  rodMesh.material.emissiveIntensity = 0.75 + pulse * 1.9;
+                }
+                if (light) {
+                  light.color.set(member.color);
+                  light.intensity = 1.2 + pulse * 2.1;
+                }
+              }
+            }
           }
 
           if (!this.membersActivated) {
@@ -2553,24 +2622,26 @@
         },
 
         updatePerformanceParticles(now) {
-          if (!this.activeSelection || !this.handHasPose.right) {
+          if (!this.activeSelection) {
             return;
           }
           const system = this.el.systems["trail-pool"];
-          if (!system || this.handSpeed.right < 0.7 || now - this.lastWaveBurstAt < 90) {
+          if (!system || now - this.lastWaveBurstAt < 72) {
             return;
           }
 
-          this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
-          if (this.handWorld.right.distanceTo(this.tempWorld) > 0.82) {
+          const wandTip = this.activeSelection.autoWandTipEl;
+          if (!wandTip || !wandTip.object3D.visible) {
             return;
           }
 
           this.lastWaveBurstAt = now;
-          this.tempWorld.y += 0.18 + Math.random() * 0.22;
-          this.tempWorld.x += (Math.random() - 0.5) * 0.18;
-          this.tempWorld.z += (Math.random() - 0.5) * 0.18;
-          this.tempWorldB.set((Math.random() - 0.5) * 0.08, 0.08 + Math.random() * 0.12, (Math.random() - 0.5) * 0.08);
+          wandTip.object3D.getWorldPosition(this.tempWorld);
+          this.tempWorldB.set(
+            Math.sin(now * 0.012) * 0.1,
+            0.05 + Math.cos(now * 0.01) * 0.04,
+            Math.cos(now * 0.014) * 0.08
+          );
           system.spawn(this.tempWorld, this.tempWorldB, 0.98, new THREE.Color(this.activeSelection.color));
         },
 
