@@ -288,7 +288,7 @@
     vr-mode-ui="enabled: false"
     loading-screen="enabled: false"
     background="color: #000000; transparent: true"
-    webxr="optionalFeatures: bounded-floor, hand-tracking, layers"
+    webxr="referenceSpaceType: local-floor; requiredFeatures: local-floor; optionalFeatures: bounded-floor, hand-tracking, layers, dom-overlay; overlayElement: #overlay"
     mr-idol-experience
   >
     <a-assets timeout="15000">
@@ -328,7 +328,7 @@
       ></video>
     </a-assets>
 
-    <a-entity id="previewEnvironment">
+    <a-entity id="previewEnvironment" hide-on-enter-ar>
       <a-plane
         rotation="-90 0 0"
         width="12"
@@ -349,14 +349,14 @@
           material="shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double"
         ></a-plane>
         <a-text
-          value="Desktop Preview Lawn"
+          value="Desktop Preview Mode"
           align="center"
           width="4"
           color="#ffe6f1"
           position="0 0.78 0.02"
         ></a-text>
         <a-text
-          value="Quest 3 passthrough will keep the real campus visible while this altar stays locked in space."
+          value="If Quest 3 passthrough is unavailable, this lawn stays visible as a VR fallback stage."
           align="center"
           width="3.6"
           color="#f3fff6"
@@ -444,12 +444,51 @@
         ></a-text>
         <a-text
           id="focusLabel"
-          value="Move toward a member card to begin"
+          value="Walk closer or press the right controller to lock a member"
           align="center"
           width="2.8"
           color="#ffe6f1"
           position="0 -1.08 0.03"
         ></a-text>
+
+        <a-entity id="detailPanel" position="1.82 0.02 0.06" visible="false">
+          <a-plane
+            id="detailPanelGlow"
+            width="0.92"
+            height="1.18"
+            position="0 0 -0.02"
+            material="shader: flat; color: #e1e668; transparent: true; opacity: 0.12; side: double"
+          ></a-plane>
+          <a-plane
+            id="detailPanelBacking"
+            width="0.82"
+            height="1.04"
+            material="shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double"
+          ></a-plane>
+          <a-image
+            id="detailPanelPhoto"
+            width="0.7"
+            height="0.88"
+            position="0 0.05 0.02"
+            material="shader: flat; side: double; transparent: true"
+          ></a-image>
+          <a-text
+            id="detailPanelState"
+            value=""
+            align="center"
+            width="1.6"
+            color="#e1e668"
+            position="0 0.58 0.03"
+          ></a-text>
+          <a-text
+            id="detailPanelName"
+            value=""
+            align="center"
+            width="1.4"
+            color="#ffe6f1"
+            position="0 -0.5 0.03"
+          ></a-text>
+        </a-entity>
       </a-entity>
 
       <a-entity id="selectionBillboard" visible="false">
@@ -549,27 +588,27 @@
         },
         interaction: {
           handHoverDistance: 0.56,
-          focusDistance: 4.2,
-          autoSelectDistance: 2.9,
+          focusDistance: 4.8,
+          autoSelectDistance: 3.2,
           autoSelectHoldMs: 180,
           switchHoldMs: 160,
           replayCooldownMs: 650,
           autoSelectWarmupMs: 320,
-          maxViewAngleDeg: 88
+          maxViewAngleDeg: 96
         },
         layout: {
-          memberArcDegrees: 72,
-          memberArcRadiusX: 1.72,
-          memberArcDepth: 0.68,
-          memberBaseY: 0.68,
-          cardWidth: 0.48,
-          cardHeight: 0.68,
-          cardImageWidth: 0.38,
-          cardImageHeight: 0.56,
+          memberArcDegrees: 120,
+          memberArcRadiusX: 2.04,
+          memberArcDepth: 0.92,
+          memberBaseY: 0.78,
+          cardWidth: 0.52,
+          cardHeight: 0.74,
+          cardImageWidth: 0.4,
+          cardImageHeight: 0.58,
           topPhotoHeight: 0.74
         },
         stage: {
-          distance: 2.6
+          distance: 2.85
         },
         members: [
           {
@@ -818,6 +857,7 @@
           this.overlayPrepared = false;
           this.handTracked = false;
           this.lastTrackedAt = 0;
+          this.poseSource = "fallback";
           this.buildMesh();
         },
 
@@ -874,7 +914,7 @@
           leftHalo.setAttribute("height", "0.18");
           leftHalo.setAttribute("position", "-0.055 0.435 -0.018");
           leftHalo.setAttribute("rotation", "0 0 34");
-          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double; depthTest: false; depthWrite: false");
+          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
           root.appendChild(leftHalo);
 
           const rightHalo = document.createElement("a-plane");
@@ -883,7 +923,7 @@
           rightHalo.setAttribute("height", "0.18");
           rightHalo.setAttribute("position", "0.055 0.435 -0.018");
           rightHalo.setAttribute("rotation", "0 0 -34");
-          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double; depthTest: false; depthWrite: false");
+          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
           root.appendChild(rightHalo);
 
           const tip = document.createElement("a-entity");
@@ -1028,6 +1068,30 @@
           const handObject = this.resolveHandAnchorObject();
           const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
 
+          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
+            fallbackObject && fallbackObject.updateMatrixWorld(true);
+            fallbackObject.getWorldPosition(this.cameraWorld);
+
+            const controllerPoseLooksValid =
+              Number.isFinite(this.anchorPosition.x) &&
+              Number.isFinite(this.anchorPosition.y) &&
+              Number.isFinite(this.anchorPosition.z) &&
+              this.anchorPosition.y > 0.2 &&
+              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
+
+            if (controllerPoseLooksValid) {
+              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
+              this.anchorPosition.add(this.offsetWorld);
+              this.anchorQuaternion.multiply(this.controllerRotation);
+              this.savedHandPosition.copy(this.anchorPosition);
+              this.savedHandQuaternion.copy(this.anchorQuaternion);
+              this.lastTrackedAt = now;
+              this.handTracked = true;
+              this.poseSource = "controller";
+              return;
+            }
+          }
+
           if (handObject && fallbackObject) {
             handObject.updateMatrixWorld(true);
             fallbackObject.updateMatrixWorld(true);
@@ -1039,7 +1103,8 @@
               Number.isFinite(this.rootPosition.x) &&
               Number.isFinite(this.rootPosition.y) &&
               Number.isFinite(this.rootPosition.z) &&
-              this.rootPosition.distanceTo(this.cameraWorld) < 2.2;
+              this.rootPosition.y > 0.2 &&
+              this.rootPosition.distanceTo(this.cameraWorld) < 1.6;
 
             if (rootPoseLooksValid) {
               this.anchorPosition.copy(this.rootPosition);
@@ -1053,7 +1118,7 @@
                   Number.isFinite(this.detailPosition.x) &&
                   Number.isFinite(this.detailPosition.y) &&
                   Number.isFinite(this.detailPosition.z) &&
-                  this.detailPosition.distanceTo(this.rootPosition) < 0.34;
+                  this.detailPosition.distanceTo(this.rootPosition) < 0.28;
 
                 if (detailPoseLooksValid) {
                   this.anchorPosition.copy(this.detailPosition);
@@ -1068,37 +1133,16 @@
               this.savedHandQuaternion.copy(this.anchorQuaternion);
               this.lastTrackedAt = now;
               this.handTracked = true;
+              this.poseSource = "hand";
               return;
             }
-          }
 
-          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
-            fallbackObject.updateMatrixWorld(true);
-            fallbackObject.getWorldPosition(this.cameraWorld);
-
-            const controllerPoseLooksValid =
-              Number.isFinite(this.anchorPosition.x) &&
-              Number.isFinite(this.anchorPosition.y) &&
-              Number.isFinite(this.anchorPosition.z) &&
-              this.anchorPosition.y > 0.18 &&
-              this.anchorPosition.distanceTo(this.cameraWorld) < 2.9;
-
-            if (controllerPoseLooksValid) {
-              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.controllerRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
-              this.handTracked = true;
+            if (this.handTracked && now - this.lastTrackedAt < 160) {
+              this.anchorPosition.copy(this.savedHandPosition);
+              this.anchorQuaternion.copy(this.savedHandQuaternion);
+              this.poseSource = "hand-cache";
               return;
             }
-          }
-
-          if (this.handTracked && now - this.lastTrackedAt < 160) {
-            this.anchorPosition.copy(this.savedHandPosition);
-            this.anchorQuaternion.copy(this.savedHandQuaternion);
-            return;
           }
 
           if (!fallbackObject) {
@@ -1111,6 +1155,7 @@
           this.anchorPosition.add(this.offsetWorld);
           this.anchorQuaternion.multiply(this.fallbackRotation);
           this.handTracked = false;
+          this.poseSource = "fallback";
         },
 
         tick(time, delta) {
@@ -1121,7 +1166,7 @@
           this.updateAnchorPose();
           const xrManager = this.el.sceneEl && this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr;
           const inXR = !!(xrManager && xrManager.isPresenting);
-          this.el.object3D.visible = inXR ? this.handTracked : true;
+          this.el.object3D.visible = !inXR || this.poseSource !== "none";
           if (!this.el.object3D.visible) {
             return;
           }
@@ -1209,6 +1254,12 @@
           this.screenRigEl = document.getElementById("screenRig");
           this.memberArcEl = document.getElementById("memberArc");
           this.screenGlowEl = document.getElementById("screenGlow");
+          this.detailPanelEl = document.getElementById("detailPanel");
+          this.detailPanelGlowEl = document.getElementById("detailPanelGlow");
+          this.detailPanelBackingEl = document.getElementById("detailPanelBacking");
+          this.detailPanelPhotoEl = document.getElementById("detailPanelPhoto");
+          this.detailPanelStateEl = document.getElementById("detailPanelState");
+          this.detailPanelNameEl = document.getElementById("detailPanelName");
           this.focusLabelEl = document.getElementById("focusLabel");
           this.selectionBillboardEl = document.getElementById("selectionBillboard");
           this.selectionPhotoEl = document.getElementById("selectionPhoto");
@@ -1293,7 +1344,7 @@
           this.initAudio();
           this.buildMemberPanels();
           this.updateFocusHud(null, null);
-          this.setStatus("点击“开始体验”后，舞台会固定在你正前方。靠近成员卡片即可自动切换语音。");
+          this.setStatus("点击“开始体验”后，舞台会固定在你正前方。靠近成员卡片或按右手手柄按键，即可锁定成员并切换语音。");
         },
 
         initAudio() {
@@ -1351,25 +1402,25 @@
 
             const cardEl = document.createElement("a-entity");
             cardEl.setAttribute("position", `${x.toFixed(4)} ${baseY.toFixed(4)} ${z.toFixed(4)}`);
-            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle) * 0.34).toFixed(2)} 0`);
+            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle) * 0.56).toFixed(2)} 0`);
 
             const glow = document.createElement("a-plane");
             glow.setAttribute("width", glowWidth.toFixed(3));
             glow.setAttribute("height", glowHeight.toFixed(3));
             glow.setAttribute("position", "0 0 -0.02");
-            glow.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double; depthTest: false; depthWrite: false");
+            glow.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
             cardEl.appendChild(glow);
 
             const panel = document.createElement("a-plane");
             panel.setAttribute("width", panelWidth.toFixed(3));
             panel.setAttribute("height", panelHeight.toFixed(3));
-            panel.setAttribute("material", "shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double; depthTest: false; depthWrite: false");
+            panel.setAttribute("material", "shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double");
             cardEl.appendChild(panel);
 
             const border = document.createElement("a-ring");
             border.setAttribute("radius-inner", "0.3");
             border.setAttribute("radius-outer", "0.312");
-            border.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double; depthTest: false; depthWrite: false");
+            border.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double");
             border.object3D.scale.set(panelWidth / 0.62, panelHeight / 0.62, 1);
             cardEl.appendChild(border);
 
@@ -1378,7 +1429,7 @@
             art.setAttribute("width", artWidth.toFixed(3));
             art.setAttribute("height", artHeight.toFixed(3));
             art.setAttribute("position", "0 0.04 0.01");
-            art.setAttribute("material", "shader: flat; side: double; transparent: true; depthTest: false; depthWrite: false");
+            art.setAttribute("material", "shader: flat; side: double; transparent: true");
             cardEl.appendChild(art);
 
             const name = document.createElement("a-text");
@@ -1393,13 +1444,13 @@
             badge.setAttribute("width", "0.33");
             badge.setAttribute("height", "0.072");
             badge.setAttribute("position", "0 0.43 0.03");
-            badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double; depthTest: false; depthWrite: false");
+            badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double");
             cardEl.appendChild(badge);
 
             const badgeText = document.createElement("a-text");
             badgeText.setAttribute("value", "");
             badgeText.setAttribute("align", "center");
-            badgeText.setAttribute("width", "1");
+            badgeText.setAttribute("width", "1.12");
             badgeText.setAttribute("position", "0 0.415 0.04");
             badgeText.setAttribute("color", "#081312");
             badgeText.setAttribute("visible", "false");
@@ -1421,6 +1472,7 @@
               panelWidth,
               panelHeight,
               detailAspect,
+              baseAngle: angle,
               memberColor: new THREE.Color(member.color),
               glowColor: new THREE.Color(APP_CONFIG.colors.accent),
               appearDelay: index * 0.1,
@@ -1512,23 +1564,13 @@
         },
 
         getActiveEmitterWorldPosition(target) {
-          const rightHandEl = document.getElementById("rightHand");
-          const rightWandEl = document.getElementById("rightWand");
-          const wandComponent = rightWandEl && rightWandEl.components && rightWandEl.components["support-wand"];
-          if (wandComponent && wandComponent.el && wandComponent.el.object3D) {
-            wandComponent.el.object3D.updateMatrixWorld(true);
-            wandComponent.tipEl && wandComponent.tipEl.object3D.updateMatrixWorld(true);
-            if (wandComponent.tipEl) {
-              wandComponent.tipEl.object3D.getWorldPosition(target);
-              return true;
-            }
-          }
-          if (rightHandEl && this.getHandWorldPosition("right", target)) {
+          if (this.activeHand === "controller" && this.getControllerWorldPosition("right", target, this.tempQuaternion)) {
+            this.tempWorldB.set(0.012, -0.004, -0.028).applyQuaternion(this.tempQuaternion);
+            target.add(this.tempWorldB);
             return true;
           }
-          if (this.activeHand === "controller" && this.getControllerWorldPosition("right", target, this.tempQuaternion)) {
-            this.tempWorldB.set(0.0, -0.01, -0.06).applyQuaternion(this.tempQuaternion);
-            target.add(this.tempWorldB);
+          if (this.handHasPose.right) {
+            target.copy(this.handWorld.right);
             return true;
           }
           if (this.activeHandEl) {
@@ -1667,24 +1709,22 @@
             return "inline";
           }
 
-          if (this.el.enterAR) {
+          if (typeof this.el.enterAR === "function") {
             try {
-              const arSupported = await navigator.xr.isSessionSupported("immersive-ar");
-              if (arSupported && !this.el.is("ar-mode")) {
+              if (!this.el.is("ar-mode")) {
                 this.setStatus("正在尝试进入 Quest 3 透视 MR 模式...");
-                await this.withTimeout(this.el.enterAR(), 6000);
+                await this.withTimeout(Promise.resolve(this.el.enterAR()), 6000);
                 return "ar";
               }
             } catch (error) {
             }
           }
 
-          if (this.el.enterVR) {
+          if (typeof this.el.enterVR === "function") {
             try {
-              const vrSupported = await navigator.xr.isSessionSupported("immersive-vr");
-              if (vrSupported && !this.el.is("vr-mode")) {
+              if (!this.el.is("vr-mode")) {
                 this.setStatus("透视模式未成功，正在切换到沉浸式模式继续运行...");
-                await this.withTimeout(this.el.enterVR(), 6000);
+                await this.withTimeout(Promise.resolve(this.el.enterVR()), 6000);
                 return "vr";
               }
             } catch (error) {
@@ -1701,12 +1741,16 @@
 
           this.preparing = true;
           try {
-            await this.waitForSceneReady();
+            const sceneReadyPromise = this.waitForSceneReady();
+            const immersiveModePromise = this.tryEnterImmersiveMode();
+            const primeMediaPromise = this.primeMedia();
+
+            await sceneReadyPromise;
             try {
-              await this.withTimeout(this.primeMedia(), 1800);
+              await this.withTimeout(primeMediaPromise, 1800);
             } catch (error) {
             }
-            const mode = await this.tryEnterImmersiveMode();
+            const mode = await immersiveModePromise;
 
             this.positionStageInFront();
             this.stageRootEl.object3D.visible = true;
@@ -1802,21 +1846,6 @@
           this.fadeMediaVolume(this.bgmEl, 0, APP_CONFIG.bgm.baseVolume, 380);
         },
 
-        stopAllOtherVoices(keepEl) {
-          for (const mediaEl of this.voiceMediaByKey.values()) {
-            if (!mediaEl || mediaEl === keepEl) {
-              continue;
-            }
-            mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
-            try {
-              mediaEl.pause();
-              mediaEl.currentTime = 0;
-            } catch (error) {
-            }
-            mediaEl.volume = 0;
-          }
-        },
-
         stopVoiceImmediate() {
           for (const mediaEl of [this.voiceAudioEl, this.voiceVideoEl, ...this.voiceMediaByKey.values()]) {
             mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
@@ -1829,7 +1858,7 @@
           }
           this.currentVoiceEl = null;
           this.currentVoiceOwner = null;
-        }
+        },
 
         resumeBgmAfterVoice() {
           if (!this.started) {
@@ -1871,6 +1900,7 @@
             return;
           }
 
+          this.stopVoiceImmediate();
           this.activeSelection = member;
           this.candidateTarget = member;
           this.candidateSince = performance.now();
@@ -1889,10 +1919,8 @@
           this.currentVoiceEl.muted = false;
           this.currentVoiceEl.defaultMuted = false;
           this.currentVoiceEl.removeAttribute("muted");
-          this.currentVoiceEl.volume = 0;
+          this.currentVoiceEl.volume = 0.42;
           this.currentVoiceEl.currentTime = 0;
-
-          this.stopAllOtherVoices(this.currentVoiceEl);
           this.bgmWasPlayingBeforeVoice = this.bgmWasPlayingBeforeVoice || !this.bgmEl.paused;
           try {
             this.bgmEl.pause();
@@ -1910,7 +1938,7 @@
             });
           }
 
-          this.fadeMediaVolume(this.currentVoiceEl, 0, APP_CONFIG.voices.selectedVolume, 160);
+          this.fadeMediaVolume(this.currentVoiceEl, 0.42, APP_CONFIG.voices.selectedVolume, 120);
           this.setStatus(`${member.name} 已进入 NOW PLAYING，当前只会播放这一位成员的语音。`);
 
           if ((reason === "pinch" || reason === "controller") && this.activeHandEl) {
@@ -1932,15 +1960,26 @@
           const stateLabel = isSelected ? "NOW PLAYING" : "LOCK TARGET";
 
           this.selectionBillboardEl.object3D.visible = true;
+          if (this.detailPanelEl) {
+            this.detailPanelEl.object3D.visible = true;
+            this.detailPanelPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
+            this.detailPanelPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
+            this.detailPanelPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
+            this.detailPanelGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.22 : 0.14}; side: double`);
+            this.detailPanelStateEl.setAttribute("value", stateLabel);
+            this.detailPanelStateEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accent);
+            this.detailPanelNameEl.setAttribute("value", member.name);
+            this.detailPanelNameEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accentSoft);
+          }
           this.selectionPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
           this.selectionPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
           this.selectionPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
           this.selectionPhotoGlowEl.setAttribute("width", (topPhotoWidth + 0.14).toFixed(3));
           this.selectionPhotoGlowEl.setAttribute("height", (topPhotoHeight + 0.18).toFixed(3));
-          this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.18 : 0.11}; side: double; depthTest: false; depthWrite: false`);
+          this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.18 : 0.11}; side: double`);
           this.selectionPhotoBackingEl.setAttribute("width", (topPhotoWidth + 0.08).toFixed(3));
           this.selectionPhotoBackingEl.setAttribute("height", (topPhotoHeight + 0.1).toFixed(3));
-          this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.36 : 0.22}; side: double; depthTest: false; depthWrite: false`);
+          this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.36 : 0.22}; side: double`);
           this.selectionPhotoRingEl.object3D.scale.set(topPhotoWidth / 0.58, topPhotoHeight / 0.58, 1);
           this.selectionPhotoRingOuterEl.object3D.scale.set((topPhotoWidth + 0.12) / 0.74, (topPhotoHeight + 0.12) / 0.74, 1);
           this.selectionCaptionEl.setAttribute("value", `${stateLabel} · ${member.name}`);
@@ -2058,7 +2097,6 @@
           this.tempWorldB.y += 0.06;
           this.laserEl.object3D.visible = true;
           this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${member.color}; opacity: 0.9`);
-          this.laserEl.object3D.scale.setScalar(0.001);
         },
 
         hideLaser() {
@@ -2076,7 +2114,6 @@
           this.activeSelection.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
           this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${this.activeSelection.color}; opacity: 0.9`);
-          this.laserEl.object3D.scale.set(0.001, 0.001, 0.001);
         },
 
         onVoiceEnded() {
@@ -2170,31 +2207,31 @@
             }
 
             const appear = THREE.MathUtils.clamp((stageElapsed - member.appearDelay) / 0.68, 0, 1);
+            const pulse = 0.5 + 0.5 * Math.sin(time * 0.0042 + member.appearDelay * 8);
             member.visibleAmount = appear;
-            const forward = member.hoverAmount * 0.065 + member.selectedAmount * 0.12;
+            const forward = member.hoverAmount * 0.08 + member.selectedAmount * 0.18;
             member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.12);
-            member.el.object3D.scale.setScalar(0.82 + appear * 0.18 + member.hoverAmount * 0.1 + member.selectedAmount * 0.14);
+            member.el.object3D.scale.setScalar(0.78 + appear * 0.22 + member.hoverAmount * 0.12 + member.selectedAmount * 0.2);
             member.el.object3D.position.x = member.baseX;
-            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.12 + Math.sin(time * 0.0008 + member.appearDelay * 4) * 0.004;
+            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.18 + Math.sin(time * 0.0012 + member.appearDelay * 4) * 0.018;
             member.el.object3D.position.z = member.baseZ + member.forwardOffset;
+            member.el.object3D.rotation.y = THREE.MathUtils.lerp(
+              member.el.object3D.rotation.y,
+              -member.baseAngle * 0.82,
+              0.12
+            );
 
             const glowColor = member.glowColor.copy(this.accentColor).lerp(member.memberColor, Math.max(member.hoverAmount, member.selectedAmount));
             if (member.glowMesh) {
               member.glowMesh.material.color.copy(glowColor);
-              member.glowMesh.material.opacity = (0.07 + member.hoverAmount * 0.24 + member.selectedAmount * 0.24) * appear;
-              member.glowMesh.material.depthTest = false;
-              member.glowMesh.material.depthWrite = false;
+              member.glowMesh.material.opacity = (0.08 + pulse * 0.05 + member.hoverAmount * 0.28 + member.selectedAmount * 0.32) * appear;
             }
             if (member.panelMesh) {
-              member.panelMesh.material.opacity = 0.74 + member.hoverAmount * 0.12 + member.selectedAmount * 0.1;
-              member.panelMesh.material.depthTest = false;
-              member.panelMesh.material.depthWrite = false;
+              member.panelMesh.material.opacity = 0.68 + pulse * 0.04 + member.hoverAmount * 0.14 + member.selectedAmount * 0.12;
             }
             if (member.borderMesh) {
               member.borderMesh.material.color.copy(glowColor);
-              member.borderMesh.material.opacity = (0.18 + member.hoverAmount * 0.26 + member.selectedAmount * 0.22) * appear;
-              member.borderMesh.material.depthTest = false;
-              member.borderMesh.material.depthWrite = false;
+              member.borderMesh.material.opacity = (0.18 + pulse * 0.08 + member.hoverAmount * 0.28 + member.selectedAmount * 0.26) * appear;
               member.borderEl.object3D.scale.set(
                 member.panelWidth / 0.62 + member.hoverAmount * 0.07 + member.selectedAmount * 0.08,
                 member.panelHeight / 0.62 + member.hoverAmount * 0.08 + member.selectedAmount * 0.1,
@@ -2213,8 +2250,6 @@
             if (member.badgeMesh) {
               member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
               member.badgeMesh.material.opacity = badgeOpacity * appear;
-              member.badgeMesh.material.depthTest = false;
-              member.badgeMesh.material.depthWrite = false;
             }
             const badgeText = isSelected ? "NOW PLAYING" : isCandidate ? "LOCK TARGET" : "";
             const badgeVisible = badgeOpacity > 0.01;
@@ -2269,6 +2304,9 @@
             this.selectionBillboardEl.object3D.visible = false;
             this.selectionGroundCueEl.object3D.visible = false;
             this.selectionBeamEl.object3D.visible = false;
+            if (this.detailPanelEl) {
+              this.detailPanelEl.object3D.visible = false;
+            }
             return;
           }
 
@@ -2312,6 +2350,13 @@
             0.12
           );
           this.screenGlowEl.object3D.scale.setScalar(this.activeSelection ? 1.03 : this.candidateTarget ? 1.015 : 1);
+
+          const detailGlowMesh = this.detailPanelGlowEl && this.detailPanelGlowEl.getObject3D("mesh");
+          if (detailGlowMesh && this.detailPanelEl && this.detailPanelEl.object3D.visible) {
+            const energy = this.activeSelection ? 1 : this.candidateTarget ? 0.56 : 0.24;
+            detailGlowMesh.material.opacity = THREE.MathUtils.lerp(detailGlowMesh.material.opacity || 0.12, 0.1 + energy * 0.16, 0.12);
+            this.detailPanelEl.object3D.scale.setScalar(1 + energy * 0.05);
+          }
         },
 
         updatePerformanceParticles(now) {
@@ -2387,7 +2432,7 @@
         onEnterXR() {
           document.body.classList.add("is-xr");
           if (this.started) {
-            this.previewEnvironmentEl.object3D.visible = false;
+            this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
             this.positionStageInFront();
             this.scheduleStageRealign();
           }
