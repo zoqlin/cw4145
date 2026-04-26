@@ -772,6 +772,7 @@
 
         init() {
           this.sourceHandEl = this.data.sourceHand;
+          this.sourceControllerEl = this.data.sourceController;
           this.fallbackTargetEl = this.data.fallbackTarget;
           this.baseColor = new THREE.Color("#e1e668");
           this.glowColor = new THREE.Color("#e1e668");
@@ -790,8 +791,9 @@
           this.savedHandPosition = new THREE.Vector3();
           this.savedHandQuaternion = new THREE.Quaternion();
           this.handAnchorObject = null;
+          this.controllerAnchorObject = null;
           this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
-          this.controllerOffset = new THREE.Vector3(0, -0.028, -0.15);
+          this.controllerOffset = new THREE.Vector3(0.016, -0.022, -0.026);
           this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
           this.handRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             THREE.MathUtils.degToRad(8),
@@ -995,28 +997,39 @@
           return this.handAnchorObject || handRoot;
         },
 
+        resolveControllerAnchorObject() {
+          if (!this.sourceControllerEl || !this.sourceControllerEl.object3D) {
+            return null;
+          }
+
+          if (this.controllerAnchorObject && this.controllerAnchorObject.parent) {
+            return this.controllerAnchorObject;
+          }
+
+          this.controllerAnchorObject = this.sourceControllerEl.object3D;
+          return this.controllerAnchorObject;
+        },
+
+        resolveControllerPose(targetPosition, targetQuaternion) {
+          const controllerObject = this.resolveControllerAnchorObject();
+          if (!controllerObject) {
+            return false;
+          }
+
+          controllerObject.updateMatrixWorld(true);
+          controllerObject.getWorldPosition(targetPosition);
+          controllerObject.getWorldQuaternion(targetQuaternion);
+          return Number.isFinite(targetPosition.x) && Number.isFinite(targetPosition.y) && Number.isFinite(targetPosition.z);
+        },
+
         updateAnchorPose() {
           const now = performance.now();
-          const controllerEl = this.data.sourceController;
-          const controllerObject = controllerEl && controllerEl.object3D;
-          const controllerComponent = controllerEl && controllerEl.components && (controllerEl.components["meta-touch-controls"] || controllerEl.components["oculus-touch-controls"]);
-          const trackedController = controllerEl && controllerEl.components && controllerEl.components["tracked-controls"];
-          const xrManager = this.el.sceneEl && this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr;
-          const controllerIndex = this.data.hand === "right" ? 0 : 1;
-          const gripObject = xrManager && xrManager.isPresenting ? xrManager.getControllerGrip(controllerIndex) : null;
+          const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
           const handObject = this.resolveHandAnchorObject();
           const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
-          const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
-          const trackedControllerObject = gripObject && gripObject.visible !== false ? gripObject : controllerObject;
 
-          if (trackedControllerObject && ((controllerComponent && controllerComponent.controllerPresent) || (trackedController && trackedController.controller) || gripObject)) {
-            trackedControllerObject.updateMatrixWorld(true);
+          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
             fallbackObject && fallbackObject.updateMatrixWorld(true);
-            trackedControllerObject.getWorldPosition(this.anchorPosition);
-            trackedControllerObject.getWorldQuaternion(this.anchorQuaternion);
-            if (!fallbackObject) {
-              return;
-            }
             fallbackObject.getWorldPosition(this.cameraWorld);
 
             const controllerPoseLooksValid =
@@ -1250,15 +1263,18 @@
           this.accentColor = new THREE.Color(APP_CONFIG.colors.accent);
           this.tempWorld = new THREE.Vector3();
           this.tempWorldB = new THREE.Vector3();
+          this.tempQuaternion = new THREE.Quaternion();
           this.handWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
           this.lastHandWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
           this.handSpeed = { left: 0, right: 0 };
           this.handHasPose = { left: false, right: false };
+          this.controllerWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
           this.lastWaveBurstAt = 0;
           this.activeHand = null;
           this.activeHandEl = null;
           this.stageRealignTimerIds = [];
           this.controllerSelectCooldownUntil = 0;
+          this.bgmWasPlayingBeforeVoice = false;
 
           this.onVoiceEnded = this.onVoiceEnded.bind(this);
           this.onEnterXR = this.onEnterXR.bind(this);
@@ -1293,8 +1309,7 @@
           this.voiceMediaByKey.clear();
 
           APP_CONFIG.members.forEach((member) => {
-            const isVideoAudio = /\.mp4($|\?)/i.test(member.audioSrc);
-            const mediaEl = document.createElement(isVideoAudio ? "video" : "audio");
+            const mediaEl = document.createElement("audio");
             mediaEl.className = "asset-media";
             mediaEl.preload = "auto";
             mediaEl.crossOrigin = "anonymous";
@@ -1430,7 +1445,7 @@
         },
 
         getVoiceElementForMember(member) {
-          return this.voiceMediaByKey.get(member.key) || (/\.mp4($|\?)/i.test(member.audioSrc) ? this.voiceVideoEl : this.voiceAudioEl);
+          return this.voiceMediaByKey.get(member.key) || this.voiceAudioEl;
         },
 
         getCameraPose() {
@@ -1474,6 +1489,45 @@
           target.y += 0.015;
           target.z -= 0.01;
           return true;
+        },
+
+        getControllerWorldPosition(hand, target, targetQuaternion = null) {
+          const controllerEl = hand === "right" ? this.rightControllerEl : document.getElementById("leftController");
+          const controllerObject = controllerEl && controllerEl.object3D;
+          if (!controllerObject) {
+            return false;
+          }
+
+          controllerObject.updateMatrixWorld(true);
+          controllerObject.getWorldPosition(target);
+          if (targetQuaternion) {
+            controllerObject.getWorldQuaternion(targetQuaternion);
+          }
+          if (!Number.isFinite(target.x) || !Number.isFinite(target.y) || !Number.isFinite(target.z)) {
+            return false;
+          }
+          if (this.cameraPosition && target.distanceTo(this.cameraPosition) > 3.4) {
+            return false;
+          }
+          return true;
+        },
+
+        getActiveEmitterWorldPosition(target) {
+          if (this.activeHand === "controller" && this.getControllerWorldPosition("right", target, this.tempQuaternion)) {
+            this.tempWorldB.set(0.012, -0.004, -0.028).applyQuaternion(this.tempQuaternion);
+            target.add(this.tempWorldB);
+            return true;
+          }
+          if (this.handHasPose.right) {
+            target.copy(this.handWorld.right);
+            return true;
+          }
+          if (this.activeHandEl) {
+            this.activeHandEl.object3D.getWorldPosition(target);
+            target.y += 0.015;
+            return true;
+          }
+          return false;
         },
 
         getAssetAspect(assetId, fallback = 0.72) {
@@ -1753,12 +1807,28 @@
           this.currentVoiceOwner = null;
         },
 
+        resumeBgmAfterVoice() {
+          if (!this.started) {
+            return;
+          }
+          const promise = this.bgmEl.play();
+          if (promise && promise.catch) {
+            promise.catch(() => {});
+          }
+          this.restoreBgm();
+          this.bgmWasPlayingBeforeVoice = false;
+        },
+
         clearSelectionState() {
           this.activeSelection = null;
           this.activeHand = null;
           this.activeHandEl = null;
           this.hideLaser();
-          this.restoreBgm();
+          if (this.bgmWasPlayingBeforeVoice) {
+            this.resumeBgmAfterVoice();
+          } else {
+            this.restoreBgm();
+          }
           this.restoreVideo();
           this.updateFocusHud(this.candidateTarget, this.candidateTarget ? "preview" : null);
           this.updateWandsForState();
@@ -1796,8 +1866,13 @@
           this.currentVoiceEl.muted = false;
           this.currentVoiceEl.defaultMuted = false;
           this.currentVoiceEl.removeAttribute("muted");
-          this.currentVoiceEl.volume = 0.01;
+          this.currentVoiceEl.volume = 0.42;
           this.currentVoiceEl.currentTime = 0;
+          this.bgmWasPlayingBeforeVoice = this.bgmWasPlayingBeforeVoice || !this.bgmEl.paused;
+          try {
+            this.bgmEl.pause();
+          } catch (error) {
+          }
           this.duckBgm();
           this.duckVideo();
           this.updateFocusHud(member, "selected");
@@ -1810,7 +1885,7 @@
             });
           }
 
-          this.fadeMediaVolume(this.currentVoiceEl, 0.01, APP_CONFIG.voices.selectedVolume, 160);
+          this.fadeMediaVolume(this.currentVoiceEl, 0.42, APP_CONFIG.voices.selectedVolume, 120);
           this.setStatus(`${member.name} 已进入 NOW PLAYING，当前只会播放这一位成员的语音。`);
 
           if ((reason === "pinch" || reason === "controller") && this.activeHandEl) {
@@ -1951,8 +2026,9 @@
             return;
           }
 
-          handEl.object3D.getWorldPosition(this.tempWorld);
-          this.tempWorld.y += 0.015;
+          if (!this.getActiveEmitterWorldPosition(this.tempWorld)) {
+            return;
+          }
           member.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
           this.laserEl.object3D.visible = true;
@@ -1968,11 +2044,8 @@
             return;
           }
 
-          if (this.handHasPose.right) {
-            this.tempWorld.copy(this.handWorld.right);
-          } else {
-            this.activeHandEl.object3D.getWorldPosition(this.tempWorld);
-            this.tempWorld.y += 0.015;
+          if (!this.getActiveEmitterWorldPosition(this.tempWorld)) {
+            return;
           }
           this.activeSelection.el.object3D.getWorldPosition(this.tempWorldB);
           this.tempWorldB.y += 0.06;
@@ -1983,7 +2056,11 @@
           this.stopVoiceImmediate();
           this.activeSelection = null;
           this.hideLaser();
-          this.restoreBgm();
+          if (this.bgmWasPlayingBeforeVoice) {
+            this.resumeBgmAfterVoice();
+          } else {
+            this.restoreBgm();
+          }
           this.restoreVideo();
           this.updateFocusHud(this.candidateTarget, this.candidateTarget ? "preview" : null);
           this.updateWandsForState();
@@ -2240,6 +2317,7 @@
 
         resetExperience() {
           this.stopVoiceImmediate();
+          this.bgmWasPlayingBeforeVoice = false;
           this.activeSelection = null;
           this.candidateTarget = null;
           this.candidateSince = 0;
