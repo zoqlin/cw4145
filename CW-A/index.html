@@ -912,6 +912,10 @@
           if (!this.sourceHandEl) {
             return null;
           }
+          const handTracking = this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
+          if (handTracking && handTracking.wristObject3D && handTracking.hasPoses) {
+            return handTracking.wristObject3D;
+          }
           if (this.handAnchorObject && this.handAnchorObject.parent) {
             return this.handAnchorObject;
           }
@@ -959,15 +963,15 @@
 
         updateAnchorPose() {
           const now = performance.now();
-          const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
           const handObject = this.resolveHandAnchorObject();
+          const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
           const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
 
-          if (handRoot && fallbackObject) {
-            handRoot.updateMatrixWorld(true);
+          if (handObject && fallbackObject) {
+            handObject.updateMatrixWorld(true);
             fallbackObject.updateMatrixWorld(true);
-            handRoot.getWorldPosition(this.rootPosition);
-            handRoot.getWorldQuaternion(this.rootQuaternion);
+            handObject.getWorldPosition(this.rootPosition);
+            handObject.getWorldQuaternion(this.rootQuaternion);
             fallbackObject.getWorldPosition(this.cameraWorld);
 
             const rootPoseLooksValid =
@@ -981,7 +985,7 @@
               this.anchorPosition.copy(this.rootPosition);
               this.anchorQuaternion.copy(this.rootQuaternion);
 
-              if (handObject && handObject !== handRoot) {
+              if (handRoot && handObject !== handRoot) {
                 handObject.updateMatrixWorld(true);
                 handObject.matrixWorld.decompose(this.detailPosition, this.detailQuaternion, this.anchorScale);
 
@@ -1032,7 +1036,12 @@
           }
 
           this.updateAnchorPose();
-          this.el.object3D.visible = true;
+          const xrManager = this.el.sceneEl && this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr;
+          const inXR = !!(xrManager && xrManager.isPresenting);
+          this.el.object3D.visible = inXR ? this.handTracked : true;
+          if (!this.el.object3D.visible) {
+            return;
+          }
           this.el.object3D.position.copy(this.anchorPosition);
           this.el.object3D.quaternion.copy(this.anchorQuaternion);
           this.updateMeshes();
@@ -1379,10 +1388,13 @@
 
         getHandWorldPosition(hand, target) {
           const handEl = document.getElementById(hand === "left" ? "leftHand" : "rightHand");
-          if (!handEl || handEl.object3D.visible === false) {
+          const handTracking = handEl && handEl.components && handEl.components["hand-tracking-controls"];
+          const wristObject = handTracking && handTracking.wristObject3D;
+          if (!handEl || !handTracking || !handTracking.hasPoses || !wristObject || wristObject.visible === false) {
             return false;
           }
-          handEl.object3D.getWorldPosition(target);
+          wristObject.updateMatrixWorld(true);
+          wristObject.getWorldPosition(target);
           if (!Number.isFinite(target.x) || !Number.isFinite(target.y) || !Number.isFinite(target.z)) {
             return false;
           }
