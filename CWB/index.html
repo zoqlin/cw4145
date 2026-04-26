@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WayV MR Cyber Altar</title>
+  <link rel="icon" href="data:,">
+  <script src="assets/vendor/aframe.min.js"></script>
+  <style>
+    :root {
+      --ink: #f6fff7;
+      --muted: rgba(235, 248, 240, 0.78);
+      --champagne: #e1e668;
+      --champagne-soft: rgba(225, 230, 104, 0.22);
+      --petal: #ffe6f1;
+      --glass: rgba(6, 14, 14, 0.78);
+      --glass-strong: rgba(5, 11, 10, 0.9);
+      --line: rgba(255, 255, 255, 0.1);
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+      --card-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top, rgba(225, 230, 104, 0.18), transparent 30%),
+        radial-gradient(circle at 85% 10%, rgba(255, 230, 241, 0.15), transparent 24%),
+        linear-gradient(180deg, #05090a 0%, #020304 100%);
+    }
+
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 18px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .panel {
+      width: min(420px, calc(100vw - 24px));
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        var(--glass);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      padding: 18px 18px 16px;
+      pointer-events: auto;
+    }
+
+    body.is-xr #overlay {
+      padding: 12px;
+    }
+
+    body.is-xr .panel {
+      width: min(360px, calc(100vw - 16px));
+      padding: 14px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(5, 10, 9, 0.78), rgba(5, 10, 9, 0.64)),
+        rgba(0, 0, 0, 0.18);
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      font-size: 11px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--petal);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4.2vw, 36px);
+      line-height: 1.02;
+      letter-spacing: 0.01em;
+    }
+
+    .subline {
+      margin: 10px 0 12px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    #status {
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      color: var(--ink);
+      cursor: pointer;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04)),
+        rgba(255, 255, 255, 0.03);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 8px 20px rgba(0, 0, 0, 0.14);
+      transition: transform 140ms ease, filter 140ms ease, background 140ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    #startButton {
+      grid-column: 1 / -1;
+      color: #11210a;
+      font-weight: 700;
+      background:
+        linear-gradient(135deg, rgba(225, 230, 104, 0.98), rgba(255, 230, 241, 0.9));
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+        0 12px 28px rgba(225, 230, 104, 0.18);
+    }
+
+    .tips {
+      margin-bottom: 14px;
+      border-radius: 22px;
+      padding: 14px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+        rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .tips strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--champagne);
+    }
+
+    .tips div {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .tips div + div {
+      margin-top: 8px;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    figure {
+      margin: 0;
+      padding: 10px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025)),
+        rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--card-shadow);
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: 108px;
+      border-radius: 14px;
+      object-fit: cover;
+      margin-bottom: 8px;
+    }
+
+    figcaption {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .asset-media {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      left: -9999px;
+      top: -9999px;
+    }
+
+    @media (max-width: 620px) {
+      #overlay {
+        padding: 10px;
+      }
+
+      .panel {
+        width: calc(100vw - 12px);
+        padding: 14px;
+        border-radius: 22px;
+      }
+
+      .gallery {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      figure img {
+        height: 96px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay">
+    <div class="panel">
+      <p class="kicker">Meta Quest 3 / A-Frame / WebXR</p>
+      <h1>WayV MR Cyber Altar</h1>
+      <p class="subline">
+        香槟绿主光、世界锁定舞台、右手应援棒、成员弧形阵列与大屏 MV 同时构成一个可表演的校园草地混合现实现场。
+      </p>
+      <p id="status">
+        点击“开始体验”后，舞台会固定在你前方。靠近成员卡片会自动切换成员语音，右手捏合会打出激光锁定并强化应援棒反馈。
+      </p>
+
+      <div class="controls">
+        <button id="startButton" type="button">开始体验</button>
+        <button id="demoNextButton" type="button">桌面切换成员</button>
+        <button id="resetButton" type="button">重置舞台到正前方</button>
+      </div>
+
+      <div class="tips">
+        <strong>Interaction Rules</strong>
+        <div>接近任一成员卡片约 2.1 米内，系统会自动锁定离你最近且在视野中的成员，并只播放这一位成员的语音。</div>
+        <div>切换到另一位成员时，之前的语音会立刻停止，不会再出现多音频叠加；同时 BGM 会自动降低，方便听清语音内容。</div>
+        <div>右手应援棒空闲态为香槟绿色呼吸光，选中成员后会强化发光、粒子与挥动反馈，帮助用户明确当前应援状态。</div>
+      </div>
+
+      <div class="gallery">
+        <figure>
+          <img src="assets/photocard-kun.png" alt="KUN photocard">
+          <figcaption>成员卡片保留统一比例，顶部展示图切换为另一张关联照片。</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/photocard-ten.png" alt="TEN photocard">
+          <figcaption>中央 MV 静音循环，独立 BGM 常驻播放，成员语音优先级最高。</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/yangyang.png" alt="YANGYANG detail">
+          <figcaption>世界锁定舞台不会跟着玩家跑，必须在草坪空间中移动靠近它。</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <a-scene
+    renderer="alpha: true; antialias: true; colorManagement: true; sortTransparentObjects: true"
+    xr-mode-ui="enabled: false"
+    vr-mode-ui="enabled: false"
+    loading-screen="enabled: false"
+    background="color: #000000; transparent: true"
+    webxr="referenceSpaceType: local-floor; requiredFeatures: local-floor; optionalFeatures: bounded-floor, hand-tracking, layers, dom-overlay; overlayElement: #overlay"
+    mr-idol-experience
+  >
+    <a-assets timeout="15000">
+      <img id="grassTex" src="assets/grass.jpg" alt="">
+      <img id="kunArt" src="assets/photocard-kun.png" alt="">
+      <img id="tenArt" src="assets/photocard-ten.png" alt="">
+      <img id="xjArt" src="assets/photocard-xj.png" alt="">
+      <img id="yangArt" src="assets/photocard-yangyang.png" alt="">
+      <img id="hghArt" src="assets/photocard-hgh.png" alt="">
+
+      <img id="kunDetailArt" src="assets/kun.png" alt="">
+      <img id="tenDetailArt" src="assets/ten.png" alt="">
+      <img id="xjDetailArt" src="assets/xj.png" alt="">
+      <img id="yangDetailArt" src="assets/yangyang.png" alt="">
+      <img id="hghDetailArt" src="assets/hgh.png" alt="">
+
+      <video
+        id="teaserVideo"
+        class="asset-media"
+        src="assets/teaser-video.mp4"
+        playsinline
+        webkit-playsinline="true"
+        muted
+        loop
+        crossorigin="anonymous"
+        preload="auto"
+      ></video>
+
+      <video
+        id="bgmTrack"
+        class="asset-media"
+        src="assets/bgm.mp4"
+        playsinline
+        webkit-playsinline="true"
+        crossorigin="anonymous"
+        preload="auto"
+      ></video>
+    </a-assets>
+
+    <a-entity id="previewEnvironment" hide-on-enter-ar>
+      <a-plane
+        rotation="-90 0 0"
+        width="12"
+        height="12"
+        material="src: #grassTex; repeat: 10 10; roughness: 1; metalness: 0"
+      ></a-plane>
+
+      <a-entity position="0 1.6 -2.6">
+        <a-plane
+          width="3.8"
+          height="2.05"
+          material="shader: flat; color: #0a1413; transparent: true; opacity: 0.9; side: double"
+        ></a-plane>
+        <a-plane
+          width="4.2"
+          height="2.3"
+          position="0 0 -0.04"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double"
+        ></a-plane>
+        <a-text
+          value="Desktop Preview Mode"
+          align="center"
+          width="4"
+          color="#ffe6f1"
+          position="0 0.78 0.02"
+        ></a-text>
+        <a-text
+          value="If Quest 3 passthrough is unavailable, this lawn stays visible as a VR fallback stage."
+          align="center"
+          width="3.6"
+          color="#f3fff6"
+          position="0 0.22 0.02"
+        ></a-text>
+      </a-entity>
+    </a-entity>
+
+    <a-entity id="rig" position="0 0 2.6">
+      <a-entity id="userCamera" camera="near: 0.01; far: 100" look-controls wasd-controls position="0 1.65 0"></a-entity>
+    </a-entity>
+
+    <a-entity
+      id="leftHand"
+      hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
+      xr-overlay-visual="renderOrder: 360"
+    ></a-entity>
+
+    <a-entity
+      id="rightHand"
+      hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
+      pinch-input="hand: right"
+      xr-overlay-visual="renderOrder: 360"
+    ></a-entity>
+
+    <a-entity
+      id="rightController"
+      meta-touch-controls="hand: right; model: false"
+      controller-select-input="hand: right"
+    ></a-entity>
+
+    <a-entity
+      id="rightWand"
+      class="wand"
+      support-wand="hand: right; sourceHand: #rightHand; sourceController: #rightController; fallbackTarget: #userCamera"
+      xr-overlay-visual="renderOrder: 420"
+    ></a-entity>
+
+    <a-entity id="experienceRoot" visible="false">
+      <a-entity id="stageGlow" position="0 0.015 0">
+        <a-ring
+          rotation="-90 0 0"
+          radius-inner="0.9"
+          radius-outer="1.34"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double"
+        ></a-ring>
+        <a-ring
+          rotation="-90 0 0"
+          radius-inner="1.42"
+          radius-outer="1.58"
+          material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.08; side: double"
+        ></a-ring>
+      </a-entity>
+
+      <a-entity id="unlockOrb" position="0 1.1 0.9" visible="false">
+        <a-sphere
+          id="unlockOrbCore"
+          radius="0.16"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.34"
+        ></a-sphere>
+        <a-sphere
+          id="unlockOrbShell"
+          radius="0.24"
+          material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.1; side: double"
+        ></a-sphere>
+        <a-ring
+          id="unlockOrbRing"
+          rotation="-90 0 0"
+          radius-inner="0.2"
+          radius-outer="0.27"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.22; side: double"
+        ></a-ring>
+        <a-text
+          id="unlockOrbLabel"
+          value="ENERGY LINK"
+          align="center"
+          width="1.6"
+          color="#ffe6f1"
+          position="0 -0.38 0"
+        ></a-text>
+      </a-entity>
+
+      <a-entity id="screenRig" position="0 1.58 0.12">
+        <a-plane
+          width="2.7"
+          height="1.72"
+          material="shader: flat; color: #091211; transparent: true; opacity: 0.92; side: double"
+        ></a-plane>
+        <a-plane
+          id="screenGlow"
+          width="2.96"
+          height="1.96"
+          position="0 0 -0.02"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double"
+        ></a-plane>
+        <a-plane
+          width="2.56"
+          height="1.54"
+          position="0 0 0.01"
+          material="shader: flat; color: #050c0c; transparent: true; opacity: 0.96; side: double"
+        ></a-plane>
+        <a-video
+          id="mainVideoScreen"
+          width="2.34"
+          height="1.315"
+          position="0 0.03 0.02"
+          src="#teaserVideo"
+          material="shader: flat; side: double"
+        ></a-video>
+        <a-text
+          value="WAYV CYBER ALTAR"
+          align="center"
+          width="4.2"
+          color="#ffe6f1"
+          position="0 -0.91 0.03"
+        ></a-text>
+        <a-text
+          id="focusLabel"
+          value="Walk closer or press the right controller to lock a member"
+          align="center"
+          width="2.8"
+          color="#ffe6f1"
+          position="0 -1.08 0.03"
+        ></a-text>
+
+        <a-entity id="detailPanel" position="1.82 0.02 0.06" visible="false">
+          <a-plane
+            id="detailPanelGlow"
+            width="0.92"
+            height="1.18"
+            position="0 0 -0.02"
+            material="shader: flat; color: #e1e668; transparent: true; opacity: 0.12; side: double"
+          ></a-plane>
+          <a-plane
+            id="detailPanelBacking"
+            width="0.82"
+            height="1.04"
+            material="shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double"
+          ></a-plane>
+          <a-image
+            id="detailPanelPhoto"
+            width="0.7"
+            height="0.88"
+            position="0 0.05 0.02"
+            material="shader: flat; side: double; transparent: true"
+          ></a-image>
+          <a-text
+            id="detailPanelState"
+            value=""
+            align="center"
+            width="1.6"
+            color="#e1e668"
+            position="0 0.58 0.03"
+          ></a-text>
+          <a-text
+            id="detailPanelName"
+            value=""
+            align="center"
+            width="1.4"
+            color="#ffe6f1"
+            position="0 -0.5 0.03"
+          ></a-text>
+        </a-entity>
+      </a-entity>
+
+      <a-entity id="selectionBillboard" visible="false">
+        <a-plane
+          id="selectionPhotoGlow"
+          width="0.68"
+          height="0.88"
+          position="0 0 -0.02"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.15; side: double"
+        ></a-plane>
+        <a-plane
+          id="selectionPhotoBacking"
+          width="0.58"
+          height="0.78"
+          material="shader: flat; color: #071211; transparent: true; opacity: 0.92; side: double"
+        ></a-plane>
+        <a-ring
+          id="selectionPhotoRing"
+          radius-inner="0.29"
+          radius-outer="0.315"
+          position="0 0.03 -0.006"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.3; side: double"
+        ></a-ring>
+        <a-ring
+          id="selectionPhotoRingOuter"
+          radius-inner="0.37"
+          radius-outer="0.384"
+          position="0 0.03 -0.012"
+          material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.12; side: double"
+        ></a-ring>
+        <a-image
+          id="selectionPhoto"
+          width="0.52"
+          height="0.68"
+          position="0 0.02 0.02"
+          material="shader: flat; side: double; transparent: true"
+        ></a-image>
+        <a-text
+          id="selectionCaption"
+          value=""
+          align="center"
+          width="1.8"
+          color="#ffe6f1"
+          position="0 -0.48 0.02"
+        ></a-text>
+      </a-entity>
+
+      <a-entity id="selectionGroundCue" visible="false">
+        <a-ring
+          id="selectionGroundRing"
+          rotation="-90 0 0"
+          radius-inner="0.18"
+          radius-outer="0.245"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.42; side: double"
+        ></a-ring>
+      </a-entity>
+
+      <a-entity id="selectionBeam" visible="false">
+        <a-cone
+          id="selectionBeamCone"
+          radius-bottom="0.32"
+          radius-top="0.02"
+          height="2.4"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.1; side: double"
+        ></a-cone>
+      </a-entity>
+
+      <a-entity id="memberArc"></a-entity>
+    </a-entity>
+
+    <a-entity id="laserLine" visible="false"></a-entity>
+
+    <a-light type="ambient" intensity="0.9" color="#f8fff9"></a-light>
+    <a-light type="directional" intensity="0.9" color="#fffce4" position="1.2 3 1.4"></a-light>
+    <a-light type="point" intensity="0.6" color="#e1e668" position="0 2.2 -0.8" distance="6"></a-light>
+  </a-scene>
+
+  <script>
+    (() => {
+      const APP_CONFIG = {
+        colors: {
+          accent: "#e1e668",
+          accentSoft: "#ffe6f1",
+          panel: "#091211",
+          inactive: "#ffffff"
+        },
+        video: {
+          baseVolume: 0,
+          duckedVolume: 0
+        },
+        bgm: {
+          baseVolume: 0.08,
+          duckedVolume: 0
+        },
+        voices: {
+          selectedVolume: 1
+        },
+        interaction: {
+          handHoverDistance: 0.56,
+          focusDistance: 4.8,
+          autoSelectDistance: 3.2,
+          autoSelectHoldMs: 180,
+          switchHoldMs: 160,
+          replayCooldownMs: 650,
+          autoSelectWarmupMs: 320,
+          maxViewAngleDeg: 96
+        },
+        layout: {
+          memberArcDegrees: 120,
+          memberArcRadiusX: 2.04,
+          memberArcDepth: 0.92,
+          memberBaseY: 0.78,
+          cardWidth: 0.52,
+          cardHeight: 0.74,
+          cardImageWidth: 0.4,
+          cardImageHeight: 0.58,
+          topPhotoHeight: 0.74
+        },
+        stage: {
+          distance: 2.85
+        },
+        unlockOrb: {
+          activationDistance: 0.42,
+          unfoldDurationMs: 1800
+        },
+        members: [
+          {
+            key: "kun",
+            name: "KUN",
+            color: "#e1e668",
+            imageId: "kunArt",
+            detailImageId: "kunDetailArt",
+            audioSrc: "assets/voice-kun.mp3"
+          },
+          {
+            key: "ten",
+            name: "TEN",
+            color: "#ffd6ef",
+            imageId: "tenArt",
+            detailImageId: "tenDetailArt",
+            audioSrc: "assets/voice-ten.mp4"
+          },
+          {
+            key: "xj",
+            name: "XIAOJUN",
+            color: "#c8f3ab",
+            imageId: "xjArt",
+            detailImageId: "xjDetailArt",
+            audioSrc: "assets/voice-xj.mp3"
+          },
+          {
+            key: "yangyang",
+            name: "YANGYANG",
+            color: "#b8efff",
+            imageId: "yangArt",
+            detailImageId: "yangDetailArt",
+            audioSrc: "assets/yang.mp4"
+          },
+          {
+            key: "hgh",
+            name: "HENDERY",
+            color: "#ffd8a8",
+            imageId: "hghArt",
+            detailImageId: "hghDetailArt",
+            audioSrc: "assets/voice-hgh.mp4"
+          }
+        ]
+      };
+
+      AFRAME.registerSystem("trail-pool", {
+        init() {
+          this.cursor = 0;
+          this.items = [];
+          const geometry = new THREE.IcosahedronGeometry(1, 0);
+
+          for (let i = 0; i < 100; i += 1) {
+            const material = new THREE.MeshBasicMaterial({
+              color: APP_CONFIG.colors.accent,
+              transparent: true,
+              opacity: 0,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+              depthTest: false
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.visible = false;
+            mesh.renderOrder = 220;
+            this.sceneEl.object3D.add(mesh);
+
+            this.items.push({
+              mesh,
+              material,
+              velocity: new THREE.Vector3(),
+              life: 0,
+              maxLife: 0,
+              baseScale: 0.02
+            });
+          }
+        },
+
+        spawn(position, motion, intensity, color) {
+          const count = intensity > 0.78 ? 3 : intensity > 0.42 ? 2 : 1;
+
+          for (let i = 0; i < count; i += 1) {
+            const item = this.items[this.cursor % this.items.length];
+            this.cursor += 1;
+
+            const spread = 0.012 + intensity * 0.034;
+            item.mesh.visible = true;
+            item.mesh.position.copy(position);
+            item.mesh.position.x += (Math.random() - 0.5) * spread;
+            item.mesh.position.y += (Math.random() - 0.5) * spread;
+            item.mesh.position.z += (Math.random() - 0.5) * spread;
+            item.baseScale = 0.016 + intensity * 0.042 + Math.random() * 0.012;
+            item.mesh.scale.setScalar(item.baseScale);
+            item.material.color.copy(color);
+            item.material.opacity = 0.55;
+
+            item.velocity.copy(motion).multiplyScalar(-0.16);
+            item.velocity.x += (Math.random() - 0.5) * 0.18;
+            item.velocity.y += 0.04 + Math.random() * 0.16;
+            item.velocity.z += (Math.random() - 0.5) * 0.18;
+            item.life = 0.26 + intensity * 0.52 + Math.random() * 0.08;
+            item.maxLife = item.life;
+          }
+        },
+
+        tick(time, delta) {
+          if (!delta) {
+            return;
+          }
+
+          const dt = delta / 1000;
+          for (const item of this.items) {
+            if (!item.mesh.visible) {
+              continue;
+            }
+
+            item.life -= dt;
+            if (item.life <= 0) {
+              item.mesh.visible = false;
+              continue;
+            }
+
+            const life01 = item.life / item.maxLife;
+            item.mesh.position.addScaledVector(item.velocity, dt);
+            item.velocity.multiplyScalar(0.965);
+            item.mesh.scale.setScalar(item.baseScale + (1 - life01) * 0.055);
+            item.material.opacity = Math.pow(life01, 1.85) * 0.62;
+          }
+        }
+      });
+
+      AFRAME.registerComponent("pinch-input", {
+        dependencies: ["hand-tracking-controls"],
+        schema: { hand: { default: "right" } },
+
+        init() {
+          this.onPinchStarted = this.onPinchStarted.bind(this);
+          this.onPinchMoved = this.onPinchMoved.bind(this);
+          this.onPinchEnded = this.onPinchEnded.bind(this);
+          this.el.addEventListener("pinchstarted", this.onPinchStarted);
+          this.el.addEventListener("pinchmoved", this.onPinchMoved);
+          this.el.addEventListener("pinchended", this.onPinchEnded);
+        },
+
+        onPinchStarted(event) {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience) {
+            experience.handlePinchStart(this.data.hand, this.el, event && event.detail && event.detail.position);
+          }
+        },
+
+        onPinchMoved(event) {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience) {
+            experience.handlePinchMove(this.data.hand, event && event.detail && event.detail.position);
+          }
+        },
+
+        onPinchEnded() {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience) {
+            experience.handlePinchEnd(this.data.hand);
+          }
+        },
+
+        remove() {
+          this.el.removeEventListener("pinchstarted", this.onPinchStarted);
+          this.el.removeEventListener("pinchmoved", this.onPinchMoved);
+          this.el.removeEventListener("pinchended", this.onPinchEnded);
+        }
+      });
+
+      AFRAME.registerComponent("controller-select-input", {
+        schema: { hand: { default: "right" } },
+
+        init() {
+          this.onSelect = this.onSelect.bind(this);
+          this.events = ["triggerdown", "gripdown", "abuttondown", "bbuttondown", "selectstart"];
+          this.events.forEach((eventName) => this.el.addEventListener(eventName, this.onSelect));
+        },
+
+        onSelect() {
+          const experience = this.el.sceneEl.components["mr-idol-experience"];
+          if (experience) {
+            experience.handleControllerSelect(this.el);
+          }
+        },
+
+        remove() {
+          this.events.forEach((eventName) => this.el.removeEventListener(eventName, this.onSelect));
+        }
+      });
+
+      AFRAME.registerComponent("xr-overlay-visual", {
+        schema: {
+          renderOrder: { default: 360 }
+        },
+
+        init() {
+          this.applyOverlay = this.applyOverlay.bind(this);
+          this.el.addEventListener("object3dset", this.applyOverlay);
+          this.applyOverlay();
+        },
+
+        applyOverlay() {
+          const root = this.el.object3D;
+          if (!root) {
+            return;
+          }
+
+          let meshIndex = 0;
+          root.traverse((child) => {
+            if (!child.isMesh || !child.material) {
+              return;
+            }
+
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            child.renderOrder = this.data.renderOrder + meshIndex;
+            meshIndex += 1;
+
+            materials.forEach((material) => {
+              material.transparent = true;
+              material.depthTest = false;
+              material.depthWrite = false;
+              material.needsUpdate = true;
+            });
+          });
+        },
+
+        tick() {
+          this.applyOverlay();
+        },
+
+        remove() {
+          this.el.removeEventListener("object3dset", this.applyOverlay);
+        }
+      });
+
+      AFRAME.registerComponent("support-wand", {
+        schema: {
+          hand: { default: "right" },
+          sourceHand: { type: "selector" },
+          sourceController: { type: "selector" },
+          fallbackTarget: { type: "selector" }
+        },
+
+        init() {
+          this.sourceHandEl = this.data.sourceHand;
+          this.sourceControllerEl = this.data.sourceController;
+          this.fallbackTargetEl = this.data.fallbackTarget;
+          this.baseColor = new THREE.Color("#e1e668");
+          this.glowColor = new THREE.Color("#e1e668");
+          this.tipWorld = new THREE.Vector3();
+          this.lastTipWorld = new THREE.Vector3();
+          this.motion = new THREE.Vector3();
+          this.anchorPosition = new THREE.Vector3();
+          this.anchorQuaternion = new THREE.Quaternion();
+          this.anchorScale = new THREE.Vector3(1, 1, 1);
+          this.rootPosition = new THREE.Vector3();
+          this.rootQuaternion = new THREE.Quaternion();
+          this.detailPosition = new THREE.Vector3();
+          this.detailQuaternion = new THREE.Quaternion();
+          this.offsetWorld = new THREE.Vector3();
+          this.cameraWorld = new THREE.Vector3();
+          this.savedHandPosition = new THREE.Vector3();
+          this.savedHandQuaternion = new THREE.Quaternion();
+          this.handAnchorObject = null;
+          this.controllerAnchorObject = null;
+          this.currentAnchorObject = null;
+          this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
+          this.controllerOffset = new THREE.Vector3(0.016, -0.022, -0.026);
+          this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
+          this.handRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            THREE.MathUtils.degToRad(8),
+            THREE.MathUtils.degToRad(-6),
+            THREE.MathUtils.degToRad(8)
+          ));
+          this.controllerRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            THREE.MathUtils.degToRad(84),
+            THREE.MathUtils.degToRad(2),
+            THREE.MathUtils.degToRad(-4)
+          ));
+          this.fallbackRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+            THREE.MathUtils.degToRad(-10),
+            THREE.MathUtils.degToRad(-12),
+            THREE.MathUtils.degToRad(18)
+          ));
+          this.ready = false;
+          this.speed = 0;
+          this.energyTarget = 0.12;
+          this.energyValue = 0.12;
+          this.trailAccumulator = 0;
+          this.overlayPrepared = false;
+          this.handTracked = false;
+          this.lastTrackedAt = 0;
+          this.poseSource = "fallback";
+          this.buildMesh();
+        },
+
+        buildMesh() {
+          const root = this.el;
+
+          const rod = document.createElement("a-cylinder");
+          rod.setAttribute("class", "wand-body");
+          rod.setAttribute("radius", "0.016");
+          rod.setAttribute("height", "0.42");
+          rod.setAttribute("position", "0 0.13 0");
+          rod.setAttribute("material", "color: #f1f3c4; roughness: 0.18; metalness: 0.24; emissive: #e1e668; emissiveIntensity: 0.46");
+          root.appendChild(rod);
+
+          const grip = document.createElement("a-cylinder");
+          grip.setAttribute("class", "wand-grip");
+          grip.setAttribute("radius", "0.018");
+          grip.setAttribute("height", "0.12");
+          grip.setAttribute("position", "0 0.01 0");
+          grip.setAttribute("material", "color: #d8dda3; roughness: 0.56; metalness: 0.08; emissive: #c7cf5c; emissiveIntensity: 0.14");
+          root.appendChild(grip);
+
+          const cap = document.createElement("a-cylinder");
+          cap.setAttribute("class", "wand-cap");
+          cap.setAttribute("radius", "0.021");
+          cap.setAttribute("height", "0.036");
+          cap.setAttribute("position", "0 0.325 0");
+          cap.setAttribute("material", "color: #edf09f; roughness: 0.16; metalness: 0.24");
+          root.appendChild(cap);
+
+          const leftArm = document.createElement("a-box");
+          leftArm.setAttribute("class", "wand-arm");
+          leftArm.setAttribute("width", "0.06");
+          leftArm.setAttribute("height", "0.18");
+          leftArm.setAttribute("depth", "0.03");
+          leftArm.setAttribute("position", "-0.055 0.435 0");
+          leftArm.setAttribute("rotation", "0 0 34");
+          leftArm.setAttribute("material", "color: #edf09f; roughness: 0.14; metalness: 0.08; emissive: #e1e668; emissiveIntensity: 2");
+          root.appendChild(leftArm);
+
+          const rightArm = document.createElement("a-box");
+          rightArm.setAttribute("class", "wand-arm");
+          rightArm.setAttribute("width", "0.06");
+          rightArm.setAttribute("height", "0.18");
+          rightArm.setAttribute("depth", "0.03");
+          rightArm.setAttribute("position", "0.055 0.435 0");
+          rightArm.setAttribute("rotation", "0 0 -34");
+          rightArm.setAttribute("material", "color: #edf09f; roughness: 0.14; metalness: 0.08; emissive: #e1e668; emissiveIntensity: 2");
+          root.appendChild(rightArm);
+
+          const leftHalo = document.createElement("a-plane");
+          leftHalo.setAttribute("class", "wand-halo");
+          leftHalo.setAttribute("width", "0.12");
+          leftHalo.setAttribute("height", "0.18");
+          leftHalo.setAttribute("position", "-0.055 0.435 -0.018");
+          leftHalo.setAttribute("rotation", "0 0 34");
+          leftHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
+          root.appendChild(leftHalo);
+
+          const rightHalo = document.createElement("a-plane");
+          rightHalo.setAttribute("class", "wand-halo");
+          rightHalo.setAttribute("width", "0.12");
+          rightHalo.setAttribute("height", "0.18");
+          rightHalo.setAttribute("position", "0.055 0.435 -0.018");
+          rightHalo.setAttribute("rotation", "0 0 -34");
+          rightHalo.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
+          root.appendChild(rightHalo);
+
+          const tip = document.createElement("a-entity");
+          tip.setAttribute("class", "wand-tip");
+          tip.setAttribute("position", "0 0.53 0");
+          root.appendChild(tip);
+
+          const light = document.createElement("a-entity");
+          light.setAttribute("class", "wand-light");
+          light.setAttribute("position", "0 0.43 0");
+          light.setAttribute("light", "type: point; color: #e1e668; intensity: 1.15; distance: 1.05; decay: 1.6");
+          root.appendChild(light);
+
+          this.bodyEl = rod;
+          this.gripEl = grip;
+          this.armEls = [leftArm, rightArm];
+          this.haloEls = [leftHalo, rightHalo];
+          this.tipEl = tip;
+          this.lightEl = light;
+          this.el.object3D.scale.setScalar(1.08);
+        },
+
+        setActiveColor(color) {
+          this.glowColor.set(color || "#e1e668");
+        },
+
+        setEnergy(value) {
+          this.energyTarget = THREE.MathUtils.clamp(value, 0, 1);
+        },
+
+        updateMeshes() {
+          this.bodyMesh = this.bodyMesh || this.bodyEl.getObject3D("mesh");
+          this.gripMesh = this.gripMesh || this.gripEl.getObject3D("mesh");
+          if (!this.armMeshes) {
+            this.armMeshes = [];
+          }
+          if (!this.armMeshes.length) {
+            this.armMeshes = this.armEls.map((el) => el.getObject3D("mesh")).filter(Boolean);
+          }
+          if (!this.haloMeshes) {
+            this.haloMeshes = [];
+          }
+          if (!this.haloMeshes.length) {
+            this.haloMeshes = this.haloEls.map((el) => el.getObject3D("mesh")).filter(Boolean);
+          }
+          if (!this.overlayPrepared) {
+            const meshes = [this.bodyMesh, this.gripMesh, ...(this.armMeshes || []), ...(this.haloMeshes || [])].filter(Boolean);
+            meshes.forEach((mesh, index) => {
+              mesh.renderOrder = 250 + index;
+              if (mesh.material) {
+                mesh.material.transparent = true;
+                mesh.material.depthTest = false;
+                mesh.material.depthWrite = false;
+                mesh.material.needsUpdate = true;
+              }
+            });
+            this.overlayPrepared = meshes.length > 0;
+          }
+        },
+
+        resolveHandAnchorObject() {
+          if (!this.sourceHandEl) {
+            return null;
+          }
+          const handTracking = this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
+          if (handTracking && handTracking.wristObject3D && handTracking.hasPoses) {
+            return handTracking.wristObject3D;
+          }
+          if (this.handAnchorObject && this.handAnchorObject.parent) {
+            return this.handAnchorObject;
+          }
+
+          const handRoot = this.sourceHandEl.object3D;
+          if (!handRoot) {
+            return null;
+          }
+
+          const preferredNames = [
+            "wrist",
+            "b_r_wrist",
+            "right_wrist",
+            "hand_r",
+            "joint-wrist"
+          ];
+
+          let fallbackBone = null;
+          handRoot.traverse((child) => {
+            if (this.handAnchorObject) {
+              return;
+            }
+
+            const childName = (child.name || "").toLowerCase();
+            if (!childName) {
+              return;
+            }
+
+            if (preferredNames.some((name) => childName.includes(name))) {
+              this.handAnchorObject = child;
+              return;
+            }
+
+            if (!fallbackBone && (child.type === "Bone" || childName.includes("metacarpal"))) {
+              fallbackBone = child;
+            }
+          });
+
+          if (!this.handAnchorObject && fallbackBone) {
+            this.handAnchorObject = fallbackBone;
+          }
+
+          return this.handAnchorObject || handRoot;
+        },
+
+        resolveControllerAnchorObject() {
+          if (!this.sourceControllerEl || !this.sourceControllerEl.object3D) {
+            return null;
+          }
+
+          if (this.controllerAnchorObject && this.controllerAnchorObject.parent) {
+            return this.controllerAnchorObject;
+          }
+
+          this.controllerAnchorObject = this.sourceControllerEl.object3D;
+          return this.controllerAnchorObject;
+        },
+
+        resolveControllerPose(targetPosition, targetQuaternion) {
+          const controllerObject = this.resolveControllerAnchorObject();
+          if (!controllerObject) {
+            return false;
+          }
+
+          controllerObject.updateMatrixWorld(true);
+          controllerObject.getWorldPosition(targetPosition);
+          controllerObject.getWorldQuaternion(targetQuaternion);
+          return Number.isFinite(targetPosition.x) && Number.isFinite(targetPosition.y) && Number.isFinite(targetPosition.z);
+        },
+
+        resolveReferenceObject() {
+          const sceneEl = this.el.sceneEl;
+          const xrManager = sceneEl && sceneEl.renderer && sceneEl.renderer.xr;
+          const sceneCamera = sceneEl && sceneEl.camera;
+          if (xrManager && xrManager.isPresenting && sceneCamera) {
+            const xrCamera = xrManager.getCamera(sceneCamera);
+            if (xrCamera) {
+              return xrCamera;
+            }
+          }
+          return this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+        },
+
+        bindToAnchor(anchorObject, localOffset, localRotation, poseSource) {
+          if (!anchorObject) {
+            return false;
+          }
+
+          if (this.currentAnchorObject !== anchorObject) {
+            anchorObject.attach(this.el.object3D);
+            this.currentAnchorObject = anchorObject;
+          }
+
+          this.el.object3D.position.copy(localOffset);
+          this.el.object3D.quaternion.copy(localRotation);
+          this.el.object3D.scale.setScalar(1.08);
+          this.poseSource = poseSource;
+          return true;
+        },
+
+        setRightHandVisible(visible) {
+          if (!this.sourceHandEl || !this.sourceHandEl.object3D) {
+            return;
+          }
+          this.sourceHandEl.object3D.visible = visible;
+        },
+
+        updateAnchorPose() {
+          const fallbackObject = this.resolveReferenceObject();
+          const handObject = this.resolveHandAnchorObject();
+          const handTracking = this.sourceHandEl && this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
+          const controllerObject = this.resolveControllerAnchorObject();
+
+          if (controllerObject && fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
+            fallbackObject.updateMatrixWorld(true);
+            fallbackObject.getWorldPosition(this.cameraWorld);
+
+            const controllerPoseLooksValid =
+              Number.isFinite(this.anchorPosition.x) &&
+              Number.isFinite(this.anchorPosition.y) &&
+              Number.isFinite(this.anchorPosition.z) &&
+              this.anchorPosition.y > 0.2 &&
+              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
+
+            if (controllerPoseLooksValid) {
+              this.bindToAnchor(controllerObject, this.controllerOffset, this.controllerRotation, "controller");
+              this.handTracked = true;
+              this.setRightHandVisible(false);
+              return;
+            }
+          }
+
+          if (handObject && fallbackObject && handTracking && handTracking.hasPoses) {
+            handObject.updateMatrixWorld(true);
+            fallbackObject.updateMatrixWorld(true);
+            handObject.getWorldPosition(this.rootPosition);
+            handObject.getWorldQuaternion(this.rootQuaternion);
+            fallbackObject.getWorldPosition(this.cameraWorld);
+
+            const rootPoseLooksValid =
+              Number.isFinite(this.rootPosition.x) &&
+              Number.isFinite(this.rootPosition.y) &&
+              Number.isFinite(this.rootPosition.z) &&
+              this.rootPosition.y > 0.2 &&
+              this.rootPosition.distanceTo(this.cameraWorld) < 1.6;
+
+            if (rootPoseLooksValid) {
+              this.bindToAnchor(handObject, this.offset, this.handRotation, "hand");
+              this.handTracked = true;
+              this.setRightHandVisible(true);
+              return;
+            }
+          }
+
+          if (!fallbackObject) {
+            return;
+          }
+
+          this.bindToAnchor(fallbackObject, this.fallbackOffset, this.fallbackRotation, "fallback");
+          this.handTracked = false;
+          this.setRightHandVisible(false);
+        },
+
+        tick(time, delta) {
+          if (!delta) {
+            return;
+          }
+
+          this.updateAnchorPose();
+          const xrManager = this.el.sceneEl && this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr;
+          const inXR = !!(xrManager && xrManager.isPresenting);
+          this.el.object3D.visible = !inXR || this.poseSource !== "none";
+          if (!this.el.object3D.visible) {
+            return;
+          }
+          this.updateMeshes();
+
+          if (!this.tipEl) {
+            return;
+          }
+
+          this.tipEl.object3D.getWorldPosition(this.tipWorld);
+          if (!this.ready) {
+            this.lastTipWorld.copy(this.tipWorld);
+            this.ready = true;
+            return;
+          }
+
+          const dt = delta / 1000;
+          this.motion.subVectors(this.tipWorld, this.lastTipWorld);
+          this.speed = THREE.MathUtils.lerp(this.speed, this.motion.length() / Math.max(dt, 0.0001), 0.22);
+          this.lastTipWorld.copy(this.tipWorld);
+
+          this.energyValue = THREE.MathUtils.lerp(this.energyValue, this.energyTarget, 0.18);
+          this.energyTarget *= 0.988;
+          const motion01 = THREE.MathUtils.clamp(this.speed / 2.2, 0, 1);
+          const combined = Math.min(1, Math.max(this.energyValue, motion01 * 0.82));
+
+          if (this.bodyMesh && this.bodyMesh.material.emissive) {
+            this.bodyMesh.material.color.set("#eef2b2");
+            this.bodyMesh.material.emissive.set("#e1e668");
+            this.bodyMesh.material.emissiveIntensity = 0.22 + combined * 0.85;
+          }
+          if (this.gripMesh && this.gripMesh.material.emissive) {
+            this.gripMesh.material.emissive.set("#cfd65f");
+            this.gripMesh.material.emissiveIntensity = 0.05 + combined * 0.24;
+          }
+          for (const armMesh of this.armMeshes || []) {
+            if (!armMesh.material.emissive) {
+              continue;
+            }
+            armMesh.material.color.set("#edf09f");
+            armMesh.material.emissive.copy(this.glowColor).lerp(new THREE.Color("#f6f8d3"), 0.18);
+            armMesh.material.emissiveIntensity = 1.2 + combined * 3.4;
+          }
+          for (let i = 0; i < (this.haloMeshes || []).length; i += 1) {
+            const haloMesh = this.haloMeshes[i];
+            const haloEl = this.haloEls[i];
+            if (!haloMesh || !haloEl) {
+              continue;
+            }
+            haloMesh.material.color.copy(this.glowColor).lerp(new THREE.Color("#f8f9dc"), 0.22);
+            haloMesh.material.opacity = 0.03 + combined * 0.22;
+            haloEl.object3D.scale.setScalar(1 + combined * 0.56 + Math.sin(time * 0.012) * 0.04);
+          }
+
+          const light = this.lightEl ? this.lightEl.getObject3D("light") : null;
+          if (light) {
+            light.color.copy(this.glowColor).lerp(new THREE.Color("#f8f9dc"), 0.18);
+            light.intensity = 0.85 + combined * 3.4;
+            light.distance = 0.95 + combined * 1.4;
+          }
+
+          this.trailAccumulator += delta;
+          const spawnInterval = combined > 0.72 ? 18 : 34;
+          if (combined > 0.1 && this.trailAccumulator >= spawnInterval) {
+            const motion = this.motion.clone();
+            if (!this.handTracked) {
+              motion.multiplyScalar(0.18);
+            }
+            this.el.sceneEl.systems["trail-pool"].spawn(this.tipWorld, motion, combined, this.glowColor);
+            this.trailAccumulator = 0;
+          }
+        }
+      });
+
+      AFRAME.registerComponent("mr-idol-experience", {
+        init() {
+          this.statusEl = document.getElementById("status");
+          this.startButton = document.getElementById("startButton");
+          this.demoNextButton = document.getElementById("demoNextButton");
+          this.resetButton = document.getElementById("resetButton");
+          this.previewEnvironmentEl = document.getElementById("previewEnvironment");
+          this.stageRootEl = document.getElementById("experienceRoot");
+          this.unlockOrbEl = document.getElementById("unlockOrb");
+          this.unlockOrbCoreEl = document.getElementById("unlockOrbCore");
+          this.unlockOrbShellEl = document.getElementById("unlockOrbShell");
+          this.unlockOrbRingEl = document.getElementById("unlockOrbRing");
+          this.unlockOrbLabelEl = document.getElementById("unlockOrbLabel");
+          this.screenRigEl = document.getElementById("screenRig");
+          this.memberArcEl = document.getElementById("memberArc");
+          this.screenGlowEl = document.getElementById("screenGlow");
+          this.detailPanelEl = document.getElementById("detailPanel");
+          this.detailPanelGlowEl = document.getElementById("detailPanelGlow");
+          this.detailPanelBackingEl = document.getElementById("detailPanelBacking");
+          this.detailPanelPhotoEl = document.getElementById("detailPanelPhoto");
+          this.detailPanelStateEl = document.getElementById("detailPanelState");
+          this.detailPanelNameEl = document.getElementById("detailPanelName");
+          this.focusLabelEl = document.getElementById("focusLabel");
+          this.selectionBillboardEl = document.getElementById("selectionBillboard");
+          this.selectionPhotoEl = document.getElementById("selectionPhoto");
+          this.selectionPhotoGlowEl = document.getElementById("selectionPhotoGlow");
+          this.selectionPhotoBackingEl = document.getElementById("selectionPhotoBacking");
+          this.selectionPhotoRingEl = document.getElementById("selectionPhotoRing");
+          this.selectionPhotoRingOuterEl = document.getElementById("selectionPhotoRingOuter");
+          this.selectionCaptionEl = document.getElementById("selectionCaption");
+          this.selectionGroundCueEl = document.getElementById("selectionGroundCue");
+          this.selectionGroundRingEl = document.getElementById("selectionGroundRing");
+          this.selectionBeamEl = document.getElementById("selectionBeam");
+          this.selectionBeamConeEl = document.getElementById("selectionBeamCone");
+          this.laserEl = document.getElementById("laserLine");
+          this.videoEl = document.getElementById("teaserVideo");
+          this.bgmEl = document.getElementById("bgmTrack");
+          this.rightControllerEl = document.getElementById("rightController");
+
+          this.voiceAudioEl = document.createElement("audio");
+          this.voiceAudioEl.className = "asset-media";
+          this.voiceAudioEl.preload = "auto";
+          this.voiceAudioEl.crossOrigin = "anonymous";
+          this.voiceAudioEl.setAttribute("playsinline", "playsinline");
+          document.body.appendChild(this.voiceAudioEl);
+
+          this.voiceVideoEl = document.createElement("video");
+          this.voiceVideoEl.className = "asset-media";
+          this.voiceVideoEl.preload = "auto";
+          this.voiceVideoEl.crossOrigin = "anonymous";
+          this.voiceVideoEl.setAttribute("playsinline", "playsinline");
+          this.voiceVideoEl.setAttribute("webkit-playsinline", "true");
+          document.body.appendChild(this.voiceVideoEl);
+
+          this.members = [];
+          this.memberMap = new Map();
+          this.hoveredByHand = { left: null, right: null };
+          this.pinchingHands = { left: false, right: false };
+          this.activeSelection = null;
+          this.candidateTarget = null;
+          this.candidateSince = 0;
+          this.currentVoiceEl = null;
+          this.currentVoiceOwner = null;
+          this.voiceMediaByKey = new Map();
+          this.previewCooldownUntil = 0;
+          this.started = false;
+          this.preparing = false;
+          this.demoIndex = 0;
+          this.stageStartedAt = 0;
+          this.membersActivated = false;
+          this.membersActivationAt = 0;
+          this.cameraPosition = new THREE.Vector3();
+          this.cameraDirection = new THREE.Vector3();
+          this.cameraForwardFlat = new THREE.Vector3();
+          this.accentColor = new THREE.Color(APP_CONFIG.colors.accent);
+          this.tempWorld = new THREE.Vector3();
+          this.tempWorldB = new THREE.Vector3();
+          this.tempQuaternion = new THREE.Quaternion();
+          this.handWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
+          this.lastHandWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
+          this.handSpeed = { left: 0, right: 0 };
+          this.handHasPose = { left: false, right: false };
+          this.controllerWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
+          this.unlockOrbWorld = new THREE.Vector3();
+          this.lastWaveBurstAt = 0;
+          this.activeHand = null;
+          this.activeHandEl = null;
+          this.stageRealignTimerIds = [];
+          this.controllerSelectCooldownUntil = 0;
+          this.bgmWasPlayingBeforeVoice = false;
+
+          this.onVoiceEnded = this.onVoiceEnded.bind(this);
+          this.onEnterXR = this.onEnterXR.bind(this);
+          this.onExitXR = this.onExitXR.bind(this);
+          this.startExperience = this.startExperience.bind(this);
+          this.resetExperience = this.resetExperience.bind(this);
+          this.demoNextMember = this.demoNextMember.bind(this);
+
+          this.voiceAudioEl.addEventListener("ended", this.onVoiceEnded);
+          this.voiceVideoEl.addEventListener("ended", this.onVoiceEnded);
+          this.startButton.addEventListener("click", this.startExperience);
+          this.demoNextButton.addEventListener("click", this.demoNextMember);
+          this.resetButton.addEventListener("click", this.resetExperience);
+          this.el.addEventListener("enter-vr", this.onEnterXR);
+          this.el.addEventListener("exit-vr", this.onExitXR);
+
+          this.initAudio();
+          this.buildMemberPanels();
+          this.updateFocusHud(null, null);
+          this.setStatus("点击“开始体验”后，舞台会固定在你正前方。靠近成员卡片或按右手手柄按键，即可锁定成员并切换语音。");
+        },
+
+        initAudio() {
+          this.videoEl.muted = true;
+          this.videoEl.volume = 0;
+          this.bgmEl.volume = 0;
+          this.bgmEl.muted = false;
+          this.voiceAudioEl.volume = 0;
+          this.voiceAudioEl.muted = false;
+          this.voiceVideoEl.volume = 0;
+          this.voiceVideoEl.muted = false;
+          this.voiceMediaByKey.clear();
+
+          APP_CONFIG.members.forEach((member) => {
+            const mediaEl = document.createElement("audio");
+            mediaEl.className = "asset-media";
+            mediaEl.preload = "auto";
+            mediaEl.crossOrigin = "anonymous";
+            mediaEl.src = member.audioSrc;
+            mediaEl.loop = false;
+            mediaEl.volume = 0;
+            mediaEl.muted = false;
+            mediaEl.dataset.prepared = "true";
+            mediaEl.setAttribute("playsinline", "playsinline");
+            mediaEl.setAttribute("webkit-playsinline", "true");
+            mediaEl.addEventListener("ended", this.onVoiceEnded);
+            document.body.appendChild(mediaEl);
+            this.voiceMediaByKey.set(member.key, mediaEl);
+          });
+        },
+
+        buildMemberPanels() {
+          this.memberArcEl.innerHTML = "";
+          this.members = [];
+          this.memberMap.clear();
+
+          const count = APP_CONFIG.members.length;
+          const maxAngle = APP_CONFIG.layout.memberArcDegrees;
+          const baseY = APP_CONFIG.layout.memberBaseY;
+          const radiusX = APP_CONFIG.layout.memberArcRadiusX;
+          const userCenteredArcOffset = APP_CONFIG.stage.distance;
+          const panelWidth = APP_CONFIG.layout.cardWidth;
+          const panelHeight = APP_CONFIG.layout.cardHeight;
+          const artWidth = APP_CONFIG.layout.cardImageWidth;
+          const artHeight = APP_CONFIG.layout.cardImageHeight;
+          const glowWidth = panelWidth + 0.1;
+          const glowHeight = panelHeight + 0.1;
+
+          APP_CONFIG.members.forEach((member, index) => {
+            const ratio = count === 1 ? 0.5 : index / (count - 1);
+            const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-maxAngle, maxAngle, ratio));
+            const x = Math.sin(angle) * radiusX;
+            const z = userCenteredArcOffset - Math.cos(angle) * radiusX;
+            const detailAspect = this.getAssetAspect(member.detailImageId || member.imageId, 0.72);
+
+            const cardEl = document.createElement("a-entity");
+            cardEl.setAttribute("position", `${x.toFixed(4)} ${baseY.toFixed(4)} ${z.toFixed(4)}`);
+            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle)).toFixed(2)} 0`);
+
+            const glow = document.createElement("a-plane");
+            glow.setAttribute("width", glowWidth.toFixed(3));
+            glow.setAttribute("height", glowHeight.toFixed(3));
+            glow.setAttribute("position", "0 0 -0.02");
+            glow.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.08; side: double");
+            cardEl.appendChild(glow);
+
+            const panel = document.createElement("a-plane");
+            panel.setAttribute("width", panelWidth.toFixed(3));
+            panel.setAttribute("height", panelHeight.toFixed(3));
+            panel.setAttribute("material", "shader: flat; color: #071211; transparent: true; opacity: 0.88; side: double");
+            cardEl.appendChild(panel);
+
+            const border = document.createElement("a-ring");
+            border.setAttribute("radius-inner", "0.3");
+            border.setAttribute("radius-outer", "0.312");
+            border.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0.16; side: double");
+            border.object3D.scale.set(panelWidth / 0.62, panelHeight / 0.62, 1);
+            cardEl.appendChild(border);
+
+            const art = document.createElement("a-image");
+            art.setAttribute("src", `#${member.imageId}`);
+            art.setAttribute("width", artWidth.toFixed(3));
+            art.setAttribute("height", artHeight.toFixed(3));
+            art.setAttribute("position", "0 0.04 0.01");
+            art.setAttribute("material", "shader: flat; side: double; transparent: true");
+            cardEl.appendChild(art);
+
+            const name = document.createElement("a-text");
+            name.setAttribute("value", member.name);
+            name.setAttribute("align", "center");
+            name.setAttribute("width", "1.35");
+            name.setAttribute("position", "0 -0.45 0.02");
+            name.setAttribute("color", APP_CONFIG.colors.accentSoft);
+            cardEl.appendChild(name);
+
+            const badge = document.createElement("a-plane");
+            badge.setAttribute("width", "0.33");
+            badge.setAttribute("height", "0.072");
+            badge.setAttribute("position", "0 0.43 0.03");
+            badge.setAttribute("material", "shader: flat; color: #e1e668; transparent: true; opacity: 0; side: double");
+            cardEl.appendChild(badge);
+
+            const badgeText = document.createElement("a-text");
+            badgeText.setAttribute("value", "");
+            badgeText.setAttribute("align", "center");
+            badgeText.setAttribute("width", "1.12");
+            badgeText.setAttribute("position", "0 0.415 0.04");
+            badgeText.setAttribute("color", "#081312");
+            badgeText.setAttribute("visible", "false");
+            cardEl.appendChild(badgeText);
+
+          const memberState = {
+              ...member,
+              el: cardEl,
+              glowEl: glow,
+              panelEl: panel,
+              borderEl: border,
+              artEl: art,
+              nameEl: name,
+              badgeEl: badge,
+              badgeTextEl: badgeText,
+              baseX: x,
+              baseY,
+              baseZ: z,
+              panelWidth,
+              panelHeight,
+              detailAspect,
+              baseAngle: angle,
+              memberColor: new THREE.Color(member.color),
+              glowColor: new THREE.Color(APP_CONFIG.colors.accent),
+              appearDelay: index * 0.1,
+              hoverAmount: 0,
+              selectedAmount: 0,
+              visibleAmount: 0,
+              forwardOffset: 0,
+              lastNameColor: null,
+              lastBadgeText: null,
+              lastBadgeVisible: null
+            };
+
+            this.memberArcEl.appendChild(cardEl);
+            this.members.push(memberState);
+            this.memberMap.set(member.key, memberState);
+          });
+        },
+
+        setStatus(text) {
+          this.statusEl.textContent = text;
+        },
+
+        getVoiceElementForMember(member) {
+          return this.voiceMediaByKey.get(member.key) || this.voiceAudioEl;
+        },
+
+        getCameraPose() {
+          this.el.object3D.updateMatrixWorld(true);
+
+          const xrManager = this.el.renderer && this.el.renderer.xr;
+          if (xrManager && xrManager.isPresenting && this.el.camera) {
+            const xrCamera = xrManager.getCamera(this.el.camera);
+            if (xrCamera) {
+              xrCamera.updateMatrixWorld(true);
+              xrCamera.getWorldPosition(this.cameraPosition);
+              xrCamera.getWorldDirection(this.cameraDirection);
+              return;
+            }
+          }
+
+          const cameraEl = document.getElementById("userCamera");
+          const cameraObject = cameraEl && (cameraEl.getObject3D("camera") || cameraEl.object3D);
+          if (!cameraObject) {
+            this.cameraPosition.set(0, 1.65, 0);
+            this.cameraDirection.set(0, 0, -1);
+            return;
+          }
+
+          cameraObject.getWorldPosition(this.cameraPosition);
+          cameraObject.getWorldDirection(this.cameraDirection);
+        },
+
+        getHandWorldPosition(hand, target) {
+          const handEl = document.getElementById(hand === "left" ? "leftHand" : "rightHand");
+          const handTracking = handEl && handEl.components && handEl.components["hand-tracking-controls"];
+          const wristObject = handTracking && handTracking.wristObject3D;
+          if (!handEl || !handTracking || !handTracking.hasPoses || !wristObject || wristObject.visible === false) {
+            return false;
+          }
+          wristObject.updateMatrixWorld(true);
+          wristObject.getWorldPosition(target);
+          if (!Number.isFinite(target.x) || !Number.isFinite(target.y) || !Number.isFinite(target.z)) {
+            return false;
+          }
+          target.y += 0.015;
+          target.z -= 0.01;
+          return true;
+        },
+
+        getControllerWorldPosition(hand, target, targetQuaternion = null) {
+          const controllerEl = hand === "right" ? this.rightControllerEl : document.getElementById("leftController");
+          const controllerObject = controllerEl && controllerEl.object3D;
+          if (!controllerObject) {
+            return false;
+          }
+
+          controllerObject.updateMatrixWorld(true);
+          controllerObject.getWorldPosition(target);
+          if (targetQuaternion) {
+            controllerObject.getWorldQuaternion(targetQuaternion);
+          }
+          if (!Number.isFinite(target.x) || !Number.isFinite(target.y) || !Number.isFinite(target.z)) {
+            return false;
+          }
+          if (this.cameraPosition && target.distanceTo(this.cameraPosition) > 3.4) {
+            return false;
+          }
+          return true;
+        },
+
+        getActiveEmitterWorldPosition(target) {
+          if (this.activeHand === "controller" && this.getControllerWorldPosition("right", target, this.tempQuaternion)) {
+            this.tempWorldB.set(0.012, -0.004, -0.028).applyQuaternion(this.tempQuaternion);
+            target.add(this.tempWorldB);
+            return true;
+          }
+          if (this.handHasPose.right) {
+            target.copy(this.handWorld.right);
+            return true;
+          }
+          if (this.activeHandEl) {
+            this.activeHandEl.object3D.getWorldPosition(target);
+            target.y += 0.015;
+            return true;
+          }
+          return false;
+        },
+
+        getAssetAspect(assetId, fallback = 0.72) {
+          const assetEl = document.getElementById(assetId);
+          if (!assetEl || !assetEl.naturalWidth || !assetEl.naturalHeight) {
+            return fallback;
+          }
+          return assetEl.naturalWidth / assetEl.naturalHeight;
+        },
+
+        fadeMediaVolume(mediaEl, from, to, duration = 220, done) {
+          if (!mediaEl) {
+            if (done) {
+              done();
+            }
+            return;
+          }
+
+          mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
+          const seq = mediaEl.__fadeSeq;
+          mediaEl.volume = from;
+          const startedAt = performance.now();
+
+          const step = () => {
+            if (mediaEl.__fadeSeq !== seq) {
+              return;
+            }
+            const t = THREE.MathUtils.clamp((performance.now() - startedAt) / duration, 0, 1);
+            mediaEl.volume = THREE.MathUtils.lerp(from, to, t);
+            if (t < 1) {
+              requestAnimationFrame(step);
+              return;
+            }
+            mediaEl.volume = to;
+            if (done) {
+              done();
+            }
+          };
+
+          requestAnimationFrame(step);
+        },
+
+        setBgmVolume(volume) {
+          this.bgmEl.volume = THREE.MathUtils.clamp(volume, 0, 1);
+        },
+
+        duckBgm() {
+          this.setBgmVolume(APP_CONFIG.bgm.duckedVolume);
+        },
+
+        restoreBgm() {
+          this.setBgmVolume(APP_CONFIG.bgm.baseVolume);
+        },
+
+        updateVideoVolume(volume) {
+          this.videoEl.volume = THREE.MathUtils.clamp(volume, 0, 1);
+        },
+
+        duckVideo() {
+          this.updateVideoVolume(APP_CONFIG.video.duckedVolume);
+        },
+
+        restoreVideo() {
+          this.updateVideoVolume(APP_CONFIG.video.baseVolume);
+        },
+
+        async primeSingleMedia(mediaEl) {
+          if (!mediaEl) {
+            return;
+          }
+
+          const oldMuted = mediaEl.muted;
+          const oldVolume = mediaEl.volume;
+          mediaEl.muted = true;
+          mediaEl.volume = 0;
+
+          try {
+            const playPromise = mediaEl.play();
+            if (playPromise && playPromise.catch) {
+              await playPromise.catch(() => {});
+            }
+          } catch (error) {
+          }
+
+          try {
+            mediaEl.pause();
+            mediaEl.currentTime = 0;
+          } catch (error) {
+          }
+
+          mediaEl.muted = oldMuted;
+          mediaEl.volume = oldVolume;
+        },
+
+        async primeMedia() {
+          await this.primeSingleMedia(this.videoEl);
+          await this.primeSingleMedia(this.bgmEl);
+          await this.primeSingleMedia(this.voiceAudioEl);
+          await this.primeSingleMedia(this.voiceVideoEl);
+          for (const mediaEl of this.voiceMediaByKey.values()) {
+            await this.primeSingleMedia(mediaEl);
+          }
+        },
+
+        waitForSceneReady() {
+          if (this.el.hasLoaded) {
+            return Promise.resolve();
+          }
+          return new Promise((resolve) => {
+            this.el.addEventListener("loaded", () => resolve(), { once: true });
+          });
+        },
+
+        withTimeout(promise, timeoutMs = 5000) {
+          let timeoutId = null;
+          const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = window.setTimeout(() => reject(new Error("Timed out")), timeoutMs);
+          });
+          return Promise.race([promise, timeoutPromise]).finally(() => {
+            if (timeoutId !== null) {
+              window.clearTimeout(timeoutId);
+            }
+          });
+        },
+
+        async tryEnterImmersiveMode() {
+          if (!navigator.xr || !window.isSecureContext) {
+            return "inline";
+          }
+
+          if (typeof this.el.enterAR === "function") {
+            try {
+              if (!this.el.is("ar-mode")) {
+                this.setStatus("正在尝试进入 Quest 3 透视 MR 模式...");
+                await this.withTimeout(Promise.resolve(this.el.enterAR()), 6000);
+                return "ar";
+              }
+            } catch (error) {
+            }
+          }
+
+          if (typeof this.el.enterVR === "function") {
+            try {
+              if (!this.el.is("vr-mode")) {
+                this.setStatus("透视模式未成功，正在切换到沉浸式模式继续运行...");
+                await this.withTimeout(Promise.resolve(this.el.enterVR()), 6000);
+                return "vr";
+              }
+            } catch (error) {
+            }
+          }
+
+          return "inline";
+        },
+
+        async startExperience() {
+          if (this.preparing) {
+            return;
+          }
+
+          this.preparing = true;
+          try {
+            const sceneReadyPromise = this.waitForSceneReady();
+            const immersiveModePromise = this.tryEnterImmersiveMode();
+            const primeMediaPromise = this.primeMedia();
+
+            await sceneReadyPromise;
+            try {
+              await this.withTimeout(primeMediaPromise, 1800);
+            } catch (error) {
+            }
+            const mode = await immersiveModePromise;
+
+            this.positionStageInFront();
+            this.stageRootEl.object3D.visible = true;
+            this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
+            this.started = true;
+            this.membersActivated = false;
+            this.membersActivationAt = 0;
+            this.stageStartedAt = 0;
+            this.unlockOrbEl.object3D.visible = true;
+            this.scheduleStageRealign();
+            await this.startVideoLoop();
+            await this.startBgmLoop();
+            this.updateWandsForState();
+            if (mode === "ar") {
+              this.setStatus("舞台已固定在你前方的 MR 空间中。请走到前方能量球附近，按下右手手柄完成启动，成员阵列会随之展开。");
+            } else if (mode === "vr") {
+              this.setStatus("已切换到沉浸式模式。请走到前方能量球附近，按下右手手柄启动成员阵列。");
+            } else {
+              this.setStatus("场景已启动。请走到前方能量球附近，按下右手手柄启动成员阵列。");
+            }
+          } finally {
+            this.preparing = false;
+          }
+        },
+
+        positionStageInFront() {
+          this.getCameraPose();
+          this.cameraForwardFlat.copy(this.cameraDirection).setY(0);
+          if (this.cameraForwardFlat.lengthSq() < 0.0001) {
+            this.cameraForwardFlat.set(0, 0, -1);
+          }
+          this.cameraForwardFlat.normalize();
+
+          this.tempWorld.copy(this.cameraPosition).add(this.cameraForwardFlat.clone().multiplyScalar(APP_CONFIG.stage.distance));
+          this.tempWorld.y = 0;
+          this.stageRootEl.object3D.position.copy(this.tempWorld);
+
+          const yaw = Math.atan2(-this.cameraForwardFlat.x, -this.cameraForwardFlat.z);
+          this.stageRootEl.object3D.rotation.set(0, yaw, 0);
+          this.stageRootEl.object3D.updateMatrixWorld(true);
+
+          if (this.screenRigEl) {
+            const screenPosition = new THREE.Vector3();
+            const screenQuaternion = new THREE.Quaternion();
+            const screenFront = new THREE.Vector3(0, 0, 1);
+            const toCamera = new THREE.Vector3();
+
+            this.screenRigEl.object3D.getWorldPosition(screenPosition);
+            this.screenRigEl.object3D.getWorldQuaternion(screenQuaternion);
+            screenFront.applyQuaternion(screenQuaternion).normalize();
+            toCamera.copy(this.cameraPosition).sub(screenPosition).setY(0);
+
+            if (toCamera.lengthSq() > 0.0001) {
+              toCamera.normalize();
+              if (screenFront.dot(toCamera) < 0) {
+                this.stageRootEl.object3D.rotation.y += Math.PI;
+                this.stageRootEl.object3D.updateMatrixWorld(true);
+              }
+            }
+          }
+        },
+
+        scheduleStageRealign() {
+          this.stageRealignTimerIds.forEach((timerId) => window.clearTimeout(timerId));
+          this.stageRealignTimerIds = [];
+          [0, 120, 360, 900, 1800].forEach((delayMs) => {
+            const timerId = window.setTimeout(() => {
+              if (!this.started && delayMs !== 0) {
+                return;
+              }
+              this.positionStageInFront();
+            }, delayMs);
+            this.stageRealignTimerIds.push(timerId);
+          });
+        },
+
+        async startVideoLoop() {
+          this.videoEl.loop = true;
+          this.videoEl.muted = true;
+          this.videoEl.currentTime = 0;
+          this.restoreVideo();
+          const promise = this.videoEl.play();
+          if (promise && promise.catch) {
+            promise.catch(() => {});
+          }
+        },
+
+        async startBgmLoop() {
+          this.bgmEl.loop = true;
+          this.bgmEl.currentTime = 0;
+          this.bgmEl.volume = 0;
+          const promise = this.bgmEl.play();
+          if (promise && promise.catch) {
+            promise.catch(() => {});
+          }
+          this.fadeMediaVolume(this.bgmEl, 0, APP_CONFIG.bgm.baseVolume, 380);
+        },
+
+        stopVoiceImmediate() {
+          for (const mediaEl of [this.voiceAudioEl, this.voiceVideoEl, ...this.voiceMediaByKey.values()]) {
+            mediaEl.__fadeSeq = (mediaEl.__fadeSeq || 0) + 1;
+            try {
+              mediaEl.pause();
+              mediaEl.currentTime = 0;
+            } catch (error) {
+            }
+            mediaEl.volume = 0;
+          }
+          this.currentVoiceEl = null;
+          this.currentVoiceOwner = null;
+        },
+
+        resumeBgmAfterVoice() {
+          if (!this.started) {
+            return;
+          }
+          const promise = this.bgmEl.play();
+          if (promise && promise.catch) {
+            promise.catch(() => {});
+          }
+          this.restoreBgm();
+          this.bgmWasPlayingBeforeVoice = false;
+        },
+
+        clearSelectionState() {
+          this.activeSelection = null;
+          this.activeHand = null;
+          this.activeHandEl = null;
+          this.hideLaser();
+          if (this.bgmWasPlayingBeforeVoice) {
+            this.resumeBgmAfterVoice();
+          } else {
+            this.restoreBgm();
+          }
+          this.restoreVideo();
+          this.updateFocusHud(this.candidateTarget, this.candidateTarget ? "preview" : null);
+          this.updateWandsForState();
+        },
+
+        selectMember(member, reason = "proximity") {
+          if (!member) {
+            return;
+          }
+
+          if (this.currentVoiceOwner && this.currentVoiceOwner.key === member.key && this.currentVoiceEl && !this.currentVoiceEl.paused) {
+            this.activeSelection = member;
+            this.candidateTarget = member;
+            this.updateFocusHud(member, "selected");
+            this.updateWandsForState();
+            return;
+          }
+
+          this.stopVoiceImmediate();
+          this.activeSelection = member;
+          this.candidateTarget = member;
+          this.candidateSince = performance.now();
+          this.currentVoiceEl = this.getVoiceElementForMember(member);
+          this.currentVoiceOwner = member;
+
+          const absoluteSrc = new URL(member.audioSrc, window.location.href).href;
+          if (this.currentVoiceEl.src !== absoluteSrc) {
+            this.currentVoiceEl.src = member.audioSrc;
+            this.currentVoiceEl.load();
+          } else {
+            this.currentVoiceEl.currentTime = 0;
+          }
+
+          this.currentVoiceEl.loop = false;
+          this.currentVoiceEl.muted = false;
+          this.currentVoiceEl.defaultMuted = false;
+          this.currentVoiceEl.removeAttribute("muted");
+          this.currentVoiceEl.volume = 0.42;
+          this.currentVoiceEl.currentTime = 0;
+          this.bgmWasPlayingBeforeVoice = this.bgmWasPlayingBeforeVoice || !this.bgmEl.paused;
+          try {
+            this.bgmEl.pause();
+          } catch (error) {
+          }
+          this.duckBgm();
+          this.duckVideo();
+          this.updateFocusHud(member, "selected");
+          this.updateWandsForState();
+
+          const playPromise = this.currentVoiceEl.play();
+          if (playPromise && playPromise.catch) {
+            playPromise.catch(() => {
+              this.setStatus(`${member.name} 已锁定，但浏览器阻止了语音播放。请再次点击“开始体验”后重试。`);
+            });
+          }
+
+          this.fadeMediaVolume(this.currentVoiceEl, 0.42, APP_CONFIG.voices.selectedVolume, 120);
+          this.setStatus(`${member.name} 已进入 NOW PLAYING，当前只会播放这一位成员的语音。`);
+
+          if ((reason === "pinch" || reason === "controller") && this.activeHandEl) {
+            this.showLaserFromHandToMember(this.activeHandEl, member);
+          }
+        },
+
+        updateFocusHud(member, mode) {
+          if (!member) {
+            this.selectionBillboardEl.object3D.visible = false;
+            this.focusLabelEl.setAttribute("value", "Move toward a member card to begin");
+            this.focusLabelEl.setAttribute("color", APP_CONFIG.colors.accentSoft);
+            return;
+          }
+
+          const isSelected = mode === "selected";
+          const topPhotoHeight = APP_CONFIG.layout.topPhotoHeight;
+          const topPhotoWidth = THREE.MathUtils.clamp(topPhotoHeight * (member.detailAspect || 0.72), 0.46, 0.88);
+          const stateLabel = isSelected ? "NOW PLAYING" : "LOCK TARGET";
+
+          this.selectionBillboardEl.object3D.visible = true;
+          if (this.detailPanelEl) {
+            this.detailPanelEl.object3D.visible = true;
+            this.detailPanelPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
+            this.detailPanelPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
+            this.detailPanelPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
+            this.detailPanelGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.22 : 0.14}; side: double`);
+            this.detailPanelStateEl.setAttribute("value", stateLabel);
+            this.detailPanelStateEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accent);
+            this.detailPanelNameEl.setAttribute("value", member.name);
+            this.detailPanelNameEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accentSoft);
+          }
+          this.selectionPhotoEl.setAttribute("src", `#${member.detailImageId || member.imageId}`);
+          this.selectionPhotoEl.setAttribute("width", topPhotoWidth.toFixed(3));
+          this.selectionPhotoEl.setAttribute("height", topPhotoHeight.toFixed(3));
+          this.selectionPhotoGlowEl.setAttribute("width", (topPhotoWidth + 0.14).toFixed(3));
+          this.selectionPhotoGlowEl.setAttribute("height", (topPhotoHeight + 0.18).toFixed(3));
+          this.selectionPhotoGlowEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.18 : 0.11}; side: double`);
+          this.selectionPhotoBackingEl.setAttribute("width", (topPhotoWidth + 0.08).toFixed(3));
+          this.selectionPhotoBackingEl.setAttribute("height", (topPhotoHeight + 0.1).toFixed(3));
+          this.selectionPhotoRingEl.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: ${isSelected ? 0.36 : 0.22}; side: double`);
+          this.selectionPhotoRingEl.object3D.scale.set(topPhotoWidth / 0.58, topPhotoHeight / 0.58, 1);
+          this.selectionPhotoRingOuterEl.object3D.scale.set((topPhotoWidth + 0.12) / 0.74, (topPhotoHeight + 0.12) / 0.74, 1);
+          this.selectionCaptionEl.setAttribute("value", `${stateLabel} · ${member.name}`);
+          this.selectionCaptionEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accentSoft);
+          this.focusLabelEl.setAttribute("value", isSelected ? `${member.name} NOW PLAYING` : `LOCK TARGET: ${member.name}`);
+          this.focusLabelEl.setAttribute("color", isSelected ? member.color : APP_CONFIG.colors.accentSoft);
+        },
+
+        updateWandsForState() {
+          const color = "#e1e668";
+          const energy = this.activeSelection ? 1 : this.candidateTarget ? 0.34 : 0.18;
+          document.querySelectorAll(".wand").forEach((el) => {
+            const component = el.components["support-wand"];
+            if (!component) {
+              return;
+            }
+            component.setActiveColor(color);
+            component.setEnergy(energy);
+          });
+        },
+
+        getBestVisibleMember() {
+          this.getCameraPose();
+          let bestMember = null;
+          let bestScore = Infinity;
+          for (const member of this.members) {
+            member.el.object3D.getWorldPosition(this.tempWorld);
+            const toMember = this.tempWorldB.copy(this.tempWorld).sub(this.cameraPosition).normalize();
+            const distance = this.cameraPosition.distanceTo(this.tempWorld);
+            const angleDeg = THREE.MathUtils.radToDeg(this.cameraDirection.angleTo(toMember));
+            if (angleDeg > 95) {
+              continue;
+            }
+            const score = distance + angleDeg * 0.018;
+            if (score < bestScore) {
+              bestScore = score;
+              bestMember = member;
+            }
+          }
+          return bestMember;
+        },
+
+        playUnlockBoom() {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            return;
+          }
+
+          if (!this.unlockAudioContext) {
+            this.unlockAudioContext = new AudioContextClass();
+          }
+
+          const context = this.unlockAudioContext;
+          if (context.state === "suspended") {
+            context.resume().catch(() => {});
+          }
+
+          const now = context.currentTime;
+          const master = context.createGain();
+          master.gain.setValueAtTime(0.0001, now);
+          master.gain.exponentialRampToValueAtTime(0.6, now + 0.03);
+          master.gain.exponentialRampToValueAtTime(0.0001, now + 1.7);
+          master.connect(context.destination);
+
+          const boom = context.createOscillator();
+          const boomGain = context.createGain();
+          boom.type = "sawtooth";
+          boom.frequency.setValueAtTime(96, now);
+          boom.frequency.exponentialRampToValueAtTime(36, now + 1.2);
+          boomGain.gain.setValueAtTime(0.001, now);
+          boomGain.gain.exponentialRampToValueAtTime(0.42, now + 0.03);
+          boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+          boom.connect(boomGain);
+          boomGain.connect(master);
+          boom.start(now);
+          boom.stop(now + 1.45);
+
+          const shimmer = context.createOscillator();
+          const shimmerGain = context.createGain();
+          shimmer.type = "triangle";
+          shimmer.frequency.setValueAtTime(540, now);
+          shimmer.frequency.exponentialRampToValueAtTime(220, now + 0.7);
+          shimmerGain.gain.setValueAtTime(0.001, now);
+          shimmerGain.gain.exponentialRampToValueAtTime(0.12, now + 0.04);
+          shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+          shimmer.connect(shimmerGain);
+          shimmerGain.connect(master);
+          shimmer.start(now);
+          shimmer.stop(now + 0.95);
+        },
+
+        tryActivateUnlockOrb() {
+          if (!this.started || this.membersActivated || !this.unlockOrbEl.object3D.visible) {
+            return false;
+          }
+
+          if (!this.getControllerWorldPosition("right", this.tempWorld, this.tempQuaternion)) {
+            this.setStatus("请先拿起右手手柄并靠近前方能量球，再按下手柄按键启动成员阵列。");
+            return true;
+          }
+
+          this.unlockOrbCoreEl.object3D.getWorldPosition(this.unlockOrbWorld);
+          const distance = this.tempWorld.distanceTo(this.unlockOrbWorld);
+          if (distance > APP_CONFIG.unlockOrb.activationDistance) {
+            this.setStatus("再靠近一点能量球，并按下右手手柄完成启动。");
+            return true;
+          }
+
+          this.membersActivated = true;
+          this.membersActivationAt = performance.now();
+          this.stageStartedAt = this.membersActivationAt;
+          this.unlockOrbEl.object3D.visible = false;
+          this.playUnlockBoom();
+          this.setStatus("能量连接完成。成员阵列正在展开，继续靠近成员卡片即可进入互动。");
+          return true;
+        },
+
+        handleControllerSelect(controllerEl) {
+          if (!this.started) {
+            return;
+          }
+          const now = performance.now();
+          if (now < this.controllerSelectCooldownUntil) {
+            return;
+          }
+          this.controllerSelectCooldownUntil = now + 220;
+          this.activeHand = "controller";
+          this.activeHandEl = controllerEl || this.rightControllerEl;
+          if (!this.membersActivated) {
+            this.tryActivateUnlockOrb();
+            return;
+          }
+          const target = this.getBestVisibleMember() || this.candidateTarget || this.activeSelection;
+          if (!target) {
+            this.setStatus("请先将视线对准并靠近成员卡片，再按右手手柄按键进行选中。");
+            return;
+          }
+          if (this.activeHandEl) {
+            this.showLaserFromHandToMember(this.activeHandEl, target);
+          }
+          this.selectMember(target, "controller");
+        },
+
+        handlePinchStart(hand, handEl, pinchPosition) {
+          if (!this.started || hand !== "right") {
+            return;
+          }
+          if (!this.membersActivated) {
+            this.setStatus("请先用右手手柄点击前方能量球，完成启动后再进行成员互动。");
+            return;
+          }
+
+          this.pinchingHands[hand] = true;
+          this.activeHand = hand;
+          this.activeHandEl = handEl;
+          if (pinchPosition) {
+            this.handWorld[hand].copy(pinchPosition);
+          } else {
+            this.getHandWorldPosition(hand, this.handWorld[hand]);
+          }
+
+          const target = this.hoveredByHand[hand] ? this.memberMap.get(this.hoveredByHand[hand]) : this.candidateTarget || this.activeSelection;
+          if (!target) {
+            this.setStatus("右手捏合未命中成员卡片。请先将手靠近卡片，或直接走近成员。");
+            return;
+          }
+
+          this.showLaserFromHandToMember(handEl, target);
+          this.selectMember(target, "pinch");
+        },
+
+        handlePinchMove(hand, pinchPosition) {
+          if (!pinchPosition) {
+            return;
+          }
+          this.handWorld[hand].copy(pinchPosition);
+          if (this.pinchingHands[hand] && this.activeSelection) {
+            this.updateLaserFollow();
+          }
+        },
+
+        handlePinchEnd(hand) {
+          this.pinchingHands[hand] = false;
+          if (hand === "right") {
+            this.hideLaser();
+          }
+        },
+
+        showLaserFromHandToMember(handEl, member) {
+          if (!handEl || !member) {
+            return;
+          }
+
+          if (!this.getActiveEmitterWorldPosition(this.tempWorld)) {
+            return;
+          }
+          member.el.object3D.getWorldPosition(this.tempWorldB);
+          this.tempWorldB.y += 0.06;
+          this.laserEl.object3D.visible = true;
+          this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${member.color}; opacity: 0.9`);
+        },
+
+        hideLaser() {
+          this.laserEl.object3D.visible = false;
+        },
+
+        updateLaserFollow() {
+          if (!this.activeSelection || !this.laserEl.object3D.visible || !this.activeHandEl) {
+            return;
+          }
+
+          if (!this.getActiveEmitterWorldPosition(this.tempWorld)) {
+            return;
+          }
+          this.activeSelection.el.object3D.getWorldPosition(this.tempWorldB);
+          this.tempWorldB.y += 0.06;
+          this.laserEl.setAttribute("line", `start: ${this.tempWorld.x} ${this.tempWorld.y} ${this.tempWorld.z}; end: ${this.tempWorldB.x} ${this.tempWorldB.y} ${this.tempWorldB.z}; color: ${this.activeSelection.color}; opacity: 0.9`);
+        },
+
+        onVoiceEnded() {
+          this.stopVoiceImmediate();
+          this.activeSelection = null;
+          this.hideLaser();
+          if (this.bgmWasPlayingBeforeVoice) {
+            this.resumeBgmAfterVoice();
+          } else {
+            this.restoreBgm();
+          }
+          this.restoreVideo();
+          this.updateFocusHud(this.candidateTarget, this.candidateTarget ? "preview" : null);
+          this.updateWandsForState();
+          this.setStatus("当前语音已播放完毕。继续靠近其他成员卡片即可切换。");
+        },
+
+        updateMemberVisuals(time, delta) {
+          const now = performance.now();
+          const stageElapsed = this.membersActivated ? (now - this.stageStartedAt) / 1000 : 0;
+          const deployAmount = this.membersActivated
+            ? THREE.MathUtils.clamp((now - this.membersActivationAt) / APP_CONFIG.unlockOrb.unfoldDurationMs, 0, 1)
+            : 0;
+          const dt = Math.max((delta || 16) / 1000, 0.0001);
+          this.getCameraPose();
+          this.handHasPose.left = this.getHandWorldPosition("left", this.handWorld.left);
+          this.handHasPose.right = this.getHandWorldPosition("right", this.handWorld.right);
+
+          for (const hand of ["left", "right"]) {
+            if (this.handHasPose[hand]) {
+              this.handSpeed[hand] = this.handWorld[hand].distanceTo(this.lastHandWorld[hand]) / dt;
+              this.lastHandWorld[hand].copy(this.handWorld[hand]);
+            } else {
+              this.handSpeed[hand] = THREE.MathUtils.lerp(this.handSpeed[hand], 0, 0.24);
+            }
+          }
+
+          this.hoveredByHand.left = null;
+          this.hoveredByHand.right = null;
+
+          let closestMember = null;
+          let closestScore = Infinity;
+          let closestCameraDistance = Infinity;
+
+          for (const member of this.members) {
+            member.glowMesh = member.glowMesh || member.glowEl.getObject3D("mesh");
+            member.panelMesh = member.panelMesh || member.panelEl.getObject3D("mesh");
+            member.borderMesh = member.borderMesh || member.borderEl.getObject3D("mesh");
+            member.badgeMesh = member.badgeMesh || member.badgeEl.getObject3D("mesh");
+            member.el.object3D.getWorldPosition(this.tempWorld);
+
+            const toMember = this.tempWorldB.copy(this.tempWorld).sub(this.cameraPosition).normalize();
+            const cameraDistance = this.cameraPosition.distanceTo(this.tempWorld);
+            const angleDeg = THREE.MathUtils.radToDeg(this.cameraDirection.angleTo(toMember));
+
+            let handDistance = Infinity;
+            let handSource = null;
+            for (const hand of ["left", "right"]) {
+              if (!this.handHasPose[hand]) {
+                continue;
+              }
+              const distance = this.handWorld[hand].distanceTo(this.tempWorld);
+              if (distance < handDistance) {
+                handDistance = distance;
+                handSource = hand;
+              }
+            }
+
+            const score = cameraDistance + angleDeg * 0.016 - Math.max(0, 0.38 - Math.min(handDistance, 0.38));
+            if (angleDeg < APP_CONFIG.interaction.maxViewAngleDeg && score < closestScore) {
+              closestScore = score;
+              closestMember = member;
+              closestCameraDistance = cameraDistance;
+            }
+
+            const hoverTarget = handDistance < APP_CONFIG.interaction.handHoverDistance
+              ? 1 - handDistance / APP_CONFIG.interaction.handHoverDistance
+              : 0;
+            const focusTarget = cameraDistance < APP_CONFIG.interaction.focusDistance && angleDeg < APP_CONFIG.interaction.maxViewAngleDeg
+              ? 1 - cameraDistance / APP_CONFIG.interaction.focusDistance
+              : 0;
+            const selectedTarget = this.activeSelection && this.activeSelection.key === member.key ? 1 : 0;
+            const candidateTarget = this.candidateTarget && this.candidateTarget.key === member.key ? 1 : 0;
+
+            member.hoverAmount = THREE.MathUtils.lerp(
+              member.hoverAmount,
+              Math.max(hoverTarget * 0.58, focusTarget * 0.88, candidateTarget * 0.96),
+              0.15
+            );
+            member.selectedAmount = THREE.MathUtils.lerp(member.selectedAmount, selectedTarget, 0.16);
+
+            if (hoverTarget > 0.1 && handSource) {
+              this.hoveredByHand[handSource] = member.key;
+            }
+
+            const appear = THREE.MathUtils.clamp((stageElapsed - member.appearDelay) / 0.68, 0, 1);
+            const pulse = 0.5 + 0.5 * Math.sin(time * 0.0042 + member.appearDelay * 8);
+            member.visibleAmount = appear;
+            const forward = member.hoverAmount * 0.08 + member.selectedAmount * 0.18;
+            member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.12);
+            member.el.object3D.scale.setScalar(0.68 + deployAmount * 0.18 + appear * 0.14 + member.hoverAmount * 0.12 + member.selectedAmount * 0.2);
+            member.el.object3D.position.x = THREE.MathUtils.lerp(0, member.baseX, deployAmount);
+            member.el.object3D.position.y = THREE.MathUtils.lerp(
+              APP_CONFIG.layout.memberBaseY - 0.08,
+              member.baseY + (1 - appear) * 0.18 + Math.sin(time * 0.0012 + member.appearDelay * 4) * 0.018,
+              deployAmount
+            );
+            member.el.object3D.position.z = THREE.MathUtils.lerp(0.22, member.baseZ + member.forwardOffset, deployAmount);
+            member.el.object3D.rotation.y = THREE.MathUtils.lerp(
+              member.el.object3D.rotation.y,
+              -member.baseAngle * 0.82 * deployAmount,
+              0.12
+            );
+
+            const glowColor = member.glowColor.copy(this.accentColor).lerp(member.memberColor, Math.max(member.hoverAmount, member.selectedAmount));
+            if (member.glowMesh) {
+              member.glowMesh.material.color.copy(glowColor);
+              member.glowMesh.material.opacity = (0.08 + pulse * 0.05 + member.hoverAmount * 0.28 + member.selectedAmount * 0.32) * appear;
+            }
+            if (member.panelMesh) {
+              member.panelMesh.material.opacity = 0.68 + pulse * 0.04 + member.hoverAmount * 0.14 + member.selectedAmount * 0.12;
+            }
+            if (member.borderMesh) {
+              member.borderMesh.material.color.copy(glowColor);
+              member.borderMesh.material.opacity = (0.18 + pulse * 0.08 + member.hoverAmount * 0.28 + member.selectedAmount * 0.26) * appear;
+              member.borderEl.object3D.scale.set(
+                member.panelWidth / 0.62 + member.hoverAmount * 0.07 + member.selectedAmount * 0.08,
+                member.panelHeight / 0.62 + member.hoverAmount * 0.08 + member.selectedAmount * 0.1,
+                1
+              );
+            }
+            const nameColor = member.selectedAmount > 0.1 ? member.color : APP_CONFIG.colors.accentSoft;
+            if (member.lastNameColor !== nameColor) {
+              member.nameEl.setAttribute("color", nameColor);
+              member.lastNameColor = nameColor;
+            }
+
+            const isCandidate = this.candidateTarget && this.candidateTarget.key === member.key;
+            const isSelected = this.activeSelection && this.activeSelection.key === member.key;
+            const badgeOpacity = isSelected ? 0.92 : isCandidate ? 0.74 : 0;
+            if (member.badgeMesh) {
+              member.badgeMesh.material.color.set(isSelected ? member.color : APP_CONFIG.colors.accent);
+              member.badgeMesh.material.opacity = badgeOpacity * appear;
+            }
+            const badgeText = isSelected ? "NOW PLAYING" : isCandidate ? "LOCK TARGET" : "";
+            const badgeVisible = badgeOpacity > 0.01;
+            if (member.lastBadgeText !== badgeText) {
+              member.badgeTextEl.setAttribute("value", badgeText);
+              member.lastBadgeText = badgeText;
+            }
+            if (member.lastBadgeVisible !== badgeVisible) {
+              member.badgeTextEl.setAttribute("visible", badgeVisible);
+              member.lastBadgeVisible = badgeVisible;
+            }
+          }
+
+          if (!this.membersActivated) {
+            this.candidateTarget = null;
+            this.candidateSince = 0;
+            this.updateFocusHud(null, null);
+            this.updateWandsForState();
+            return;
+          }
+
+          if (!closestMember || closestCameraDistance > APP_CONFIG.interaction.focusDistance) {
+            if (!this.activeSelection) {
+              this.candidateTarget = null;
+              this.candidateSince = 0;
+              this.updateFocusHud(null, null);
+              this.updateWandsForState();
+            }
+            return;
+          }
+
+          const switchingToAnother = this.activeSelection && this.activeSelection.key !== closestMember.key;
+          if (!this.candidateTarget || this.candidateTarget.key !== closestMember.key) {
+            this.candidateTarget = closestMember;
+            this.candidateSince = now;
+            if (!this.activeSelection || switchingToAnother) {
+              this.updateFocusHud(closestMember, "preview");
+              this.setStatus(`${closestMember.name} 已锁定为目标。继续向这张卡片靠近，会自动进入 NOW PLAYING 并开始播放语音。`);
+            }
+            this.updateWandsForState();
+          }
+
+          const holdMs = switchingToAnother ? APP_CONFIG.interaction.switchHoldMs : APP_CONFIG.interaction.autoSelectHoldMs;
+          const cooldownReady = switchingToAnother ? true : now > this.previewCooldownUntil;
+          if (
+            now - this.stageStartedAt > APP_CONFIG.interaction.autoSelectWarmupMs &&
+            cooldownReady &&
+            closestCameraDistance < APP_CONFIG.interaction.autoSelectDistance &&
+            now - this.candidateSince > holdMs &&
+            (!this.activeSelection || this.activeSelection.key !== closestMember.key)
+          ) {
+            this.selectMember(closestMember, "proximity");
+            this.previewCooldownUntil = now + APP_CONFIG.interaction.replayCooldownMs;
+          }
+        },
+
+        updateSelectionPresentation() {
+          const target = this.activeSelection || this.candidateTarget;
+          if (!target) {
+            this.selectionBillboardEl.object3D.visible = false;
+            this.selectionGroundCueEl.object3D.visible = false;
+            this.selectionBeamEl.object3D.visible = false;
+            if (this.detailPanelEl) {
+              this.detailPanelEl.object3D.visible = false;
+            }
+            return;
+          }
+
+          const isSelected = this.activeSelection && this.activeSelection.key === target.key;
+          this.selectionBillboardEl.object3D.visible = true;
+          this.selectionBillboardEl.object3D.position.set(
+            target.baseX,
+            target.baseY + target.panelHeight * 0.96 + (isSelected ? 0.28 : 0.22),
+            target.baseZ + target.forwardOffset + 0.04
+          );
+          this.selectionBillboardEl.object3D.rotation.set(0, target.el.object3D.rotation.y, 0);
+          this.selectionBillboardEl.object3D.scale.setScalar(isSelected ? 0.9 : 0.82);
+
+          this.selectionGroundCueEl.object3D.visible = true;
+          this.selectionGroundCueEl.object3D.position.set(target.baseX, 0.03, target.baseZ + target.forwardOffset);
+          this.selectionGroundCueEl.object3D.scale.setScalar(isSelected ? 1.18 : 1);
+          this.selectionGroundRingMesh = this.selectionGroundRingMesh || this.selectionGroundRingEl.getObject3D("mesh");
+          if (this.selectionGroundRingMesh) {
+            this.selectionGroundRingMesh.material.color.set(target.color);
+            this.selectionGroundRingMesh.material.opacity = isSelected ? 0.52 : 0.3;
+          }
+
+          this.selectionBeamEl.object3D.visible = false;
+        },
+
+        updateScreenVisuals() {
+          const glowMesh = this.screenGlowEl.getObject3D("mesh");
+          if (!glowMesh) {
+            return;
+          }
+
+          const targetColor = this.activeSelection
+            ? this.activeSelection.color
+            : this.candidateTarget
+              ? this.candidateTarget.color
+              : APP_CONFIG.colors.accent;
+          glowMesh.material.color.set(targetColor);
+          glowMesh.material.opacity = THREE.MathUtils.lerp(
+            glowMesh.material.opacity || 0.08,
+            this.activeSelection ? 0.24 : this.candidateTarget ? 0.14 : 0.08,
+            0.12
+          );
+          this.screenGlowEl.object3D.scale.setScalar(this.activeSelection ? 1.03 : this.candidateTarget ? 1.015 : 1);
+
+          const detailGlowMesh = this.detailPanelGlowEl && this.detailPanelGlowEl.getObject3D("mesh");
+          if (detailGlowMesh && this.detailPanelEl && this.detailPanelEl.object3D.visible) {
+            const energy = this.activeSelection ? 1 : this.candidateTarget ? 0.56 : 0.24;
+            detailGlowMesh.material.opacity = THREE.MathUtils.lerp(detailGlowMesh.material.opacity || 0.12, 0.1 + energy * 0.16, 0.12);
+            this.detailPanelEl.object3D.scale.setScalar(1 + energy * 0.05);
+          }
+        },
+
+        updatePerformanceParticles(now) {
+          if (!this.activeSelection || !this.handHasPose.right) {
+            return;
+          }
+          const system = this.el.systems["trail-pool"];
+          if (!system || this.handSpeed.right < 0.7 || now - this.lastWaveBurstAt < 90) {
+            return;
+          }
+
+          this.activeSelection.el.object3D.getWorldPosition(this.tempWorld);
+          if (this.handWorld.right.distanceTo(this.tempWorld) > 0.82) {
+            return;
+          }
+
+          this.lastWaveBurstAt = now;
+          this.tempWorld.y += 0.18 + Math.random() * 0.22;
+          this.tempWorld.x += (Math.random() - 0.5) * 0.18;
+          this.tempWorld.z += (Math.random() - 0.5) * 0.18;
+          this.tempWorldB.set((Math.random() - 0.5) * 0.08, 0.08 + Math.random() * 0.12, (Math.random() - 0.5) * 0.08);
+          system.spawn(this.tempWorld, this.tempWorldB, 0.98, new THREE.Color(this.activeSelection.color));
+        },
+
+        updateUnlockOrbVisuals(time) {
+          if (!this.unlockOrbEl || !this.unlockOrbEl.object3D.visible) {
+            return;
+          }
+
+          const pulse = 0.5 + 0.5 * Math.sin(time * 0.0045);
+          this.unlockOrbEl.object3D.position.y = 1.08 + Math.sin(time * 0.0024) * 0.04;
+          this.unlockOrbEl.object3D.scale.setScalar(0.94 + pulse * 0.12);
+
+          const coreMesh = this.unlockOrbCoreEl.getObject3D("mesh");
+          if (coreMesh) {
+            coreMesh.material.opacity = 0.24 + pulse * 0.18;
+          }
+
+          const shellMesh = this.unlockOrbShellEl.getObject3D("mesh");
+          if (shellMesh) {
+            shellMesh.material.opacity = 0.06 + pulse * 0.08;
+          }
+
+          const ringMesh = this.unlockOrbRingEl.getObject3D("mesh");
+          if (ringMesh) {
+            ringMesh.material.opacity = 0.14 + pulse * 0.16;
+          }
+        },
+
+        demoNextMember() {
+          if (!this.started) {
+            this.startExperience();
+            return;
+          }
+
+          const member = this.members[this.demoIndex % this.members.length];
+          this.demoIndex += 1;
+          if (!this.membersActivated) {
+            this.membersActivated = true;
+            this.membersActivationAt = performance.now();
+            this.stageStartedAt = this.membersActivationAt;
+            this.unlockOrbEl.object3D.visible = false;
+          }
+          this.candidateTarget = member;
+          this.candidateSince = performance.now();
+          this.selectMember(member, "desktop");
+          this.setStatus(`桌面调试模式已切换到 ${member.name}。Quest 3 中可直接靠近卡片或用右手捏合测试。`);
+        },
+
+        resetExperience() {
+          this.stopVoiceImmediate();
+          this.bgmWasPlayingBeforeVoice = false;
+          this.activeSelection = null;
+          this.candidateTarget = null;
+          this.candidateSince = 0;
+          this.pinchingHands.left = false;
+          this.pinchingHands.right = false;
+          this.activeHand = null;
+          this.activeHandEl = null;
+          this.hideLaser();
+          this.membersActivated = false;
+          this.membersActivationAt = 0;
+          this.stageStartedAt = 0;
+          this.unlockOrbEl.object3D.visible = this.started;
+
+          try {
+            this.bgmEl.pause();
+            this.bgmEl.currentTime = 0;
+          } catch (error) {
+          }
+          try {
+            this.videoEl.pause();
+            this.videoEl.currentTime = 0;
+          } catch (error) {
+          }
+
+          this.positionStageInFront();
+          this.scheduleStageRealign();
+          this.updateFocusHud(null, null);
+          this.updateWandsForState();
+          if (this.started) {
+            this.startVideoLoop();
+            this.startBgmLoop();
+          }
+          this.setStatus("舞台已重置到你的正前方。现在重新靠近任意成员卡片即可测试语音切换。");
+        },
+
+        onEnterXR() {
+          document.body.classList.add("is-xr");
+          if (this.started) {
+            this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
+            this.positionStageInFront();
+            this.scheduleStageRealign();
+          }
+        },
+
+        onExitXR() {
+          document.body.classList.remove("is-xr");
+          this.previewEnvironmentEl.object3D.visible = true;
+          this.hideLaser();
+        },
+
+        tick(time, delta) {
+          if (!this.started) {
+            return;
+          }
+
+          this.updateMemberVisuals(time, delta);
+          this.updateUnlockOrbVisuals(time);
+          this.updateSelectionPresentation();
+          this.updateScreenVisuals();
+          this.updateLaserFollow();
+          this.updatePerformanceParticles(performance.now());
+
+          if (this.activeSelection) {
+            this.duckVideo();
+            this.duckBgm();
+          } else if (!this.currentVoiceEl || this.currentVoiceEl.paused || this.currentVoiceEl.ended) {
+            this.restoreVideo();
+            this.restoreBgm();
+            this.updateWandsForState();
+          }
+        },
+
+        remove() {
+          this.stageRealignTimerIds.forEach((timerId) => window.clearTimeout(timerId));
+          this.voiceMediaByKey.forEach((mediaEl) => {
+            mediaEl.removeEventListener("ended", this.onVoiceEnded);
+            mediaEl.remove();
+          });
+          this.voiceAudioEl.removeEventListener("ended", this.onVoiceEnded);
+          this.voiceVideoEl.removeEventListener("ended", this.onVoiceEnded);
+          this.voiceAudioEl.remove();
+          this.voiceVideoEl.remove();
+          this.startButton.removeEventListener("click", this.startExperience);
+          this.demoNextButton.removeEventListener("click", this.demoNextMember);
+          this.resetButton.removeEventListener("click", this.resetExperience);
+          this.el.removeEventListener("enter-vr", this.onEnterXR);
+          this.el.removeEventListener("exit-vr", this.onExitXR);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
