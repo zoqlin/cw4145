@@ -1385,7 +1385,7 @@
           const maxAngle = APP_CONFIG.layout.memberArcDegrees;
           const baseY = APP_CONFIG.layout.memberBaseY;
           const radiusX = APP_CONFIG.layout.memberArcRadiusX;
-          const depth = APP_CONFIG.layout.memberArcDepth;
+          const userCenteredArcOffset = APP_CONFIG.stage.distance;
           const panelWidth = APP_CONFIG.layout.cardWidth;
           const panelHeight = APP_CONFIG.layout.cardHeight;
           const artWidth = APP_CONFIG.layout.cardImageWidth;
@@ -1397,12 +1397,12 @@
             const ratio = count === 1 ? 0.5 : index / (count - 1);
             const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-maxAngle, maxAngle, ratio));
             const x = Math.sin(angle) * radiusX;
-            const z = depth - Math.cos(angle) * 0.24;
+            const z = userCenteredArcOffset - Math.cos(angle) * radiusX;
             const detailAspect = this.getAssetAspect(member.detailImageId || member.imageId, 0.72);
 
             const cardEl = document.createElement("a-entity");
             cardEl.setAttribute("position", `${x.toFixed(4)} ${baseY.toFixed(4)} ${z.toFixed(4)}`);
-            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle) * 0.56).toFixed(2)} 0`);
+            cardEl.setAttribute("rotation", `0 ${(-THREE.MathUtils.radToDeg(angle)).toFixed(2)} 0`);
 
             const glow = document.createElement("a-plane");
             glow.setAttribute("width", glowWidth.toFixed(3));
