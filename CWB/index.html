@@ -362,6 +362,29 @@
           color="#f3fff6"
           position="0 0.22 0.02"
         ></a-text>
+        <a-entity id="previewUnlockOrb" position="0 1.12 -0.5">
+          <a-sphere
+            radius="0.16"
+            material="shader: flat; color: #e1e668; transparent: true; opacity: 0.34"
+          ></a-sphere>
+          <a-sphere
+            radius="0.24"
+            material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.1; side: double"
+          ></a-sphere>
+          <a-ring
+            rotation="-90 0 0"
+            radius-inner="0.2"
+            radius-outer="0.27"
+            material="shader: flat; color: #e1e668; transparent: true; opacity: 0.22; side: double"
+          ></a-ring>
+          <a-text
+            value="PLEASE STAND HERE"
+            align="center"
+            width="1.9"
+            color="#ffe6f1"
+            position="0 -0.38 0"
+          ></a-text>
+        </a-entity>
       </a-entity>
     </a-entity>
 
@@ -638,7 +661,7 @@
           maxViewAngleDeg: 96
         },
         layout: {
-          memberArcDegrees: 100,
+          memberArcDegrees: 120,
           memberArcRadiusX: 1.48,
           memberArcDepth: 0.56,
           memberBaseY: 0.86,
@@ -1562,35 +1585,36 @@
 
             const autoWand = document.createElement("a-entity");
             autoWand.setAttribute("visible", "false");
-            autoWand.object3D.position.set(0.24, -0.18, 0.16);
+            autoWand.setAttribute("xr-overlay-visual", "renderOrder: 430");
+            autoWand.object3D.position.set(0.34, -0.12, 0.3);
             autoWand.object3D.rotation.set(
-              THREE.MathUtils.degToRad(16),
-              THREE.MathUtils.degToRad(-12),
-              THREE.MathUtils.degToRad(-24)
+              THREE.MathUtils.degToRad(18),
+              THREE.MathUtils.degToRad(-18),
+              THREE.MathUtils.degToRad(-28)
             );
             const autoRod = document.createElement("a-cylinder");
-            autoRod.setAttribute("radius", "0.012");
-            autoRod.setAttribute("height", "0.36");
-            autoRod.setAttribute("position", "0 0.12 0");
+            autoRod.setAttribute("radius", "0.016");
+            autoRod.setAttribute("height", "0.46");
+            autoRod.setAttribute("position", "0 0.16 0");
             autoRod.setAttribute("material", `color: #f1f3c4; roughness: 0.18; metalness: 0.18; emissive: ${member.color}; emissiveIntensity: 0.8`);
             autoWand.appendChild(autoRod);
             const autoGrip = document.createElement("a-cylinder");
-            autoGrip.setAttribute("radius", "0.015");
-            autoGrip.setAttribute("height", "0.1");
-            autoGrip.setAttribute("position", "0 -0.05 0");
+            autoGrip.setAttribute("radius", "0.018");
+            autoGrip.setAttribute("height", "0.12");
+            autoGrip.setAttribute("position", "0 -0.03 0");
             autoGrip.setAttribute("material", "color: #d8dda3; roughness: 0.56; metalness: 0.08");
             autoWand.appendChild(autoGrip);
             const autoTip = document.createElement("a-sphere");
-            autoTip.setAttribute("radius", "0.042");
-            autoTip.setAttribute("position", "0 0.34 0");
+            autoTip.setAttribute("radius", "0.058");
+            autoTip.setAttribute("position", "0 0.42 0");
             autoTip.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.72`);
             autoWand.appendChild(autoTip);
             const autoLight = document.createElement("a-light");
             autoLight.setAttribute("type", "point");
             autoLight.setAttribute("color", member.color);
-            autoLight.setAttribute("intensity", "1.2");
-            autoLight.setAttribute("distance", "1.2");
-            autoLight.setAttribute("position", "0 0.34 0");
+            autoLight.setAttribute("intensity", "1.6");
+            autoLight.setAttribute("distance", "1.5");
+            autoLight.setAttribute("position", "0 0.42 0");
             autoWand.appendChild(autoLight);
             cardEl.appendChild(autoWand);
 
@@ -2225,7 +2249,7 @@
           this.unlockOrbEl.object3D.visible = false;
           this.memberArcEl.object3D.visible = true;
           this.playUnlockBoom();
-          this.setStatus("成员阵列正在以 100 度展开。现在可以用手柄或捏合选择成员。");
+          this.setStatus("成员阵列正在以 120 度展开。现在可以用手柄或捏合选择成员。");
           return true;
         },
 
@@ -2491,13 +2515,13 @@
               if (wandVisible) {
                 const wave = Math.sin(time * 0.008);
                 const waveFast = Math.sin(time * 0.017 + member.appearDelay * 8);
-                member.autoWandEl.object3D.position.set(0.23 + wave * 0.025, -0.18 + waveFast * 0.012, 0.18);
+                member.autoWandEl.object3D.position.set(0.34 + wave * 0.04, -0.12 + waveFast * 0.016, 0.32 + waveFast * 0.03);
                 member.autoWandEl.object3D.rotation.set(
-                  THREE.MathUtils.degToRad(14 + waveFast * 5),
-                  THREE.MathUtils.degToRad(-12 + wave * 7),
-                  THREE.MathUtils.degToRad(-24 + wave * 16)
+                  THREE.MathUtils.degToRad(16 + waveFast * 8),
+                  THREE.MathUtils.degToRad(-18 + wave * 10),
+                  THREE.MathUtils.degToRad(-28 + wave * 20)
                 );
-                member.autoWandEl.object3D.scale.setScalar(0.96 + selectedTarget * 0.16);
+                member.autoWandEl.object3D.scale.setScalar(1.08 + selectedTarget * 0.18);
                 const tipMesh = member.autoWandTipEl && member.autoWandTipEl.getObject3D("mesh");
                 const rodMesh = member.autoWandRodEl && member.autoWandRodEl.getObject3D("mesh");
                 const light = member.autoWandLightEl && member.autoWandLightEl.getObject3D("light");
@@ -2511,7 +2535,7 @@
                 }
                 if (light) {
                   light.color.set(member.color);
-                  light.intensity = 1.2 + pulse * 2.1;
+                  light.intensity = 1.8 + pulse * 2.4;
                 }
               }
             }
