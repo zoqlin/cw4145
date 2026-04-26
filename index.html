@@ -411,6 +411,34 @@
         ></a-ring>
       </a-entity>
 
+      <a-entity id="unlockOrb" position="0 1.1 0.9" visible="false">
+        <a-sphere
+          id="unlockOrbCore"
+          radius="0.16"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.34"
+        ></a-sphere>
+        <a-sphere
+          id="unlockOrbShell"
+          radius="0.24"
+          material="shader: flat; color: #ffe6f1; transparent: true; opacity: 0.1; side: double"
+        ></a-sphere>
+        <a-ring
+          id="unlockOrbRing"
+          rotation="-90 0 0"
+          radius-inner="0.2"
+          radius-outer="0.27"
+          material="shader: flat; color: #e1e668; transparent: true; opacity: 0.22; side: double"
+        ></a-ring>
+        <a-text
+          id="unlockOrbLabel"
+          value="ENERGY LINK"
+          align="center"
+          width="1.6"
+          color="#ffe6f1"
+          position="0 -0.38 0"
+        ></a-text>
+      </a-entity>
+
       <a-entity id="screenRig" position="0 1.58 0.12">
         <a-plane
           width="2.7"
@@ -612,6 +640,10 @@
         },
         stage: {
           distance: 2.85
+        },
+        unlockOrb: {
+          activationDistance: 0.42,
+          unfoldDurationMs: 1800
         },
         members: [
           {
@@ -879,6 +911,7 @@
           this.savedHandQuaternion = new THREE.Quaternion();
           this.handAnchorObject = null;
           this.controllerAnchorObject = null;
+          this.currentAnchorObject = null;
           this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
           this.controllerOffset = new THREE.Vector3(0.016, -0.022, -0.026);
           this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
@@ -1123,19 +1156,38 @@
           return this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
         },
 
-        updateAnchorPose() {
-          const now = performance.now();
-          const fallbackObject = this.resolveReferenceObject();
-          const handObject = this.resolveHandAnchorObject();
-          const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
-          const handTracking = this.sourceHandEl && this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
-
-          if (this.sourceHandEl) {
-            this.sourceHandEl.object3D.visible = !!(handTracking && handTracking.hasPoses);
+        bindToAnchor(anchorObject, localOffset, localRotation, poseSource) {
+          if (!anchorObject) {
+            return false;
           }
 
-          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
-            fallbackObject && fallbackObject.updateMatrixWorld(true);
+          if (this.currentAnchorObject !== anchorObject) {
+            anchorObject.attach(this.el.object3D);
+            this.currentAnchorObject = anchorObject;
+          }
+
+          this.el.object3D.position.copy(localOffset);
+          this.el.object3D.quaternion.copy(localRotation);
+          this.el.object3D.scale.setScalar(1.08);
+          this.poseSource = poseSource;
+          return true;
+        },
+
+        setRightHandVisible(visible) {
+          if (!this.sourceHandEl || !this.sourceHandEl.object3D) {
+            return;
+          }
+          this.sourceHandEl.object3D.visible = visible;
+        },
+
+        updateAnchorPose() {
+          const fallbackObject = this.resolveReferenceObject();
+          const handObject = this.resolveHandAnchorObject();
+          const handTracking = this.sourceHandEl && this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
+          const controllerObject = this.resolveControllerAnchorObject();
+
+          if (controllerObject && fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
+            fallbackObject.updateMatrixWorld(true);
             fallbackObject.getWorldPosition(this.cameraWorld);
 
             const controllerPoseLooksValid =
@@ -1146,19 +1198,14 @@
               this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
 
             if (controllerPoseLooksValid) {
-              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.controllerRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
+              this.bindToAnchor(controllerObject, this.controllerOffset, this.controllerRotation, "controller");
               this.handTracked = true;
-              this.poseSource = "controller";
+              this.setRightHandVisible(false);
               return;
             }
           }
 
-          if (handObject && fallbackObject) {
+          if (handObject && fallbackObject && handTracking && handTracking.hasPoses) {
             handObject.updateMatrixWorld(true);
             fallbackObject.updateMatrixWorld(true);
             handObject.getWorldPosition(this.rootPosition);
@@ -1173,40 +1220,9 @@
               this.rootPosition.distanceTo(this.cameraWorld) < 1.6;
 
             if (rootPoseLooksValid) {
-              this.anchorPosition.copy(this.rootPosition);
-              this.anchorQuaternion.copy(this.rootQuaternion);
-
-              if (handRoot && handObject !== handRoot) {
-                handObject.updateMatrixWorld(true);
-                handObject.matrixWorld.decompose(this.detailPosition, this.detailQuaternion, this.anchorScale);
-
-                const detailPoseLooksValid =
-                  Number.isFinite(this.detailPosition.x) &&
-                  Number.isFinite(this.detailPosition.y) &&
-                  Number.isFinite(this.detailPosition.z) &&
-                  this.detailPosition.distanceTo(this.rootPosition) < 0.28;
-
-                if (detailPoseLooksValid) {
-                  this.anchorPosition.copy(this.detailPosition);
-                  this.anchorQuaternion.copy(this.detailQuaternion);
-                }
-              }
-
-              this.offsetWorld.copy(this.offset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.handRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
+              this.bindToAnchor(handObject, this.offset, this.handRotation, "hand");
               this.handTracked = true;
-              this.poseSource = "hand";
-              return;
-            }
-
-            if (this.handTracked && now - this.lastTrackedAt < 160) {
-              this.anchorPosition.copy(this.savedHandPosition);
-              this.anchorQuaternion.copy(this.savedHandQuaternion);
-              this.poseSource = "hand-cache";
+              this.setRightHandVisible(true);
               return;
             }
           }
@@ -1215,13 +1231,9 @@
             return;
           }
 
-          fallbackObject.getWorldPosition(this.anchorPosition);
-          fallbackObject.getWorldQuaternion(this.anchorQuaternion);
-          this.offsetWorld.copy(this.fallbackOffset).applyQuaternion(this.anchorQuaternion);
-          this.anchorPosition.add(this.offsetWorld);
-          this.anchorQuaternion.multiply(this.fallbackRotation);
+          this.bindToAnchor(fallbackObject, this.fallbackOffset, this.fallbackRotation, "fallback");
           this.handTracked = false;
-          this.poseSource = "fallback";
+          this.setRightHandVisible(false);
         },
 
         tick(time, delta) {
@@ -1236,8 +1248,6 @@
           if (!this.el.object3D.visible) {
             return;
           }
-          this.el.object3D.position.copy(this.anchorPosition);
-          this.el.object3D.quaternion.copy(this.anchorQuaternion);
           this.updateMeshes();
 
           if (!this.tipEl) {
@@ -1317,6 +1327,11 @@
           this.resetButton = document.getElementById("resetButton");
           this.previewEnvironmentEl = document.getElementById("previewEnvironment");
           this.stageRootEl = document.getElementById("experienceRoot");
+          this.unlockOrbEl = document.getElementById("unlockOrb");
+          this.unlockOrbCoreEl = document.getElementById("unlockOrbCore");
+          this.unlockOrbShellEl = document.getElementById("unlockOrbShell");
+          this.unlockOrbRingEl = document.getElementById("unlockOrbRing");
+          this.unlockOrbLabelEl = document.getElementById("unlockOrbLabel");
           this.screenRigEl = document.getElementById("screenRig");
           this.memberArcEl = document.getElementById("memberArc");
           this.screenGlowEl = document.getElementById("screenGlow");
@@ -1373,6 +1388,8 @@
           this.preparing = false;
           this.demoIndex = 0;
           this.stageStartedAt = 0;
+          this.membersActivated = false;
+          this.membersActivationAt = 0;
           this.cameraPosition = new THREE.Vector3();
           this.cameraDirection = new THREE.Vector3();
           this.cameraForwardFlat = new THREE.Vector3();
@@ -1385,6 +1402,7 @@
           this.handSpeed = { left: 0, right: 0 };
           this.handHasPose = { left: false, right: false };
           this.controllerWorld = { left: new THREE.Vector3(), right: new THREE.Vector3() };
+          this.unlockOrbWorld = new THREE.Vector3();
           this.lastWaveBurstAt = 0;
           this.activeHand = null;
           this.activeHandEl = null;
@@ -1822,17 +1840,20 @@
             this.stageRootEl.object3D.visible = true;
             this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
             this.started = true;
-            this.stageStartedAt = performance.now();
+            this.membersActivated = false;
+            this.membersActivationAt = 0;
+            this.stageStartedAt = 0;
+            this.unlockOrbEl.object3D.visible = true;
             this.scheduleStageRealign();
             await this.startVideoLoop();
             await this.startBgmLoop();
             this.updateWandsForState();
             if (mode === "ar") {
-              this.setStatus("舞台已固定在你前方的 MR 空间中。向成员卡片走近即可自动播放语音，右手捏合会打出激光锁定。");
+              this.setStatus("舞台已固定在你前方的 MR 空间中。请走到前方能量球附近，按下右手手柄完成启动，成员阵列会随之展开。");
             } else if (mode === "vr") {
-              this.setStatus("已切换到沉浸式模式继续运行。舞台在你前方，向成员卡片走近即可自动切换语音。");
+              this.setStatus("已切换到沉浸式模式。请走到前方能量球附近，按下右手手柄启动成员阵列。");
             } else {
-              this.setStatus("场景已在当前页面成功启动。若 Quest 没有进入沉浸模式，请先确认浏览器权限，再重新点击开始体验。");
+              this.setStatus("场景已启动。请走到前方能量球附近，按下右手手柄启动成员阵列。");
             }
           } finally {
             this.preparing = false;
@@ -2088,6 +2109,81 @@
           return bestMember;
         },
 
+        playUnlockBoom() {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) {
+            return;
+          }
+
+          if (!this.unlockAudioContext) {
+            this.unlockAudioContext = new AudioContextClass();
+          }
+
+          const context = this.unlockAudioContext;
+          if (context.state === "suspended") {
+            context.resume().catch(() => {});
+          }
+
+          const now = context.currentTime;
+          const master = context.createGain();
+          master.gain.setValueAtTime(0.0001, now);
+          master.gain.exponentialRampToValueAtTime(0.6, now + 0.03);
+          master.gain.exponentialRampToValueAtTime(0.0001, now + 1.7);
+          master.connect(context.destination);
+
+          const boom = context.createOscillator();
+          const boomGain = context.createGain();
+          boom.type = "sawtooth";
+          boom.frequency.setValueAtTime(96, now);
+          boom.frequency.exponentialRampToValueAtTime(36, now + 1.2);
+          boomGain.gain.setValueAtTime(0.001, now);
+          boomGain.gain.exponentialRampToValueAtTime(0.42, now + 0.03);
+          boomGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+          boom.connect(boomGain);
+          boomGain.connect(master);
+          boom.start(now);
+          boom.stop(now + 1.45);
+
+          const shimmer = context.createOscillator();
+          const shimmerGain = context.createGain();
+          shimmer.type = "triangle";
+          shimmer.frequency.setValueAtTime(540, now);
+          shimmer.frequency.exponentialRampToValueAtTime(220, now + 0.7);
+          shimmerGain.gain.setValueAtTime(0.001, now);
+          shimmerGain.gain.exponentialRampToValueAtTime(0.12, now + 0.04);
+          shimmerGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+          shimmer.connect(shimmerGain);
+          shimmerGain.connect(master);
+          shimmer.start(now);
+          shimmer.stop(now + 0.95);
+        },
+
+        tryActivateUnlockOrb() {
+          if (!this.started || this.membersActivated || !this.unlockOrbEl.object3D.visible) {
+            return false;
+          }
+
+          if (!this.getControllerWorldPosition("right", this.tempWorld, this.tempQuaternion)) {
+            this.setStatus("请先拿起右手手柄并靠近前方能量球，再按下手柄按键启动成员阵列。");
+            return true;
+          }
+
+          this.unlockOrbCoreEl.object3D.getWorldPosition(this.unlockOrbWorld);
+          const distance = this.tempWorld.distanceTo(this.unlockOrbWorld);
+          if (distance > APP_CONFIG.unlockOrb.activationDistance) {
+            this.setStatus("再靠近一点能量球，并按下右手手柄完成启动。");
+            return true;
+          }
+
+          this.membersActivated = true;
+          this.membersActivationAt = performance.now();
+          this.stageStartedAt = this.membersActivationAt;
+          this.unlockOrbEl.object3D.visible = false;
+          this.playUnlockBoom();
+          this.setStatus("能量连接完成。成员阵列正在展开，继续靠近成员卡片即可进入互动。");
+          return true;
+        },
+
         handleControllerSelect(controllerEl) {
           if (!this.started) {
             return;
@@ -2099,6 +2195,10 @@
           this.controllerSelectCooldownUntil = now + 220;
           this.activeHand = "controller";
           this.activeHandEl = controllerEl || this.rightControllerEl;
+          if (!this.membersActivated) {
+            this.tryActivateUnlockOrb();
+            return;
+          }
           const target = this.getBestVisibleMember() || this.candidateTarget || this.activeSelection;
           if (!target) {
             this.setStatus("请先将视线对准并靠近成员卡片，再按右手手柄按键进行选中。");
@@ -2112,6 +2212,10 @@
 
         handlePinchStart(hand, handEl, pinchPosition) {
           if (!this.started || hand !== "right") {
+            return;
+          }
+          if (!this.membersActivated) {
+            this.setStatus("请先用右手手柄点击前方能量球，完成启动后再进行成员互动。");
             return;
           }
 
@@ -2199,7 +2303,10 @@
 
         updateMemberVisuals(time, delta) {
           const now = performance.now();
-          const stageElapsed = (now - this.stageStartedAt) / 1000;
+          const stageElapsed = this.membersActivated ? (now - this.stageStartedAt) / 1000 : 0;
+          const deployAmount = this.membersActivated
+            ? THREE.MathUtils.clamp((now - this.membersActivationAt) / APP_CONFIG.unlockOrb.unfoldDurationMs, 0, 1)
+            : 0;
           const dt = Math.max((delta || 16) / 1000, 0.0001);
           this.getCameraPose();
           this.handHasPose.left = this.getHandWorldPosition("left", this.handWorld.left);
@@ -2277,13 +2384,17 @@
             member.visibleAmount = appear;
             const forward = member.hoverAmount * 0.08 + member.selectedAmount * 0.18;
             member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.12);
-            member.el.object3D.scale.setScalar(0.78 + appear * 0.22 + member.hoverAmount * 0.12 + member.selectedAmount * 0.2);
-            member.el.object3D.position.x = member.baseX;
-            member.el.object3D.position.y = member.baseY + (1 - appear) * 0.18 + Math.sin(time * 0.0012 + member.appearDelay * 4) * 0.018;
-            member.el.object3D.position.z = member.baseZ + member.forwardOffset;
+            member.el.object3D.scale.setScalar(0.68 + deployAmount * 0.18 + appear * 0.14 + member.hoverAmount * 0.12 + member.selectedAmount * 0.2);
+            member.el.object3D.position.x = THREE.MathUtils.lerp(0, member.baseX, deployAmount);
+            member.el.object3D.position.y = THREE.MathUtils.lerp(
+              APP_CONFIG.layout.memberBaseY - 0.08,
+              member.baseY + (1 - appear) * 0.18 + Math.sin(time * 0.0012 + member.appearDelay * 4) * 0.018,
+              deployAmount
+            );
+            member.el.object3D.position.z = THREE.MathUtils.lerp(0.22, member.baseZ + member.forwardOffset, deployAmount);
             member.el.object3D.rotation.y = THREE.MathUtils.lerp(
               member.el.object3D.rotation.y,
-              -member.baseAngle * 0.82,
+              -member.baseAngle * 0.82 * deployAmount,
               0.12
             );
 
@@ -2327,6 +2438,14 @@
               member.badgeTextEl.setAttribute("visible", badgeVisible);
               member.lastBadgeVisible = badgeVisible;
             }
+          }
+
+          if (!this.membersActivated) {
+            this.candidateTarget = null;
+            this.candidateSince = 0;
+            this.updateFocusHud(null, null);
+            this.updateWandsForState();
+            return;
           }
 
           if (!closestMember || closestCameraDistance > APP_CONFIG.interaction.focusDistance) {
@@ -2447,6 +2566,31 @@
           system.spawn(this.tempWorld, this.tempWorldB, 0.98, new THREE.Color(this.activeSelection.color));
         },
 
+        updateUnlockOrbVisuals(time) {
+          if (!this.unlockOrbEl || !this.unlockOrbEl.object3D.visible) {
+            return;
+          }
+
+          const pulse = 0.5 + 0.5 * Math.sin(time * 0.0045);
+          this.unlockOrbEl.object3D.position.y = 1.08 + Math.sin(time * 0.0024) * 0.04;
+          this.unlockOrbEl.object3D.scale.setScalar(0.94 + pulse * 0.12);
+
+          const coreMesh = this.unlockOrbCoreEl.getObject3D("mesh");
+          if (coreMesh) {
+            coreMesh.material.opacity = 0.24 + pulse * 0.18;
+          }
+
+          const shellMesh = this.unlockOrbShellEl.getObject3D("mesh");
+          if (shellMesh) {
+            shellMesh.material.opacity = 0.06 + pulse * 0.08;
+          }
+
+          const ringMesh = this.unlockOrbRingEl.getObject3D("mesh");
+          if (ringMesh) {
+            ringMesh.material.opacity = 0.14 + pulse * 0.16;
+          }
+        },
+
         demoNextMember() {
           if (!this.started) {
             this.startExperience();
@@ -2455,6 +2599,12 @@
 
           const member = this.members[this.demoIndex % this.members.length];
           this.demoIndex += 1;
+          if (!this.membersActivated) {
+            this.membersActivated = true;
+            this.membersActivationAt = performance.now();
+            this.stageStartedAt = this.membersActivationAt;
+            this.unlockOrbEl.object3D.visible = false;
+          }
           this.candidateTarget = member;
           this.candidateSince = performance.now();
           this.selectMember(member, "desktop");
@@ -2472,6 +2622,10 @@
           this.activeHand = null;
           this.activeHandEl = null;
           this.hideLaser();
+          this.membersActivated = false;
+          this.membersActivationAt = 0;
+          this.stageStartedAt = 0;
+          this.unlockOrbEl.object3D.visible = this.started;
 
           try {
             this.bgmEl.pause();
@@ -2516,6 +2670,7 @@
           }
 
           this.updateMemberVisuals(time, delta);
+          this.updateUnlockOrbVisuals(time);
           this.updateSelectionPresentation();
           this.updateScreenVisuals();
           this.updateLaserFollow();
