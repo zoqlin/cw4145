@@ -1604,11 +1604,28 @@
             autoGrip.setAttribute("position", "0 -0.03 0");
             autoGrip.setAttribute("material", "color: #d8dda3; roughness: 0.56; metalness: 0.08");
             autoWand.appendChild(autoGrip);
-            const autoTip = document.createElement("a-sphere");
-            autoTip.setAttribute("radius", "0.058");
-            autoTip.setAttribute("position", "0 0.42 0");
-            autoTip.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.72`);
-            autoWand.appendChild(autoTip);
+            const autoTipGroup = document.createElement("a-entity");
+            autoTipGroup.object3D.position.set(0, 0.42, 0);
+            const autoTipLeft = document.createElement("a-box");
+            autoTipLeft.setAttribute("width", "0.03");
+            autoTipLeft.setAttribute("height", "0.12");
+            autoTipLeft.setAttribute("depth", "0.03");
+            autoTipLeft.setAttribute("position", "-0.04 0.02 0");
+            autoTipLeft.setAttribute("rotation", "0 0 34");
+            autoTipLeft.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.78`);
+            autoTipGroup.appendChild(autoTipLeft);
+            const autoTipRight = document.createElement("a-box");
+            autoTipRight.setAttribute("width", "0.03");
+            autoTipRight.setAttribute("height", "0.12");
+            autoTipRight.setAttribute("depth", "0.03");
+            autoTipRight.setAttribute("position", "0.04 0.02 0");
+            autoTipRight.setAttribute("rotation", "0 0 -34");
+            autoTipRight.setAttribute("material", `shader: flat; color: ${member.color}; transparent: true; opacity: 0.78`);
+            autoTipGroup.appendChild(autoTipRight);
+            const autoTipAnchor = document.createElement("a-entity");
+            autoTipAnchor.object3D.position.set(0, 0.08, 0);
+            autoTipGroup.appendChild(autoTipAnchor);
+            autoWand.appendChild(autoTipGroup);
             const autoLight = document.createElement("a-light");
             autoLight.setAttribute("type", "point");
             autoLight.setAttribute("color", member.color);
@@ -1630,7 +1647,9 @@
               badgeTextEl: badgeText,
               autoWandEl: autoWand,
               autoWandRodEl: autoRod,
-              autoWandTipEl: autoTip,
+              autoWandTipEl: autoTipAnchor,
+              autoWandTipLeftEl: autoTipLeft,
+              autoWandTipRightEl: autoTipRight,
               autoWandLightEl: autoLight,
               baseX: x,
               baseY,
@@ -2510,8 +2529,11 @@
             }
 
             if (member.autoWandEl) {
-              const wandVisible = isSelected && appear > 0.2;
+              const wandVisible = !!(isSelected && selectedTarget > 0.99 && appear > 0.2);
               member.autoWandEl.object3D.visible = wandVisible;
+              if (!wandVisible) {
+                member.autoWandEl.object3D.scale.setScalar(0.0001);
+              }
               if (wandVisible) {
                 const wave = Math.sin(time * 0.008);
                 const waveFast = Math.sin(time * 0.017 + member.appearDelay * 8);
@@ -2522,12 +2544,17 @@
                   THREE.MathUtils.degToRad(-28 + wave * 20)
                 );
                 member.autoWandEl.object3D.scale.setScalar(1.08 + selectedTarget * 0.18);
-                const tipMesh = member.autoWandTipEl && member.autoWandTipEl.getObject3D("mesh");
+                const tipLeftMesh = member.autoWandTipLeftEl && member.autoWandTipLeftEl.getObject3D("mesh");
+                const tipRightMesh = member.autoWandTipRightEl && member.autoWandTipRightEl.getObject3D("mesh");
                 const rodMesh = member.autoWandRodEl && member.autoWandRodEl.getObject3D("mesh");
                 const light = member.autoWandLightEl && member.autoWandLightEl.getObject3D("light");
-                if (tipMesh) {
-                  tipMesh.material.color.set(member.color);
-                  tipMesh.material.opacity = 0.56 + pulse * 0.28;
+                if (tipLeftMesh) {
+                  tipLeftMesh.material.color.set(member.color);
+                  tipLeftMesh.material.opacity = 0.62 + pulse * 0.24;
+                }
+                if (tipRightMesh) {
+                  tipRightMesh.material.color.set(member.color);
+                  tipRightMesh.material.opacity = 0.62 + pulse * 0.24;
                 }
                 if (rodMesh && rodMesh.material.emissive) {
                   rodMesh.material.emissive.set(member.color);
