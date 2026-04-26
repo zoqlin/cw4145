@@ -541,11 +541,11 @@
           duckedVolume: 0
         },
         bgm: {
-          baseVolume: 0.18,
-          duckedVolume: 0.045
+          baseVolume: 0.08,
+          duckedVolume: 0
         },
         voices: {
-          selectedVolume: 0.98
+          selectedVolume: 1
         },
         interaction: {
           handHoverDistance: 0.56,
@@ -1001,15 +1001,19 @@
           const controllerObject = controllerEl && controllerEl.object3D;
           const controllerComponent = controllerEl && controllerEl.components && (controllerEl.components["meta-touch-controls"] || controllerEl.components["oculus-touch-controls"]);
           const trackedController = controllerEl && controllerEl.components && controllerEl.components["tracked-controls"];
+          const xrManager = this.el.sceneEl && this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr;
+          const controllerIndex = this.data.hand === "right" ? 0 : 1;
+          const gripObject = xrManager && xrManager.isPresenting ? xrManager.getControllerGrip(controllerIndex) : null;
           const handObject = this.resolveHandAnchorObject();
           const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
           const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+          const trackedControllerObject = gripObject && gripObject.visible !== false ? gripObject : controllerObject;
 
-          if (controllerObject && ((controllerComponent && controllerComponent.controllerPresent) || (trackedController && trackedController.controller))) {
-            controllerObject.updateMatrixWorld(true);
+          if (trackedControllerObject && ((controllerComponent && controllerComponent.controllerPresent) || (trackedController && trackedController.controller) || gripObject)) {
+            trackedControllerObject.updateMatrixWorld(true);
             fallbackObject && fallbackObject.updateMatrixWorld(true);
-            controllerObject.getWorldPosition(this.anchorPosition);
-            controllerObject.getWorldQuaternion(this.anchorQuaternion);
+            trackedControllerObject.getWorldPosition(this.anchorPosition);
+            trackedControllerObject.getWorldQuaternion(this.anchorQuaternion);
             if (!fallbackObject) {
               return;
             }
@@ -1890,7 +1894,7 @@
           this.controllerSelectCooldownUntil = now + 220;
           this.activeHand = "controller";
           this.activeHandEl = controllerEl || this.rightControllerEl;
-          const target = this.candidateTarget || this.activeSelection || this.getBestVisibleMember();
+          const target = this.getBestVisibleMember() || this.candidateTarget || this.activeSelection;
           if (!target) {
             this.setStatus("请先将视线对准并靠近成员卡片，再按右手手柄按键进行选中。");
             return;
@@ -2134,9 +2138,10 @@
           }
 
           const holdMs = switchingToAnother ? APP_CONFIG.interaction.switchHoldMs : APP_CONFIG.interaction.autoSelectHoldMs;
+          const cooldownReady = switchingToAnother ? true : now > this.previewCooldownUntil;
           if (
             now - this.stageStartedAt > APP_CONFIG.interaction.autoSelectWarmupMs &&
-            now > this.previewCooldownUntil &&
+            cooldownReady &&
             closestCameraDistance < APP_CONFIG.interaction.autoSelectDistance &&
             now - this.candidateSince > holdMs &&
             (!this.activeSelection || this.activeSelection.key !== closestMember.key)
