@@ -653,6 +653,7 @@
         },
         unlockOrb: {
           activationDistance: 0.52,
+          autoRevealDelayMs: 5000,
           unfoldDurationMs: 1800
         },
         members: [
@@ -1404,6 +1405,7 @@
           this.started = false;
           this.preparing = false;
           this.demoIndex = 0;
+          this.experienceStartedAt = 0;
           this.stageStartedAt = 0;
           this.membersActivated = false;
           this.membersActivationAt = 0;
@@ -1857,22 +1859,20 @@
             this.stageRootEl.object3D.visible = true;
             this.previewEnvironmentEl.object3D.visible = !this.el.is("ar-mode");
             this.started = true;
+            this.experienceStartedAt = performance.now();
             this.membersActivated = false;
             this.membersActivationAt = 0;
             this.stageStartedAt = 0;
-            this.unlockOrbEl.object3D.visible = true;
+            this.unlockOrbEl.object3D.visible = false;
             this.memberArcEl.object3D.visible = false;
             this.scheduleStageRealign();
             await this.startVideoLoop();
             await this.startBgmLoop();
             this.updateWandsForState();
-            if (mode === "ar") {
-              this.setStatus("舞台已固定在你前方的 MR 空间中。请走到前方能量球附近，按下右手手柄完成启动，成员阵列会随之展开。");
-            } else if (mode === "vr") {
-              this.setStatus("已切换到沉浸式模式。请走到前方能量球附近，按下右手手柄启动成员阵列。");
-            } else {
-              this.setStatus("场景已启动。请走到前方能量球附近，按下右手手柄启动成员阵列。");
-            }
+            this.setStatus(mode === "ar"
+              ? "舞台已固定在你前方的 MR 空间中。成员阵列将在 5 秒后自动展开。"
+              : "场景已启动。成员阵列将在 5 秒后自动展开。"
+            );
           } finally {
             this.preparing = false;
           }
@@ -2176,33 +2176,17 @@
           shimmer.stop(now + 0.95);
         },
 
-        tryActivateUnlockOrb(source = "leftPinch") {
-          if (!this.started || this.membersActivated || !this.unlockOrbEl.object3D.visible) {
+        revealMemberArc(reason = "auto") {
+          if (!this.started || this.membersActivated) {
             return false;
           }
-
-          const hasActivationPose = source === "leftPinch"
-            ? this.getHandWorldPosition("left", this.tempWorld)
-            : this.getControllerWorldPosition("right", this.tempWorld, this.tempQuaternion);
-          if (!hasActivationPose) {
-            this.setStatus(source === "leftPinch" ? "请把左手伸到前方能量球附近，并做捏合手势展开成员阵列。" : "请先拿起右手手柄，再按下手柄按键。");
-            return true;
-          }
-
-          this.unlockOrbCoreEl.object3D.getWorldPosition(this.unlockOrbWorld);
-          const distance = this.tempWorld.distanceTo(this.unlockOrbWorld);
-          if (distance > APP_CONFIG.unlockOrb.activationDistance) {
-            this.setStatus("再靠近一点能量球，并用左手捏合完成启动。开启后成员阵列会以 120 度展开。");
-            return true;
-          }
-
           this.membersActivated = true;
           this.membersActivationAt = performance.now();
           this.stageStartedAt = this.membersActivationAt;
           this.unlockOrbEl.object3D.visible = false;
           this.memberArcEl.object3D.visible = true;
           this.playUnlockBoom();
-          this.setStatus("能量连接完成。成员阵列正在展开，继续靠近成员卡片即可进入互动。");
+          this.setStatus("成员阵列正在以 120 度展开。现在可以用手柄或捏合选择成员。");
           return true;
         },
 
@@ -2218,7 +2202,7 @@
           this.activeHand = "controller";
           this.activeHandEl = controllerEl || this.rightControllerEl;
           if (!this.membersActivated) {
-            this.setStatus("请先用左手靠近能量球并捏合，展开 120 度成员阵列后再用手柄选择成员。");
+            this.setStatus("成员阵列将在进入空间 5 秒后展开，请稍候再用手柄选择成员。");
             return;
           }
           const target = this.getBestVisibleMember() || this.candidateTarget || this.activeSelection;
@@ -2237,13 +2221,7 @@
             return;
           }
           if (!this.membersActivated) {
-            if (hand === "left") {
-              this.activeHand = hand;
-              this.activeHandEl = handEl;
-              this.tryActivateUnlockOrb("leftPinch");
-            } else {
-              this.setStatus("请先用左手靠近能量球并捏合，展开 120 度成员阵列后再进行成员互动。");
-            }
+            this.setStatus("成员阵列将在进入空间 5 秒后展开，请稍候再捏合选择成员。");
             return;
           }
 
@@ -2629,11 +2607,7 @@
           const member = this.members[this.demoIndex % this.members.length];
           this.demoIndex += 1;
           if (!this.membersActivated) {
-            this.membersActivated = true;
-            this.membersActivationAt = performance.now();
-            this.stageStartedAt = this.membersActivationAt;
-            this.unlockOrbEl.object3D.visible = false;
-            this.memberArcEl.object3D.visible = true;
+            this.revealMemberArc("desktop");
           }
           this.candidateTarget = member;
           this.candidateSince = performance.now();
@@ -2655,7 +2629,8 @@
           this.membersActivated = false;
           this.membersActivationAt = 0;
           this.stageStartedAt = 0;
-          this.unlockOrbEl.object3D.visible = this.started;
+          this.experienceStartedAt = this.started ? performance.now() : 0;
+          this.unlockOrbEl.object3D.visible = false;
           this.memberArcEl.object3D.visible = false;
 
           try {
@@ -2698,6 +2673,10 @@
         tick(time, delta) {
           if (!this.started) {
             return;
+          }
+
+          if (!this.membersActivated && this.experienceStartedAt && performance.now() - this.experienceStartedAt >= APP_CONFIG.unlockOrb.autoRevealDelayMs) {
+            this.revealMemberArc("elapsed");
           }
 
           this.updateMemberVisuals(time, delta);
