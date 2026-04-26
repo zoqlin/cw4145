@@ -372,12 +372,14 @@
     <a-entity
       id="leftHand"
       hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
+      xr-overlay-visual="renderOrder: 360"
     ></a-entity>
 
     <a-entity
       id="rightHand"
       hand-tracking-controls="hand: right; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
       pinch-input="hand: right"
+      xr-overlay-visual="renderOrder: 360"
     ></a-entity>
 
     <a-entity
@@ -390,6 +392,7 @@
       id="rightWand"
       class="wand"
       support-wand="hand: right; sourceHand: #rightHand; sourceController: #rightController; fallbackTarget: #userCamera"
+      xr-overlay-visual="renderOrder: 420"
     ></a-entity>
 
     <a-entity id="experienceRoot" visible="false">
@@ -798,6 +801,51 @@
 
         remove() {
           this.events.forEach((eventName) => this.el.removeEventListener(eventName, this.onSelect));
+        }
+      });
+
+      AFRAME.registerComponent("xr-overlay-visual", {
+        schema: {
+          renderOrder: { default: 360 }
+        },
+
+        init() {
+          this.applyOverlay = this.applyOverlay.bind(this);
+          this.el.addEventListener("object3dset", this.applyOverlay);
+          this.applyOverlay();
+        },
+
+        applyOverlay() {
+          const root = this.el.object3D;
+          if (!root) {
+            return;
+          }
+
+          let meshIndex = 0;
+          root.traverse((child) => {
+            if (!child.isMesh || !child.material) {
+              return;
+            }
+
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            child.renderOrder = this.data.renderOrder + meshIndex;
+            meshIndex += 1;
+
+            materials.forEach((material) => {
+              material.transparent = true;
+              material.depthTest = false;
+              material.depthWrite = false;
+              material.needsUpdate = true;
+            });
+          });
+        },
+
+        tick() {
+          this.applyOverlay();
+        },
+
+        remove() {
+          this.el.removeEventListener("object3dset", this.applyOverlay);
         }
       });
 
