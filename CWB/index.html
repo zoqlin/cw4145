@@ -372,6 +372,7 @@
     <a-entity
       id="leftHand"
       hand-tracking-controls="hand: left; modelStyle: mesh; modelColor: #ffc9df; modelOpacity: 0.62"
+      pinch-input="hand: left"
       xr-overlay-visual="renderOrder: 360"
     ></a-entity>
 
@@ -391,9 +392,16 @@
     ></a-entity>
 
     <a-entity
+      id="leftWand"
+      class="wand"
+      support-wand="hand: left; sourceHand: #leftHand; fallbackTarget: #userCamera"
+      xr-overlay-visual="renderOrder: 420"
+    ></a-entity>
+
+    <a-entity
       id="rightWand"
       class="wand"
-      support-wand="hand: right; sourceController: #rightController; fallbackTarget: #userCamera"
+      support-wand="hand: right; sourceHand: #rightHand; sourceController: #rightController; fallbackTarget: #userCamera"
       xr-overlay-visual="renderOrder: 420"
     ></a-entity>
 
@@ -644,7 +652,7 @@
           distance: 2.85
         },
         unlockOrb: {
-          activationDistance: 0.42,
+          activationDistance: 0.52,
           unfoldDurationMs: 1800
         },
         members: [
@@ -914,9 +922,10 @@
           this.handAnchorObject = null;
           this.controllerAnchorObject = null;
           this.currentAnchorObject = null;
-          this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
-          this.controllerOffset = new THREE.Vector3(0.016, -0.022, -0.026);
-          this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
+          const side = this.data.hand === "left" ? -1 : 1;
+          this.offset = new THREE.Vector3(0.036 * side, -0.028, -0.012);
+          this.controllerOffset = new THREE.Vector3(0.016 * side, -0.022, -0.026);
+          this.fallbackOffset = new THREE.Vector3(0.28 * side, -0.28, -0.58);
           this.handRotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(
             THREE.MathUtils.degToRad(8),
             THREE.MathUtils.degToRad(-6),
@@ -1086,6 +1095,9 @@
 
           const preferredNames = [
             "wrist",
+            this.data.hand === "left" ? "b_l_wrist" : "b_r_wrist",
+            `${this.data.hand}_wrist`,
+            this.data.hand === "left" ? "hand_l" : "hand_r",
             "b_r_wrist",
             "right_wrist",
             "hand_r",
@@ -1180,18 +1192,13 @@
           return true;
         },
 
-        setRightHandVisible(visible) {
-          if (!this.sourceHandEl || !this.sourceHandEl.object3D) {
-            return;
-          }
-          this.sourceHandEl.object3D.visible = visible;
-        },
-
         updateAnchorPose() {
           const fallbackObject = this.resolveReferenceObject();
           const handObject = this.resolveHandAnchorObject();
           const handTracking = this.sourceHandEl && this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
           const controllerObject = this.resolveControllerAnchorObject();
+          const xrManager = this.el.sceneEl && this.el.sceneEl.renderer && this.el.sceneEl.renderer.xr;
+          const inXR = !!(xrManager && xrManager.isPresenting);
 
           if (controllerObject && fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
             fallbackObject.updateMatrixWorld(true);
@@ -1207,7 +1214,6 @@
             if (controllerPoseLooksValid) {
               this.bindToAnchor(controllerObject, this.controllerOffset, this.controllerRotation, "controller");
               this.handTracked = true;
-              this.setRightHandVisible(false);
               return;
             }
           }
@@ -1229,9 +1235,14 @@
             if (rootPoseLooksValid) {
               this.bindToAnchor(handObject, this.offset, this.handRotation, "hand");
               this.handTracked = true;
-              this.setRightHandVisible(true);
               return;
             }
+          }
+
+          if (inXR) {
+            this.poseSource = "none";
+            this.handTracked = false;
+            return;
           }
 
           if (!fallbackObject) {
@@ -1240,7 +1251,6 @@
 
           this.bindToAnchor(fallbackObject, this.fallbackOffset, this.fallbackRotation, "fallback");
           this.handTracked = false;
-          this.setRightHandVisible(false);
         },
 
         tick(time, delta) {
@@ -2166,20 +2176,23 @@
           shimmer.stop(now + 0.95);
         },
 
-        tryActivateUnlockOrb() {
+        tryActivateUnlockOrb(source = "leftPinch") {
           if (!this.started || this.membersActivated || !this.unlockOrbEl.object3D.visible) {
             return false;
           }
 
-          if (!this.getControllerWorldPosition("right", this.tempWorld, this.tempQuaternion)) {
-            this.setStatus("请先拿起右手手柄并靠近前方能量球，再按下手柄按键启动成员阵列。");
+          const hasActivationPose = source === "leftPinch"
+            ? this.getHandWorldPosition("left", this.tempWorld)
+            : this.getControllerWorldPosition("right", this.tempWorld, this.tempQuaternion);
+          if (!hasActivationPose) {
+            this.setStatus(source === "leftPinch" ? "请把左手伸到前方能量球附近，并做捏合手势展开成员阵列。" : "请先拿起右手手柄，再按下手柄按键。");
             return true;
           }
 
           this.unlockOrbCoreEl.object3D.getWorldPosition(this.unlockOrbWorld);
           const distance = this.tempWorld.distanceTo(this.unlockOrbWorld);
           if (distance > APP_CONFIG.unlockOrb.activationDistance) {
-            this.setStatus("再靠近一点能量球，并按下右手手柄完成启动。");
+            this.setStatus("再靠近一点能量球，并用左手捏合完成启动。开启后成员阵列会以 120 度展开。");
             return true;
           }
 
@@ -2205,7 +2218,7 @@
           this.activeHand = "controller";
           this.activeHandEl = controllerEl || this.rightControllerEl;
           if (!this.membersActivated) {
-            this.tryActivateUnlockOrb();
+            this.setStatus("请先用左手靠近能量球并捏合，展开 120 度成员阵列后再用手柄选择成员。");
             return;
           }
           const target = this.getBestVisibleMember() || this.candidateTarget || this.activeSelection;
@@ -2220,11 +2233,17 @@
         },
 
         handlePinchStart(hand, handEl, pinchPosition) {
-          if (!this.started || hand !== "right") {
+          if (!this.started) {
             return;
           }
           if (!this.membersActivated) {
-            this.setStatus("请先用右手手柄点击前方能量球，完成启动后再进行成员互动。");
+            if (hand === "left") {
+              this.activeHand = hand;
+              this.activeHandEl = handEl;
+              this.tryActivateUnlockOrb("leftPinch");
+            } else {
+              this.setStatus("请先用左手靠近能量球并捏合，展开 120 度成员阵列后再进行成员互动。");
+            }
             return;
           }
 
@@ -2239,7 +2258,7 @@
 
           const target = this.hoveredByHand[hand] ? this.memberMap.get(this.hoveredByHand[hand]) : this.candidateTarget || this.activeSelection;
           if (!target) {
-            this.setStatus("右手捏合未命中成员卡片。请先将手靠近卡片，或直接走近成员。");
+            this.setStatus("捏合未命中成员卡片。请先将手靠近卡片，或直接走近成员。");
             return;
           }
 
