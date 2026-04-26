@@ -384,6 +384,8 @@
 
     <a-entity
       id="rightController"
+      tracked-controls="hand: right; controller: 0; idPrefix: Oculus Touch"
+      oculus-touch-controls="hand: right; model: false"
       meta-touch-controls="hand: right; model: false"
       controller-select-input="hand: right"
     ></a-entity>
@@ -391,7 +393,7 @@
     <a-entity
       id="rightWand"
       class="wand"
-      support-wand="hand: right; sourceHand: #rightHand; sourceController: #rightController; fallbackTarget: #userCamera"
+      support-wand="hand: right; sourceController: #rightController; fallbackTarget: #userCamera"
       xr-overlay-visual="renderOrder: 420"
     ></a-entity>
 
@@ -1161,14 +1163,19 @@
             return false;
           }
 
-          if (this.currentAnchorObject !== anchorObject) {
-            anchorObject.attach(this.el.object3D);
-            this.currentAnchorObject = anchorObject;
+          const sceneObject = this.el.sceneEl && this.el.sceneEl.object3D;
+          if (sceneObject && this.el.object3D.parent !== sceneObject) {
+            sceneObject.attach(this.el.object3D);
           }
 
-          this.el.object3D.position.copy(localOffset);
-          this.el.object3D.quaternion.copy(localRotation);
+          anchorObject.updateMatrixWorld(true);
+          anchorObject.getWorldPosition(this.anchorPosition);
+          anchorObject.getWorldQuaternion(this.anchorQuaternion);
+          this.offsetWorld.copy(localOffset).applyQuaternion(this.anchorQuaternion);
+          this.el.object3D.position.copy(this.anchorPosition).add(this.offsetWorld);
+          this.el.object3D.quaternion.copy(this.anchorQuaternion).multiply(localRotation);
           this.el.object3D.scale.setScalar(1.08);
+          this.currentAnchorObject = anchorObject;
           this.poseSource = poseSource;
           return true;
         },
@@ -1844,6 +1851,7 @@
             this.membersActivationAt = 0;
             this.stageStartedAt = 0;
             this.unlockOrbEl.object3D.visible = true;
+            this.memberArcEl.object3D.visible = false;
             this.scheduleStageRealign();
             await this.startVideoLoop();
             await this.startBgmLoop();
@@ -2179,6 +2187,7 @@
           this.membersActivationAt = performance.now();
           this.stageStartedAt = this.membersActivationAt;
           this.unlockOrbEl.object3D.visible = false;
+          this.memberArcEl.object3D.visible = true;
           this.playUnlockBoom();
           this.setStatus("能量连接完成。成员阵列正在展开，继续靠近成员卡片即可进入互动。");
           return true;
@@ -2384,17 +2393,18 @@
             member.visibleAmount = appear;
             const forward = member.hoverAmount * 0.08 + member.selectedAmount * 0.18;
             member.forwardOffset = THREE.MathUtils.lerp(member.forwardOffset, forward, 0.12);
-            member.el.object3D.scale.setScalar(0.68 + deployAmount * 0.18 + appear * 0.14 + member.hoverAmount * 0.12 + member.selectedAmount * 0.2);
+            const fanEase = deployAmount * deployAmount * (3 - 2 * deployAmount);
+            member.el.object3D.scale.setScalar(0.2 + fanEase * 0.66 + appear * 0.14 + member.hoverAmount * 0.12 + member.selectedAmount * 0.2);
             member.el.object3D.position.x = THREE.MathUtils.lerp(0, member.baseX, deployAmount);
             member.el.object3D.position.y = THREE.MathUtils.lerp(
               APP_CONFIG.layout.memberBaseY - 0.08,
               member.baseY + (1 - appear) * 0.18 + Math.sin(time * 0.0012 + member.appearDelay * 4) * 0.018,
-              deployAmount
+              fanEase
             );
-            member.el.object3D.position.z = THREE.MathUtils.lerp(0.22, member.baseZ + member.forwardOffset, deployAmount);
+            member.el.object3D.position.z = THREE.MathUtils.lerp(0.12, member.baseZ + member.forwardOffset, fanEase);
             member.el.object3D.rotation.y = THREE.MathUtils.lerp(
               member.el.object3D.rotation.y,
-              -member.baseAngle * 0.82 * deployAmount,
+              -member.baseAngle * 0.82 * fanEase,
               0.12
             );
 
@@ -2604,6 +2614,7 @@
             this.membersActivationAt = performance.now();
             this.stageStartedAt = this.membersActivationAt;
             this.unlockOrbEl.object3D.visible = false;
+            this.memberArcEl.object3D.visible = true;
           }
           this.candidateTarget = member;
           this.candidateSince = performance.now();
@@ -2626,6 +2637,7 @@
           this.membersActivationAt = 0;
           this.stageStartedAt = 0;
           this.unlockOrbEl.object3D.visible = this.started;
+          this.memberArcEl.object3D.visible = false;
 
           try {
             this.bgmEl.pause();
