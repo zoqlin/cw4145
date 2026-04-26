@@ -1062,9 +1062,22 @@
           return Number.isFinite(targetPosition.x) && Number.isFinite(targetPosition.y) && Number.isFinite(targetPosition.z);
         },
 
+        resolveReferenceObject() {
+          const sceneEl = this.el.sceneEl;
+          const xrManager = sceneEl && sceneEl.renderer && sceneEl.renderer.xr;
+          const sceneCamera = sceneEl && sceneEl.camera;
+          if (xrManager && xrManager.isPresenting && sceneCamera) {
+            const xrCamera = xrManager.getCamera(sceneCamera);
+            if (xrCamera) {
+              return xrCamera;
+            }
+          }
+          return this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+        },
+
         updateAnchorPose() {
           const now = performance.now();
-          const fallbackObject = this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
+          const fallbackObject = this.resolveReferenceObject();
           const handObject = this.resolveHandAnchorObject();
           const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
 
