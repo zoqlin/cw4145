@@ -879,6 +879,7 @@
           this.savedHandQuaternion = new THREE.Quaternion();
           this.handAnchorObject = null;
           this.controllerAnchorObject = null;
+          this.currentAnchorObject = null;
           this.offset = new THREE.Vector3(0.036, -0.024, -0.01);
           this.controllerOffset = new THREE.Vector3(0.016, -0.022, -0.026);
           this.fallbackOffset = new THREE.Vector3(0.34, -0.28, -0.58);
@@ -1110,27 +1111,6 @@
           return Number.isFinite(targetPosition.x) && Number.isFinite(targetPosition.y) && Number.isFinite(targetPosition.z);
         },
 
-        resolveEntityPose(entityEl, targetPosition, targetQuaternion) {
-          if (!entityEl || !entityEl.object3D) {
-            return false;
-          }
-
-          const object3D = entityEl.object3D;
-          object3D.updateMatrixWorld(true);
-          object3D.getWorldPosition(targetPosition);
-          object3D.getWorldQuaternion(targetQuaternion);
-
-          return (
-            Number.isFinite(targetPosition.x) &&
-            Number.isFinite(targetPosition.y) &&
-            Number.isFinite(targetPosition.z) &&
-            Number.isFinite(targetQuaternion.x) &&
-            Number.isFinite(targetQuaternion.y) &&
-            Number.isFinite(targetQuaternion.z) &&
-            Number.isFinite(targetQuaternion.w)
-          );
-        },
-
         resolveReferenceObject() {
           const sceneEl = this.el.sceneEl;
           const xrManager = sceneEl && sceneEl.renderer && sceneEl.renderer.xr;
@@ -1144,89 +1124,56 @@
           return this.fallbackTargetEl && (this.fallbackTargetEl.getObject3D("camera") || this.fallbackTargetEl.object3D);
         },
 
+        bindToAnchor(anchorObject, localOffset, localRotation, poseSource) {
+          if (!anchorObject) {
+            return false;
+          }
+
+          if (this.currentAnchorObject !== anchorObject) {
+            anchorObject.attach(this.el.object3D);
+            this.currentAnchorObject = anchorObject;
+          }
+
+          this.el.object3D.position.copy(localOffset);
+          this.el.object3D.quaternion.copy(localRotation);
+          this.el.object3D.scale.setScalar(1.08);
+          this.poseSource = poseSource;
+          return true;
+        },
+
+        setRightHandVisible(visible) {
+          if (!this.sourceHandEl || !this.sourceHandEl.object3D) {
+            return;
+          }
+          this.sourceHandEl.object3D.visible = visible;
+        },
+
         updateAnchorPose() {
-          const now = performance.now();
           const fallbackObject = this.resolveReferenceObject();
           const handObject = this.resolveHandAnchorObject();
-          const handRoot = this.sourceHandEl && this.sourceHandEl.object3D;
-          const controllerEntityEl = this.sourceControllerEl;
-          const handEntityEl = this.sourceHandEl;
+          const handTracking = this.sourceHandEl && this.sourceHandEl.components && this.sourceHandEl.components["hand-tracking-controls"];
+          const controllerObject = this.resolveControllerAnchorObject();
 
-          if (fallbackObject && this.resolveEntityPose(controllerEntityEl, this.anchorPosition, this.anchorQuaternion)) {
-            fallbackObject && fallbackObject.updateMatrixWorld(true);
-            fallbackObject.getWorldPosition(this.cameraWorld);
-
-            const controllerPoseLooksValid =
-              Number.isFinite(this.anchorPosition.x) &&
-              Number.isFinite(this.anchorPosition.y) &&
-              Number.isFinite(this.anchorPosition.z) &&
-              this.anchorPosition.y > 0.2 &&
-              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
-
-            if (controllerPoseLooksValid) {
-              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.controllerRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
-              this.handTracked = true;
-              this.poseSource = "controller";
-              return;
-            }
-          }
-
-          if (fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
-            fallbackObject && fallbackObject.updateMatrixWorld(true);
-            fallbackObject.getWorldPosition(this.cameraWorld);
-
-            const controllerPoseLooksValid =
-              Number.isFinite(this.anchorPosition.x) &&
-              Number.isFinite(this.anchorPosition.y) &&
-              Number.isFinite(this.anchorPosition.z) &&
-              this.anchorPosition.y > 0.2 &&
-              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
-
-            if (controllerPoseLooksValid) {
-              this.offsetWorld.copy(this.controllerOffset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.controllerRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
-              this.handTracked = true;
-              this.poseSource = "controller";
-              return;
-            }
-          }
-
-          if (fallbackObject && this.resolveEntityPose(handEntityEl, this.rootPosition, this.rootQuaternion)) {
+          if (controllerObject && fallbackObject && this.resolveControllerPose(this.anchorPosition, this.anchorQuaternion)) {
             fallbackObject.updateMatrixWorld(true);
             fallbackObject.getWorldPosition(this.cameraWorld);
 
-            const handEntityLooksValid =
-              Number.isFinite(this.rootPosition.x) &&
-              Number.isFinite(this.rootPosition.y) &&
-              Number.isFinite(this.rootPosition.z) &&
-              this.rootPosition.y > 0.2 &&
-              this.rootPosition.distanceTo(this.cameraWorld) < 1.6;
+            const controllerPoseLooksValid =
+              Number.isFinite(this.anchorPosition.x) &&
+              Number.isFinite(this.anchorPosition.y) &&
+              Number.isFinite(this.anchorPosition.z) &&
+              this.anchorPosition.y > 0.2 &&
+              this.anchorPosition.distanceTo(this.cameraWorld) < 2.6;
 
-            if (handEntityLooksValid) {
-              this.anchorPosition.copy(this.rootPosition);
-              this.anchorQuaternion.copy(this.rootQuaternion);
-              this.offsetWorld.copy(this.offset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.handRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
+            if (controllerPoseLooksValid) {
+              this.bindToAnchor(controllerObject, this.controllerOffset, this.controllerRotation, "controller");
               this.handTracked = true;
-              this.poseSource = "hand";
+              this.setRightHandVisible(false);
               return;
             }
           }
 
-          if (handObject && fallbackObject) {
+          if (handObject && fallbackObject && handTracking && handTracking.hasPoses) {
             handObject.updateMatrixWorld(true);
             fallbackObject.updateMatrixWorld(true);
             handObject.getWorldPosition(this.rootPosition);
@@ -1241,40 +1188,9 @@
               this.rootPosition.distanceTo(this.cameraWorld) < 1.6;
 
             if (rootPoseLooksValid) {
-              this.anchorPosition.copy(this.rootPosition);
-              this.anchorQuaternion.copy(this.rootQuaternion);
-
-              if (handRoot && handObject !== handRoot) {
-                handObject.updateMatrixWorld(true);
-                handObject.matrixWorld.decompose(this.detailPosition, this.detailQuaternion, this.anchorScale);
-
-                const detailPoseLooksValid =
-                  Number.isFinite(this.detailPosition.x) &&
-                  Number.isFinite(this.detailPosition.y) &&
-                  Number.isFinite(this.detailPosition.z) &&
-                  this.detailPosition.distanceTo(this.rootPosition) < 0.28;
-
-                if (detailPoseLooksValid) {
-                  this.anchorPosition.copy(this.detailPosition);
-                  this.anchorQuaternion.copy(this.detailQuaternion);
-                }
-              }
-
-              this.offsetWorld.copy(this.offset).applyQuaternion(this.anchorQuaternion);
-              this.anchorPosition.add(this.offsetWorld);
-              this.anchorQuaternion.multiply(this.handRotation);
-              this.savedHandPosition.copy(this.anchorPosition);
-              this.savedHandQuaternion.copy(this.anchorQuaternion);
-              this.lastTrackedAt = now;
+              this.bindToAnchor(handObject, this.offset, this.handRotation, "hand");
               this.handTracked = true;
-              this.poseSource = "hand";
-              return;
-            }
-
-            if (this.handTracked && now - this.lastTrackedAt < 160) {
-              this.anchorPosition.copy(this.savedHandPosition);
-              this.anchorQuaternion.copy(this.savedHandQuaternion);
-              this.poseSource = "hand-cache";
+              this.setRightHandVisible(true);
               return;
             }
           }
@@ -1283,13 +1199,9 @@
             return;
           }
 
-          fallbackObject.getWorldPosition(this.anchorPosition);
-          fallbackObject.getWorldQuaternion(this.anchorQuaternion);
-          this.offsetWorld.copy(this.fallbackOffset).applyQuaternion(this.anchorQuaternion);
-          this.anchorPosition.add(this.offsetWorld);
-          this.anchorQuaternion.multiply(this.fallbackRotation);
+          this.bindToAnchor(fallbackObject, this.fallbackOffset, this.fallbackRotation, "fallback");
           this.handTracked = false;
-          this.poseSource = "fallback";
+          this.setRightHandVisible(false);
         },
 
         tick(time, delta) {
@@ -1304,8 +1216,6 @@
           if (!this.el.object3D.visible) {
             return;
           }
-          this.el.object3D.position.copy(this.anchorPosition);
-          this.el.object3D.quaternion.copy(this.anchorQuaternion);
           this.updateMeshes();
 
           if (!this.tipEl) {
